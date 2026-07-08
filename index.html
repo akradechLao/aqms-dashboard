@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQMS Dashboard - ระบบเฝ้าระวังคุณภาพอากาศ</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-primary:#f0f4f8;--bg-secondary:#ffffff;--bg-card:#ffffff;
+  --border:rgba(14,165,233,0.2);--border-glow:rgba(14,165,233,0.5);
+  --text-primary:#1e293b;--text-secondary:#475569;--text-muted:#94a3b8;
+  --accent:#0284c7;--accent-light:#0ea5e9;--accent-glow:rgba(14,165,233,0.15);
+  --green:#059669;--green-light:#10b981;--yellow:#d97706;--yellow-light:#f59e0b;
+  --orange:#ea580c;--orange-light:#f97316;--red:#dc2626;--red-light:#ef4444;
+  --purple:#7c3aed;--purple-light:#a855f7;--maroon:#991b1b;
+  --glass:rgba(255,255,255,0.85);--glass-border:rgba(14,165,233,0.12);
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 12px rgba(0,0,0,0.04);
+  --shadow-lg:0 4px 6px rgba(0,0,0,0.05),0 10px 24px rgba(0,0,0,0.06);
+  --radius:16px;--radius-sm:10px;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  font-family:'Sarabun',system-ui,sans-serif;
+  background:var(--bg-primary);color:var(--text-primary);
+  min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%,rgba(14,165,233,0.06),transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(5,150,105,0.04),transparent);
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg-primary)}
+::-webkit-scrollbar-thumb{background:var(--accent-light);border-radius:3px}
+.header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:16px 32px;display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;
+  box-shadow:0 1px 8px rgba(0,0,0,0.04);
+}
+.header-left{display:flex;align-items:center;gap:16px}
+.logo{
+  font-family:'Orbitron',monospace;font-weight:900;font-size:1.5rem;
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:2px;white-space:nowrap;
+}
+.logo i{margin-right:8px;-webkit-text-fill-color:var(--accent)}
+.sys-status{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:20px;font-size:.88rem;font-weight:600;
+  background:rgba(5,150,105,0.1);border:1px solid rgba(5,150,105,0.25);color:var(--green);
+}
+.sys-status .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+.header-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.clock{font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:1px}
+.refresh-info{font-size:.88rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;font-weight:500}
+.refresh-info i{animation:spin 4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emergency-banner{
+  background:linear-gradient(90deg,rgba(220,38,38,0.08),rgba(220,38,38,0.03),rgba(220,38,38,0.08));
+  border-bottom:1px solid rgba(220,38,38,0.2);
+  padding:10px 28px;display:none;align-items:center;gap:12px;
+  animation:banner-flash 3s infinite;overflow:hidden;
+}
+@keyframes banner-flash{0%,100%{background-color:rgba(220,38,38,0.02)}50%{background-color:rgba(220,38,38,0.06)}}
+.emergency-banner.active{display:flex}
+.emergency-banner .alert-icon{
+  width:36px;height:36px;border-radius:50%;background:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  animation:alert-pulse 1.5s infinite;flex-shrink:0;font-size:1rem;
+}
+@keyframes alert-pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0.4)}50%{box-shadow:0 0 0 10px rgba(220,38,38,0)}}
+.emergency-banner .marquee-wrap{flex:1;overflow:hidden;position:relative;height:22px}
+.emergency-banner .marquee{
+  position:absolute;white-space:nowrap;animation:marquee 30s linear infinite;
+  font-size:.95rem;color:#b91c1c;font-weight:600;line-height:22px;
+}
+@keyframes marquee{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.emergency-banner .close-alert{
+  background:none;border:1px solid rgba(220,38,38,0.3);color:#b91c1c;
+  padding:4px 12px;border-radius:6px;cursor:pointer;font-size:.88rem;font-weight:600;flex-shrink:0;
+  transition:all .2s;
+}
+.emergency-banner .close-alert:hover{background:rgba(220,38,38,0.1)}
+.summary-bar{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;
+  padding:20px 32px;
+}
+.summary-card{
+  background:var(--glass);backdrop-filter:blur(12px);
+  border:1px solid var(--glass-border);border-radius:var(--radius-sm);
+  padding:18px 20px;display:flex;align-items:center;gap:16px;
+  transition:all .3s;position:relative;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.summary-card::before{
+  content:'';position:absolute;top:0;left:0;width:5px;height:100%;border-radius:0 2px 2px 0;
+}
+.summary-card:nth-child(1)::before{background:var(--green)}
+.summary-card:nth-child(2)::before{background:var(--yellow)}
+.summary-card:nth-child(3)::before{background:var(--orange)}
+.summary-card:nth-child(4)::before{background:var(--red)}
+.summary-card:nth-child(5)::before{background:var(--purple)}
+.summary-card:nth-child(6)::before{background:var(--accent)}
+.summary-card:hover{border-color:var(--border-glow);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.summary-icon{
+  width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;
+}
+.summary-card:nth-child(1) .summary-icon{background:rgba(5,150,105,0.12);color:var(--green)}
+.summary-card:nth-child(2) .summary-icon{background:rgba(217,119,6,0.12);color:var(--yellow)}
+.summary-card:nth-child(3) .summary-icon{background:rgba(234,88,12,0.12);color:var(--orange)}
+.summary-card:nth-child(4) .summary-icon{background:rgba(220,38,38,0.12);color:var(--red)}
+.summary-card:nth-child(5) .summary-icon{background:rgba(124,58,237,0.12);color:var(--purple)}
+.summary-card:nth-child(6) .summary-icon{background:rgba(2,132,199,0.12);color:var(--accent)}
+.summary-info .label{font-size:.82rem;color:var(--text-muted);font-weight:600;letter-spacing:.3px}
+.summary-info .value{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:700;line-height:1.2}
+.summary-card:nth-child(1) .value{color:var(--green)}
+.summary-card:nth-child(2) .value{color:var(--yellow)}
+.summary-card:nth-child(3) .value{color:var(--orange)}
+.summary-card:nth-child(4) .value{color:var(--red)}
+.summary-card:nth-child(5) .value{color:var(--purple)}
+.summary-card:nth-child(6) .value{color:var(--accent)}
+.main-content{padding:0 32px 32px}
+.section-title{
+  font-size:1.15rem;font-weight:700;color:var(--text-primary);
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+  letter-spacing:.3px;
+}
+.section-title i{color:var(--accent)}
+.stations-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px;
+}
+.station-card{
+  background:var(--glass);backdrop-filter:blur(16px);
+  border:1px solid var(--glass-border);border-radius:var(--radius);
+  overflow:hidden;transition:all .4s cubic-bezier(.4,0,.2,1);
+  position:relative;cursor:pointer;
+  box-shadow:var(--shadow);
+}
+.station-card:hover{
+  border-color:var(--border-glow);transform:translateY(-4px);
+  box-shadow:0 12px 28px rgba(0,0,0,0.08),0 0 20px var(--accent-glow);
+}
+.station-card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  transition:all .3s;
+}
+.station-card[data-level="good"]::after{background:linear-gradient(90deg,var(--green),var(--green-light))}
+.station-card[data-level="moderate"]::after{background:linear-gradient(90deg,var(--yellow),var(--yellow-light))}
+.station-card[data-level="sensitive"]::after{background:linear-gradient(90deg,var(--orange),var(--orange-light))}
+.station-card[data-level="unhealthy"]::after{background:linear-gradient(90deg,var(--red),var(--red-light))}
+.station-card[data-level="very-unhealthy"]::after{background:linear-gradient(90deg,var(--purple),var(--purple-light))}
+.station-card[data-level="hazardous"]::after{background:linear-gradient(90deg,var(--maroon),var(--red))}
+.station-card[data-level="offline"]::after{background:linear-gradient(90deg,#94a3b8,#cbd5e1)}
+.station-header{
+  padding:18px 20px 14px;display:flex;align-items:flex-start;justify-content:space-between;
+}
+.station-name-wrap{display:flex;align-items:center;gap:12px}
+.station-num{
+  font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;
+  background:rgba(2,132,199,0.1);color:var(--accent);
+  padding:4px 10px;border-radius:6px;letter-spacing:1px;white-space:nowrap;
+}
+.station-name{font-size:1.05rem;font-weight:700;color:var(--text-primary);line-height:1.3}
+.station-site{font-size:.82rem;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:4px;font-weight:500}
+.station-site i{font-size:.6rem}
+.station-live{
+  display:flex;align-items:center;gap:5px;font-size:.8rem;
+  font-weight:600;flex-shrink:0;
+}
+.station-live.online{color:var(--green)}
+.station-live.offline{color:var(--red)}
+.station-live .blink{width:7px;height:7px;border-radius:50%;animation:pulse-dot 1.5s infinite}
+.station-live.online .blink{background:var(--green)}
+.station-live.offline .blink{background:var(--red)}
+.aqi-gauge{
+  padding:12px 20px 8px;display:flex;align-items:center;gap:20px;
+}
+.gauge-ring{
+  width:92px;height:92px;position:relative;flex-shrink:0;
+}
+.gauge-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge-ring .track{fill:none;stroke:rgba(0,0,0,0.06);stroke-width:7}
+.gauge-ring .fill{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset 1.5s ease}
+.gauge-center{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.gauge-center .aqi-value{
+  font-family:'Orbitron',monospace;font-size:1.9rem;font-weight:900;line-height:1;
+}
+.gauge-center .aqi-label{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:600}
+.gauge-info{flex:1}
+.gauge-status{
+  font-size:.88rem;font-weight:700;padding:5px 14px;border-radius:8px;
+  display:inline-block;margin-bottom:10px;
+}
+.gauge-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+.gauge-meta-item{display:flex;align-items:center;gap:8px;font-size:.88rem}
+.gauge-meta-item i{width:14px;text-align:center;color:var(--text-muted);font-size:.78rem}
+.gauge-meta-item .val{color:var(--text-primary);font-weight:600;font-family:'Orbitron',monospace;font-size:.88rem}
+.gauge-meta-item .unit{color:var(--text-muted);font-size:.78rem;font-weight:500}
+.pollutants{padding:10px 20px 28px}
+.pollutants-title{font-size:.8rem;color:var(--text-muted);font-weight:600;letter-spacing:.3px;margin-bottom:8px}
+.pollutant-bars{display:flex;flex-direction:column;gap:14px}
+.pollutant-row{display:flex;align-items:center;gap:10px;padding-bottom:6px}
+.pollutant-name{font-size:.82rem;color:var(--text-secondary);width:50px;flex-shrink:0;font-weight:600}
+.pollutant-bar-wrap{flex:1;height:14px;background:rgba(0,0,0,0.05);border-radius:7px;overflow:visible;position:relative}
+.pollutant-bar{height:100%;border-radius:6px;transition:width 1.5s ease;position:relative;z-index:1}
+.pollutant-standard{position:absolute;top:-2px;width:2px;height:18px;background:rgba(0,0,0,0.55);border-radius:1px;z-index:2}
+.pollutant-standard::after{content:attr(data-label);position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:.5rem;color:var(--text-muted);white-space:nowrap;font-weight:600}
+.pollutant-val{font-family:'Orbitron',monospace;font-size:.72rem;width:72px;text-align:right;color:var(--text-secondary);font-weight:500}
+.sparkline-area{padding:0 20px 10px;height:60px}
+.sparkline-area canvas{width:100%!important;height:60px!important}
+.station-footer{
+  padding:12px 20px;border-top:1px solid rgba(0,0,0,0.05);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.trend-info{display:flex;align-items:center;gap:6px;font-size:.85rem;font-weight:500}
+.trend-info i{font-size:.9rem}
+.trend-up{color:var(--red)}
+.trend-down{color:var(--green)}
+.trend-stable{color:var(--yellow)}
+.station-time{font-size:.78rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;font-weight:500}
+.legend-section{
+  margin-top:24px;padding:24px 28px;
+  background:var(--glass);backdrop-filter:blur(12px);
+  border:1px solid var(--glass-border);border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+.legend-title{font-size:1.1rem;color:var(--text-primary);margin-bottom:16px;font-weight:700}
+.legend-bar-wrap{
+  display:flex;height:48px;border-radius:10px;overflow:hidden;margin-bottom:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+.legend-segment{
+  display:flex;align-items:center;justify-content:flex-start;
+  padding-left:10px;position:relative;
+}
+.legend-segment span{
+  font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;
+  color:rgba(255,255,255,0.95);text-shadow:0 1px 2px rgba(0,0,0,0.3);
+}
+.legend-segment .legend-end{
+  position:absolute;right:10px;left:auto;
+}
+.legend-labels{display:flex;justify-content:space-between;font-size:.85rem;color:var(--text-secondary);font-weight:600;line-height:1.4;text-align:center}
+.modal-overlay{
+  position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.modal-overlay.active{display:flex}
+.modal{
+  background:var(--bg-secondary);border:1px solid var(--border);
+  border-radius:var(--radius);width:100%;max-width:700px;max-height:85vh;overflow-y:auto;
+  animation:modal-in .3s ease;box-shadow:0 20px 60px rgba(0,0,0,0.15);
+}
+@keyframes modal-in{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:none}}
+.modal-header{
+  padding:22px 28px;border-bottom:1px solid rgba(0,0,0,0.06);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-header h2{font-size:1.25rem;font-weight:700;color:var(--text-primary)}
+.modal-close{
+  width:36px;height:36px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);
+  background:none;color:var(--text-secondary);cursor:pointer;font-size:1.1rem;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.modal-close:hover{background:rgba(220,38,38,0.1);color:var(--red);border-color:rgba(220,38,38,0.3)}
+.modal-body{padding:28px}
+.modal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px}
+.modal-stat{
+  background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.06);
+  border-radius:var(--radius-sm);padding:16px;text-align:center;
+}
+.modal-stat .label{font-size:.82rem;color:var(--text-muted);font-weight:600;margin-bottom:4px}
+.modal-stat .value{font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:700;color:var(--text-primary)}
+.modal-stat .unit{font-size:.68rem;color:var(--text-muted);font-weight:500}
+.modal-chart-wrap{height:260px;margin-top:20px}
+.modal-chart-wrap canvas{width:100%!important;height:100%!important}
+@media(max-width:768px){
+  html{font-size:14px}
+  .header{padding:10px 16px}
+  .summary-bar{padding:12px 16px}
+  .main-content{padding:0 16px 16px}
+  .stations-grid{grid-template-columns:1fr}
+  .logo{font-size:1.1rem}
+  .emergency-banner{padding:8px 16px}
+  .legend-bar-wrap{height:32px}
+  .legend-segment span{font-size:.6rem}
+  .legend-labels{font-size:.7rem}
+  .gauge-ring{width:76px;height:76px}
+  .gauge-center .aqi-value{font-size:1.5rem}
+  .summary-info .value{font-size:1.4rem}
+  .pollutant-bar-wrap{height:10px}
+  .pollutant-standard{height:14px}
+  .pollutant-standard::after{font-size:.45rem}
+}
+@media(max-width:480px){
+  .summary-bar{grid-template-columns:1fr 1fr}
+  .header-right .clock{font-size:1rem}
+  .legend-bar-wrap{height:28px}
+  .legend-segment span{font-size:.5rem}
+  .legend-labels{font-size:.6rem}
+  .pollutant-name{width:42px;font-size:.72rem}
+  .pollutant-val{font-size:.62rem;width:60px}
+}
+@media(min-width:1400px){
+  .stations-grid{grid-template-columns:repeat(3,1fr)}
+}
+.station-card{animation:card-in .6s ease both}
+.station-card:nth-child(1){animation-delay:.05s}
+.station-card:nth-child(2){animation-delay:.1s}
+.station-card:nth-child(3){animation-delay:.15s}
+.station-card:nth-child(4){animation-delay:.2s}
+.station-card:nth-child(5){animation-delay:.25s}
+.station-card:nth-child(6){animation-delay:.3s}
+.station-card:nth-child(7){animation-delay:.35s}
+@keyframes card-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+[data-tooltip]{position:relative}
+[data-tooltip]:hover::after{
+  content:attr(data-tooltip);position:absolute;bottom:calc(100% + 8px);left:50%;
+  transform:translateX(-50%);padding:6px 10px;border-radius:6px;
+  background:var(--bg-secondary);border:1px solid var(--border);
+  font-size:.85rem;color:var(--text-primary);white-space:nowrap;z-index:50;
+  animation:tip-in .2s ease;box-shadow:var(--shadow);
+}
+@keyframes tip-in{from{opacity:0;transform:translateX(-50%) translateY(4px)}to{opacity:1;transform:translateX(-50%)}}
+.gauge-status[data-level="good"]{background:rgba(5,150,105,0.1);color:var(--green)}
+.gauge-status[data-level="moderate"]{background:rgba(217,119,6,0.1);color:var(--yellow)}
+.gauge-status[data-level="sensitive"]{background:rgba(234,88,12,0.1);color:var(--orange)}
+.gauge-status[data-level="unhealthy"]{background:rgba(220,38,38,0.1);color:var(--red)}
+.gauge-status[data-level="very-unhealthy"]{background:rgba(124,58,237,0.1);color:var(--purple)}
+.gauge-status[data-level="hazardous"]{background:rgba(153,27,27,0.15);color:var(--maroon)}
+.gauge-status[data-level="offline"]{background:rgba(148,163,184,0.15);color:#64748b}
+.loading-overlay{
+  position:fixed;inset:0;z-index:2000;background:var(--bg-primary);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  transition:opacity .5s;
+}
+.loading-overlay.hidden{opacity:0;pointer-events:none}
+.loading-spinner{
+  width:60px;height:60px;border:3px solid rgba(14,165,233,0.15);
+  border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;
+}
+.loading-text{color:var(--text-secondary);font-size:1.05rem;font-weight:600}
+.source-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:.68rem;padding:3px 8px;border-radius:5px;
+  background:rgba(2,132,199,0.08);color:var(--accent);
+  border:1px solid rgba(2,132,199,0.15);margin-left:6px;vertical-align:middle;
+  font-weight:600;
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">กำลังเชื่อมต่อระบบเฝ้าระวัง...</div>
+</div>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo"><i class="fas fa-wind"></i>AQMS MONITOR</div>
+    <div class="sys-status" id="sysStatus"><span class="dot"></span>กำลังเชื่อมต่อ...</div>
+  </div>
+  <div class="header-right">
+    <div class="refresh-info"><i class="fas fa-sync-alt"></i> อัปเดตทุก 60 วินาที</div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<div class="emergency-banner" id="emergencyBanner">
+  <div class="alert-icon"><i class="fas fa-exclamation-triangle" style="color:#fff"></i></div>
+  <div class="marquee-wrap">
+    <div class="marquee" id="marqueeText"></div>
+  </div>
+  <button class="close-alert" onclick="document.getElementById('emergencyBanner').classList.remove('active')">
+    <i class="fas fa-times"></i> ปิด
+  </button>
+</div>
+
+<div class="summary-bar">
+  <div class="summary-card">
+    <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+    <div class="summary-info">
+      <div class="label">ดี</div>
+      <div class="value" id="countGood">0</div>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-icon"><i class="fas fa-info-circle"></i></div>
+    <div class="summary-info">
+      <div class="label">ปานกลาง</div>
+      <div class="value" id="countModerate">0</div>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-icon"><i class="fas fa-exclamation-circle"></i></div>
+    <div class="summary-info">
+      <div class="label">ไม่ดีต่อ<br>กลุ่มเสี่ยง</div>
+      <div class="value" id="countSensitive">0</div>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-icon"><i class="fas fa-skull-crossbones"></i></div>
+    <div class="summary-info">
+      <div class="label">ไม่ดี</div>
+      <div class="value" id="countUnhealthy">0</div>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-icon"><i class="fas fa-heartbeat"></i></div>
+    <div class="summary-info">
+      <div class="label">AQI เฉลี่ย</div>
+      <div class="value" id="avgAqi">--</div>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-icon"><i class="fas fa-server"></i></div>
+    <div class="summary-info">
+      <div class="label">สถานีเชื่อมต่อ</div>
+      <div class="value" id="countOnline">0/7</div>
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="section-title"><i class="fas fa-map-marked-alt"></i> สถานีเฝ้าระวังคุณภาพอากาศ 7 แห่ง</div>
+  <div class="stations-grid" id="stationsGrid"></div>
+  <div class="legend-section">
+    <div class="legend-title"><i class="fas fa-info-circle"></i> ระดับค่าดัชนีคุณภาพอากาศ (AQI) ตามกรมควบคุมมลพิษ</div>
+    <div class="legend-bar-wrap">
+      <div class="legend-segment" style="background:#059669;flex:25"><span>0</span></div>
+      <div class="legend-segment" style="background:#d97706;flex:25"><span>26</span></div>
+      <div class="legend-segment" style="background:#ea580c;flex:50"><span>51</span></div>
+      <div class="legend-segment" style="background:#dc2626;flex:100"><span>101</span></div>
+      <div class="legend-segment" style="background:#7c3aed;flex:100"><span>201</span></div>
+      <div class="legend-segment" style="background:#991b1b;flex:100;position:relative"><span>301</span><span class="legend-end">400+</span></div>
+    </div>
+    <div class="legend-labels">
+      <span>ดี<br>0-25</span><span>ปานกลาง<br>26-50</span><span>เริ่มมีผล<br>ต่อสุขภาพ<br>51-100</span>
+      <span>มีผลต่อ<br>สุขภาพ<br>101-200</span><span>มีผลต่อสุขภาพ<br>อย่างมาก<br>201-300</span><span>เป็นอันตราย<br>ต่อสุขภาพ<br>301+</span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">รายละเอียดสถานี</h2>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid" id="modalGrid"></div>
+      <div class="modal-chart-wrap"><canvas id="modalChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATIONS = [
+  { id:'001', name:'วัดอู่ตะเภา', site:'อมตะซิตี้ ชลบุรี', source:'amata', lat:'13.4106', lng:'101.0164' },
+  { id:'002', name:'วัดมาบสามเกลียว', site:'อมตะซิตี้ ชลบุรี', source:'amata', lat:'13.4404', lng:'101.0379' },
+  { id:'003', name:'โรงเรียนพานทองสภาชนูปถัมภ์', site:'อมตะซิตี้ ชลบุรี', source:'amata', lat:'13.4626', lng:'101.0908' },
+  { id:'004', name:'วัดอ้อมแก้ว', site:'อมตะซิตี้ ชลบุรี', source:'amata', lat:'13.4534', lng:'101.1143' },
+  { id:'005', name:'วัดพนานิคม', site:'อมตะซิตี้ ระยอง', source:'amata', lat:'12.9183', lng:'101.1072' },
+  { id:'006', name:'รพ.สต.มาบยางพร', site:'อมตะซิตี้ ระยอง', source:'amata', lat:'12.9900', lng:'101.1329' },
+  { id:'PT5', name:'สถานี ปิ่นทอง โครงการ 5', site:'ปิ่นทอง 5', source:'pt5', lat:'13.10', lng:'101.00' },
+];
+
+const AMATA_TOKEN = '1|uDd7ptCf9hdOR3irFocfHbLgm2ePrSRXPugUCvz7d4283131';
+const AMATA_PM25_TOKEN = '1|f7MPVH175GVeXbdG7VrOW2OChWVFC172KJdPA3DH0d1266f7';
+const AMATA_PM25_STATIONS = ['002','004','005'];
+const PT5_TOKEN = '1|SnpQPAiDIE8BjMPfOMbF0TjtHxFeo2PqP5ztKpzm33be5594';
+
+let stationData = {};
+let sparklineCharts = {};
+let modalChartInstance = null;
+let fetchInterval = null;
+
+function getAQILevel(aqi){
+  if(aqi==null) return {level:'offline',label:'ไม่มีข้อมูล',color:'#64748b',bg:'rgba(100,116,139,0.15)'};
+  if(aqi<=25) return {level:'good',label:'ดี',color:'#059669',bg:'rgba(5,150,105,0.1)'};
+  if(aqi<=50) return {level:'moderate',label:'ปานกลาง',color:'#d97706',bg:'rgba(217,119,6,0.1)'};
+  if(aqi<=100) return {level:'sensitive',label:'เริ่มมีผลต่อสุขภาพ',color:'#ea580c',bg:'rgba(234,88,12,0.1)'};
+  if(aqi<=200) return {level:'unhealthy',label:'มีผลต่อสุขภาพ',color:'#dc2626',bg:'rgba(220,38,38,0.1)'};
+  if(aqi<=300) return {level:'very-unhealthy',label:'มีผลต่อสุขภาพอย่างมาก',color:'#7c3aed',bg:'rgba(124,58,237,0.1)'};
+  return {level:'hazardous',label:'เป็นอันตรายต่อสุขภาพ',color:'#991b1b',bg:'rgba(153,27,27,0.15)'};
+}
+function getPM25Color(v){
+  if(v<=12.5) return 'var(--green)';if(v<=25.5) return 'var(--yellow)';
+  if(v<=37.5) return 'var(--orange)';if(v<=55) return 'var(--red)';
+  if(v<=150) return 'var(--purple)';return 'var(--maroon)';
+}
+function getPollutantColor(param, val){
+  const limits = { pm10:120, tsp:270, so2:300, no2:170 };
+  const pct = Math.min((val/(limits[param]||100))*100, 100);
+  if(pct<40) return 'var(--green)';if(pct<60) return 'var(--yellow)';
+  if(pct<80) return 'var(--orange)';return 'var(--red)';
+}
+function calcAQI_PM25(pm25){
+  if(pm25==null) return null;
+  const c=pm25;
+  if(c<=12.5) return Math.round((50/12.5)*c);
+  if(c<=25.5) return Math.round(50+(50/13)*(c-12.5));
+  if(c<=37.5) return Math.round(100+(50/12.2)*(c-25.5));
+  if(c<=55) return Math.round(150+(50/17.5)*(c-37.5));
+  if(c<=150) return Math.round(200+(100/95)*(c-55));
+  return Math.round(300+(100/150)*(c-150));
+}
+function calcAQI_PM10(pm10){
+  if(pm10==null) return null;
+  const c=pm10;
+  if(c<=50) return Math.round((50/50)*c);
+  if(c<=100) return Math.round(50+(50/50)*(c-50));
+  if(c<=250) return Math.round(100+(50/150)*(c-100));
+  if(c<=350) return Math.round(150+(50/100)*(c-250));
+  if(c<=430) return Math.round(200+(100/80)*(c-350));
+  return Math.round(300+(100/170)*(c-430));
+}
+function calcAQI_NO2(no2){
+  if(no2==null) return null;
+  const c=no2;
+  if(c<=40) return Math.round((50/40)*c);
+  if(c<=80) return Math.round(50+(50/40)*(c-40));
+  if(c<=180) return Math.round(100+(50/100)*(c-80));
+  if(c<=280) return Math.round(150+(50/100)*(c-180));
+  if(c<=400) return Math.round(200+(100/120)*(c-280));
+  return Math.round(300+(100/200)*(c-400));
+}
+function calcAQI_SO2(so2){
+  if(so2==null) return null;
+  const c=so2;
+  if(c<=50) return Math.round((50/50)*c);
+  if(c<=100) return Math.round(50+(50/50)*(c-50));
+  if(c<=200) return Math.round(100+(50/100)*(c-100));
+  if(c<=400) return Math.round(150+(50/200)*(c-200));
+  if(c<=600) return Math.round(200+(100/200)*(c-400));
+  return Math.round(300+(100/400)*(c-600));
+}
+function calcOverallAQI(d){
+  const vals = [
+    calcAQI_PM25(d.pm25),
+    calcAQI_PM10(d.pm10),
+    calcAQI_NO2(d.no2),
+    calcAQI_SO2(d.so2),
+  ].filter(v=>v!=null);
+  return vals.length>0 ? Math.max(...vals) : null;
+}
+
+async function fetchWithTimeout(url, token, timeout=8000){
+  const ctrl = new AbortController();
+  const tid = setTimeout(()=>ctrl.abort(), timeout);
+  try {
+    const r = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { 'Authorization':'Bearer '+token, 'Accept':'application/json' }
+    });
+    clearTimeout(tid);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return await r.json();
+  } catch(e){ clearTimeout(tid); throw e; }
+}
+
+function extractVal(v){ return (v!=null && typeof v==='object' && 'value' in v) ? +v.value : (v!=null ? +v : null); }
+function fmt(v){ return v!=null ? (+v).toFixed(1) : '--'; }
+
+const THAI_STANDARDS = {
+  pm25: { limit:15, unit:'µg/m³', label:'มาตรฐาน' },
+  pm10: { limit:120, unit:'µg/m³', label:'มาตรฐาน' },
+  tsp: { limit:330, unit:'µg/m³', label:'มาตรฐาน' },
+  so2: { limit:300, unit:'ppb', label:'มาตรฐาน' },
+  no2: { limit:200, unit:'ppb', label:'มาตรฐาน' },
+};
+
+async function fetchAmataStation(stationId){
+  try {
+    const minuteData = await fetchWithTimeout(
+      `https://amata.northernthai.co.th/api/v1/M1S${stationId}`, AMATA_TOKEN
+    );
+    let d = {};
+    if(minuteData && minuteData.data){
+      const keys = Object.keys(minuteData.data);
+      if(keys.length>0){
+        d = minuteData.data[keys[keys.length-1]];
+      }
+    }
+    const result = {
+      pm10: extractVal(d.PM10),
+      tsp: extractVal(d.TSP),
+      so2: extractVal(d.SO2),
+      no2: extractVal(d.NO2),
+      temp: extractVal(d.Temperature),
+      humidity: extractVal(d.RH),
+      wind: extractVal(d.WS),
+      pressure: extractVal(d.Pressure),
+      pm25: null,
+      online: true,
+      timestamp: null,
+      stationName: minuteData.station_th_name || null,
+    };
+    if(AMATA_PM25_STATIONS.includes(stationId)){
+      try {
+        const pm25Data = await fetchWithTimeout(
+          `https://aqms.northernthai.co.th/api/v2/aqms/M1S${stationId}`, AMATA_PM25_TOKEN
+        );
+        let pdArr = pm25Data;
+        if(pm25Data && pm25Data.data && Array.isArray(pm25Data.data)) pdArr = pm25Data.data;
+        if(Array.isArray(pdArr) && pdArr.length>0){
+          const pd = pdArr[0];
+          const pm25v = extractVal(pd.PM25);
+          if(pm25v!=null) result.pm25 = pm25v;
+          const pm10v = extractVal(pd.PM10);
+          if(pm10v!=null) result.pm10 = pm10v;
+          const no2v = extractVal(pd.NO2);
+          if(no2v!=null) result.no2 = no2v;
+          const tspv = extractVal(pd.TSP);
+          if(tspv!=null) result.tsp = tspv;
+          const so2v = extractVal(pd.SO2);
+          if(so2v!=null) result.so2 = so2v;
+        }
+      } catch(e){}
+    }
+    return result;
+  } catch(e){
+    return { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, pressure:null, online:false };
+  }
+}
+
+async function fetchPT5Station(){
+  try {
+    const raw = await fetchWithTimeout(
+      'https://pt5.northernthai.co.th/api/v1/s002data/h', PT5_TOKEN
+    );
+    let d = {};
+    if(Array.isArray(raw) && raw.length>0){
+      d = raw[0];
+    } else if(raw && raw.data && Array.isArray(raw.data) && raw.data.length>0){
+      d = raw.data[0];
+    }
+    const pv = (v,s) => (v!=null && s==1) ? +v : null;
+    return {
+      pm25: null,
+      pm10: pv(d.Value2, d.Status2),
+      tsp: pv(d.Value1, d.Status1),
+      so2: pv(d.Value6, d.Status6),
+      no2: pv(d.Value4, d.Status4),
+      temp: pv(d.Value9, d.Status9),
+      humidity: pv(d.Value10, d.Status10),
+      wind: pv(d.Value7, d.Status7),
+      pressure: pv(d.Value11, d.Status11),
+      online: true,
+      timestamp: d.Date_Time || null,
+    };
+  } catch(e){
+    return { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, pressure:null, online:false };
+  }
+}
+
+async function fetchAllStations(){
+  const results = {};
+  const promises = STATIONS.map(async s => {
+    let data;
+    if(s.source==='pt5'){
+      data = await fetchPT5Station();
+    } else {
+      data = await fetchAmataStation(s.id);
+    }
+    results[s.id] = data;
+  });
+  await Promise.all(promises);
+  STATIONS.forEach(s => {
+    if(!stationData[s.id]){
+      stationData[s.id] = { history:[], ...s };
+    }
+    const old = stationData[s.id];
+    const nw = results[s.id];
+    Object.assign(old, nw);
+    old.aqi = calcOverallAQI(old);
+    if(old.aqi!=null){
+      old.history.push(old.aqi);
+      if(old.history.length>24) old.history.shift();
+    }
+    old.lastUpdate = new Date();
+  });
+  renderStations();
+  updateSummary();
+  checkAlerts();
+}
+
+function renderStations(){
+  const grid = document.getElementById('stationsGrid');
+  grid.innerHTML = STATIONS.map(s => {
+    const d = stationData[s.id] || s;
+    const info = getAQILevel(d.aqi);
+    const circumference = 2*Math.PI*40;
+    const aqiVal = d.aqi!=null ? d.aqi : 0;
+    const offset = circumference-(Math.min(aqiVal,500)/500)*circumference;
+    const pm25Pct = d.pm25!=null ? Math.min((d.pm25/50)*100,100) : 0;
+    const pm10Pct = d.pm10!=null ? Math.min((d.pm10/200)*100,100) : 0;
+    const tspPct = d.tsp!=null ? Math.min((d.tsp/500)*100,100) : 0;
+    const so2Pct = d.so2!=null ? Math.min((d.so2/400)*100,100) : 0;
+    const no2Pct = d.no2!=null ? Math.min((d.no2/300)*100,100) : 0;
+    const pm25StdPct = Math.min((15/50)*100,100);
+    const pm10StdPct = Math.min((120/200)*100,100);
+    const tspStdPct = Math.min((330/500)*100,100);
+    const so2StdPct = Math.min((300/400)*100,100);
+    const no2StdPct = Math.min((200/300)*100,100);
+    const statusClass = d.online ? 'online' : 'offline';
+    const statusText = d.online ? 'LIVE' : 'OFFLINE';
+    const sourceLabel = s.source==='pt5' ? '<span class="source-badge"><i class="fas fa-cloud"></i>PT5</span>' : '<span class="source-badge"><i class="fas fa-industry"></i>AMATA</span>';
+    const timeStr = d.lastUpdate ? d.lastUpdate.toLocaleTimeString('th-TH',{hour12:false}) : '--:--:--';
+    const hist = d.history && d.history.length>1 ? d.history : Array(24).fill(aqiVal||0);
+
+    return`
+    <div class="station-card" data-level="${info.level}" onclick="openModal('${s.id}')">
+      <div class="station-header">
+        <div class="station-name-wrap">
+          <span class="station-num">${s.id}</span>
+          <div>
+            <div class="station-name">${s.name}${sourceLabel}</div>
+            <div class="station-site"><i class="fas fa-map-pin"></i> ${s.site}</div>
+          </div>
+        </div>
+        <div class="station-live ${statusClass}"><span class="blink"></span> ${statusText}</div>
+      </div>
+      <div class="aqi-gauge">
+        <div class="gauge-ring">
+          <svg viewBox="0 0 92 92">
+            <circle class="track" cx="46" cy="46" r="40"/>
+            <circle class="fill" cx="46" cy="46" r="40"
+              stroke="${info.color}"
+              stroke-dasharray="${circumference}"
+              stroke-dashoffset="${offset}"/>
+          </svg>
+          <div class="gauge-center">
+            <div class="aqi-value" style="color:${info.color}">${d.aqi!=null?d.aqi:'--'}</div>
+            <div class="aqi-label">AQI</div>
+          </div>
+        </div>
+        <div class="gauge-info">
+          <div class="gauge-status" data-level="${info.level}">${info.label}</div>
+          <div class="gauge-meta">
+            <div class="gauge-meta-item"><i class="fas fa-thermometer-half"></i><span class="val">${fmt(d.temp)}</span><span class="unit">°C</span></div>
+            <div class="gauge-meta-item"><i class="fas fa-tint"></i><span class="val">${fmt(d.humidity)}</span><span class="unit">%</span></div>
+            <div class="gauge-meta-item"><i class="fas fa-wind"></i><span class="val">${fmt(d.wind)}</span><span class="unit">m/s</span></div>
+            <div class="gauge-meta-item"><i class="fas fa-compress-arrows-alt"></i><span class="val">${fmt(d.pressure)}</span><span class="unit">hPa</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="pollutants">
+        <div class="pollutants-title">สารมลพิษหลัก</div>
+        <div class="pollutant-bars">
+          ${d.pm25!=null?`<div class="pollutant-row"><span class="pollutant-name">PM2.5</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${pm25Pct}%;background:${getPM25Color(d.pm25)}"></div><div class="pollutant-standard" style="left:${pm25StdPct}%" data-label="15"></div></div><span class="pollutant-val">${fmt(d.pm25)} µg/m³</span></div>`:''}
+          <div class="pollutant-row"><span class="pollutant-name">PM10</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${pm10Pct}%;background:var(--accent)"></div><div class="pollutant-standard" style="left:${pm10StdPct}%" data-label="120"></div></div><span class="pollutant-val">${fmt(d.pm10)} µg/m³</span></div>
+          <div class="pollutant-row"><span class="pollutant-name">TSP</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${tspPct}%;background:var(--purple)"></div><div class="pollutant-standard" style="left:${tspStdPct}%" data-label="330"></div></div><span class="pollutant-val">${fmt(d.tsp)} µg/m³</span></div>
+          <div class="pollutant-row"><span class="pollutant-name">SO₂</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${so2Pct}%;background:var(--yellow)"></div><div class="pollutant-standard" style="left:${so2StdPct}%" data-label="300"></div></div><span class="pollutant-val">${fmt(d.so2)} ppb</span></div>
+          <div class="pollutant-row"><span class="pollutant-name">NO₂</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${no2Pct}%;background:var(--orange)"></div><div class="pollutant-standard" style="left:${no2StdPct}%" data-label="200"></div></div><span class="pollutant-val">${fmt(d.no2)} ppb</span></div>
+        </div>
+      </div>
+      <div class="sparkline-area"><canvas id="spark-${s.id}"></canvas></div>
+      <div class="station-footer">
+        <div class="trend-info"><i class="fas fa-clock" style="color:var(--text-muted)"></i><span style="color:var(--text-muted)">อัปเดตล่าสุด</span></div>
+        <div class="station-time"><i class="far fa-clock"></i> ${timeStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+  STATIONS.forEach(s => renderSparkline(s));
+}
+
+function renderSparkline(s){
+  const canvas = document.getElementById('spark-'+s.id);
+  if(!canvas) return;
+  if(sparklineCharts[s.id]) sparklineCharts[s.id].destroy();
+  const d = stationData[s.id] || {};
+  const info = getAQILevel(d.aqi);
+  const hist = d.history && d.history.length>0 ? d.history : [0];
+  sparklineCharts[s.id] = new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:hist.map((_,i)=>i),
+      datasets:[{
+        data:hist,borderColor:info.color,borderWidth:2,
+        fill:true,backgroundColor:info.color+'18',
+        pointRadius:0,tension:.4,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{display:false},y:{display:false,beginAtZero:true}},
+      animation:{duration:1500}
+    }
+  });
+}
+
+function updateSummary(){
+  let good=0,moderate=0,sensitive=0,unhealthy=0,totalAqi=0,count=0,onlineCount=0;
+  STATIONS.forEach(s=>{
+    const d=stationData[s.id];
+    if(d && d.online) onlineCount++;
+    if(d && d.aqi!=null){
+      totalAqi+=d.aqi;count++;
+      if(d.aqi<=25)good++;
+      else if(d.aqi<=50)moderate++;
+      else if(d.aqi<=100)sensitive++;
+      else unhealthy++;
+    }
+  });
+  document.getElementById('countGood').textContent=good;
+  document.getElementById('countModerate').textContent=moderate;
+  document.getElementById('countSensitive').textContent=sensitive;
+  document.getElementById('countUnhealthy').textContent=unhealthy;
+  document.getElementById('avgAqi').textContent=count>0?Math.round(totalAqi/count):'--';
+  document.getElementById('countOnline').textContent=onlineCount+'/'+STATIONS.length;
+  const statusEl=document.getElementById('sysStatus');
+  if(onlineCount===STATIONS.length){
+    statusEl.innerHTML='<span class="dot"></span>ระบบทำงานปกติ';
+    statusEl.style.background='rgba(16,185,129,0.1)';
+    statusEl.style.borderColor='rgba(16,185,129,0.3)';
+    statusEl.style.color='var(--green)';
+  } else if(onlineCount>0){
+    statusEl.innerHTML='<span class="dot" style="background:var(--yellow)"></span>เชื่อมต่อ '+onlineCount+'/'+STATIONS.length;
+    statusEl.style.background='rgba(245,158,11,0.1)';
+    statusEl.style.borderColor='rgba(245,158,11,0.3)';
+    statusEl.style.color='var(--yellow)';
+  } else {
+    statusEl.innerHTML='<span class="dot" style="background:var(--red)"></span>ไม่สามารถเชื่อมต่อได้';
+    statusEl.style.background='rgba(239,68,68,0.1)';
+    statusEl.style.borderColor='rgba(239,68,68,0.3)';
+    statusEl.style.color='var(--red)';
+  }
+}
+
+function checkAlerts(){
+  const alerts=[];
+  STATIONS.forEach(s=>{
+    const d=stationData[s.id];
+    if(d && d.aqi!=null && d.aqi>100){
+      const lvl=getAQILevel(d.aqi);
+      alerts.push(`${s.name} (${s.site}): AQI ${d.aqi} - ${lvl.label}`);
+    }
+  });
+  const banner=document.getElementById('emergencyBanner');
+  if(alerts.length>0){
+    document.getElementById('marqueeText').textContent='⚠ '+alerts.join('   |   ');
+    banner.classList.add('active');
+  } else {
+    banner.classList.remove('active');
+  }
+}
+
+function openModal(id){
+  const s=STATIONS.find(x=>x.id===id);
+  const d=stationData[id];
+  if(!s || !d) return;
+  const info=getAQILevel(d.aqi);
+  document.getElementById('modalTitle').innerHTML=`<span style="color:${info.color}">${s.id}</span> ${s.name}`;
+  document.getElementById('modalGrid').innerHTML=`
+    <div class="modal-stat"><div class="label">AQI</div><div class="value" style="color:${info.color}">${d.aqi!=null?d.aqi:'--'}</div><div class="unit">${info.label}</div></div>
+    ${d.pm25!=null?`<div class="modal-stat"><div class="label">PM2.5</div><div class="value">${fmt(d.pm25)}</div><div class="unit">µg/m³ (มาตรฐาน 15)</div></div>`:''}
+    <div class="modal-stat"><div class="label">PM10</div><div class="value">${fmt(d.pm10)}</div><div class="unit">µg/m³ (มาตรฐาน 120)</div></div>
+    <div class="modal-stat"><div class="label">TSP</div><div class="value">${fmt(d.tsp)}</div><div class="unit">µg/m³ (มาตรฐาน 330)</div></div>
+    <div class="modal-stat"><div class="label">SO₂</div><div class="value">${fmt(d.so2)}</div><div class="unit">ppb (มาตรฐาน 300)</div></div>
+    <div class="modal-stat"><div class="label">NO₂</div><div class="value">${fmt(d.no2)}</div><div class="unit">ppb (มาตรฐาน 200)</div></div>
+    <div class="modal-stat"><div class="label">อุณหภูมิ</div><div class="value">${fmt(d.temp)}</div><div class="unit">°C</div></div>
+    <div class="modal-stat"><div class="label">ความชื้น</div><div class="value">${fmt(d.humidity)}</div><div class="unit">%</div></div>
+    <div class="modal-stat"><div class="label">ลม</div><div class="value">${fmt(d.wind)}</div><div class="unit">m/s</div></div>
+    <div class="modal-stat"><div class="label">ความกดอากาศ</div><div class="value">${fmt(d.pressure)}</div><div class="unit">hPa</div></div>
+  `;
+  if(modalChartInstance)modalChartInstance.destroy();
+  const ctx=document.getElementById('modalChart').getContext('2d');
+  const hist=d.history&&d.history.length>0?d.history:[0];
+  modalChartInstance=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:hist.map((_,i)=>`${hist.length-i} ชม.`),
+      datasets:[{
+        label:'AQI',data:hist,borderColor:info.color,borderWidth:2.5,
+        fill:true,backgroundColor:info.color+'15',pointRadius:3,pointBackgroundColor:info.color,
+        pointBorderColor:'#fff',pointBorderWidth:1.5,tension:.3,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#475569',font:{size:12,family:'Sarabun'},usePointStyle:true}}},
+      scales:{
+        x:{ticks:{color:'#64748b',font:{size:11,family:'Sarabun'},maxTicksLimit:8},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'}},
+        y:{ticks:{color:'#64748b',font:{size:11,family:'Sarabun'}},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'},beginAtZero:true}
+      }
+    }
+  });
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('active')}
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('th-TH',{hour12:false})+' น.';
+}
+
+async function init(){
+  updateClock();
+  setInterval(updateClock,1000);
+  await fetchAllStations();
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  fetchInterval = setInterval(fetchAllStations, 60000);
+}
+
+init();
+</script>
+</body>
+</html>
