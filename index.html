@@ -216,12 +216,12 @@ body{
 .pollutants-title{font-size:.8rem;color:var(--text-muted);font-weight:600;letter-spacing:.3px;margin-bottom:8px}
 .pollutant-bars{display:flex;flex-direction:column;gap:14px}
 .pollutant-row{display:flex;align-items:center;gap:10px;padding-bottom:6px}
-.pollutant-name{font-size:.82rem;color:var(--text-secondary);width:50px;flex-shrink:0;font-weight:600}
-.pollutant-bar-wrap{flex:1;height:14px;background:rgba(0,0,0,0.05);border-radius:7px;overflow:visible;position:relative}
-.pollutant-bar{height:100%;border-radius:6px;transition:width 1.5s ease;position:relative;z-index:1}
-.pollutant-standard{position:absolute;top:-2px;width:2px;height:18px;background:rgba(0,0,0,0.55);border-radius:1px;z-index:2}
-.pollutant-standard::after{content:attr(data-label);position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:.5rem;color:var(--text-muted);white-space:nowrap;font-weight:600}
-.pollutant-val{font-family:'Orbitron',monospace;font-size:.72rem;width:72px;text-align:right;color:var(--text-secondary);font-weight:500}
+.pollutant-name{width:52px;font-size:.78rem;font-weight:600;color:var(--text-secondary);flex-shrink:0}
+.pollutant-bar-wrap{flex:1;min-width:0;height:12px;background:rgba(0,0,0,0.04);border-radius:6px;position:relative;overflow:visible}
+.pollutant-bar{height:100%;border-radius:6px;transition:width .8s ease}
+.pollutant-standard{position:absolute;top:-2px;width:2px;height:16px;background:rgba(0,0,0,0.45);z-index:1}
+.pollutant-standard::after{content:attr(data-label);position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:.5rem;color:var(--text-muted);white-space:nowrap;font-weight:500}
+.pollutant-val{font-family:'Orbitron',monospace;font-size:.72rem;min-width:100px;text-align:right;color:var(--text-secondary);font-weight:500;white-space:nowrap;flex-shrink:0}
 .sparkline-area{padding:0 20px 10px;height:60px}
 .sparkline-area canvas{width:100%!important;height:60px!important}
 .station-footer{
@@ -308,6 +308,7 @@ body{
   .pollutant-bar-wrap{height:10px}
   .pollutant-standard{height:14px}
   .pollutant-standard::after{font-size:.45rem}
+  .pollutant-val{min-width:80px;font-size:.65rem}
 }
 @media(max-width:480px){
   .page-wrapper{padding:0 0.3vw}
@@ -317,7 +318,7 @@ body{
   .legend-segment span{font-size:.5rem}
   .legend-labels{font-size:.6rem}
   .pollutant-name{width:42px;font-size:.72rem}
-  .pollutant-val{font-size:.62rem;width:60px}
+  .pollutant-val{min-width:70px;font-size:.6rem}
 }
 @media(min-width:1400px){
   .stations-grid{grid-template-columns:repeat(3,1fr)}
