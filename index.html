@@ -14,7 +14,7 @@
   --border:rgba(14,165,233,0.2);--border-glow:rgba(14,165,233,0.5);
   --text-primary:#1e293b;--text-secondary:#475569;--text-muted:#94a3b8;
   --accent:#0284c7;--accent-light:#0ea5e9;--accent-glow:rgba(14,165,233,0.15);
-  --green:#059669;--green-light:#10b981;--yellow:#d97706;--yellow-light:#f59e0b;
+  --green:#059669;--green-light:#10b981;--yellow:#eab308;--yellow-light:#facc15;
   --orange:#ea580c;--orange-light:#f97316;--red:#dc2626;--red-light:#ef4444;
   --purple:#7c3aed;--purple-light:#a855f7;--maroon:#991b1b;
   --glass:rgba(255,255,255,0.85);--glass-border:rgba(14,165,233,0.12);
@@ -448,7 +448,7 @@ body{
     <div class="legend-title"><i class="fas fa-info-circle"></i> ระดับค่าดัชนีคุณภาพอากาศ (AQI) ตามกรมควบคุมมลพิษ</div>
     <div class="legend-bar-wrap">
       <div class="legend-segment" style="background:#059669;flex:25"><span>0</span></div>
-      <div class="legend-segment" style="background:#d97706;flex:25"><span>26</span></div>
+      <div class="legend-segment" style="background:#eab308;flex:25"><span>26</span></div>
       <div class="legend-segment" style="background:#ea580c;flex:50"><span>51</span></div>
       <div class="legend-segment" style="background:#dc2626;flex:100"><span>101</span></div>
       <div class="legend-segment" style="background:#7c3aed;flex:100"><span>201</span></div>
@@ -499,7 +499,7 @@ let fetchInterval = null;
 function getAQILevel(aqi){
   if(aqi==null) return {level:'offline',label:'ไม่มีข้อมูล',color:'#64748b',bg:'rgba(100,116,139,0.15)'};
   if(aqi<=25) return {level:'good',label:'ดี',color:'#059669',bg:'rgba(5,150,105,0.1)'};
-  if(aqi<=50) return {level:'moderate',label:'ปานกลาง',color:'#d97706',bg:'rgba(217,119,6,0.1)'};
+  if(aqi<=50) return {level:'moderate',label:'ปานกลาง',color:'#eab308',bg:'rgba(234,179,8,0.1)'};
   if(aqi<=100) return {level:'sensitive',label:'เริ่มมีผลต่อสุขภาพ',color:'#ea580c',bg:'rgba(234,88,12,0.1)'};
   if(aqi<=200) return {level:'unhealthy',label:'มีผลต่อสุขภาพ',color:'#dc2626',bg:'rgba(220,38,38,0.1)'};
   if(aqi<=300) return {level:'very-unhealthy',label:'มีผลต่อสุขภาพอย่างมาก',color:'#7c3aed',bg:'rgba(124,58,237,0.1)'};
