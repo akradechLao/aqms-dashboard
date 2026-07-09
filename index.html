@@ -1203,12 +1203,16 @@ const OFFICE_CAMS = [
   { name:'กล้องวงจรปิดดูระดับน้ำ', location:'คลองห้วยใหญ่', src:'camera_02' },
 ];
 
+let officeCamTimers = [];
+
 function initOfficeCCTV(){
+  officeCamTimers.forEach(t=>clearInterval(t));
+  officeCamTimers = [];
   const grid=document.getElementById('cctvOfficeGrid');
   grid.innerHTML=OFFICE_CAMS.map((cam,i)=>{
     const streamUrl = GO2RTC_BASE+'/stream.html?src='+cam.src+'&mode=mse';
     const snapshotUrl = GO2RTC_BASE+'/api/frame.jpeg?src='+cam.src;
-    return `<div class="cctv-card" style="cursor:default">
+    return `<div class="cctv-card" style="cursor:default" id="officeCamCard${i}">
       <div class="cctv-header">
         <div class="cctv-icon" style="background:rgba(234,179,8,0.1);color:var(--yellow)"><i class="fas fa-video"></i></div>
         <div style="flex:1">
@@ -1219,7 +1223,7 @@ function initOfficeCCTV(){
           <i class="fas fa-external-link-alt"></i>
         </a>
       </div>
-      <div class="cctv-body" style="height:240px;background:#000;position:relative">
+      <div class="cctv-body" style="height:240px;background:#000;position:relative" id="officeCamBody${i}">
         <div id="officeLoader${i}" class="no-signal" style="display:flex">
           <div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--yellow);border-radius:50%;animation:spin 1s linear infinite"></div>
           <span>กำลังเชื่อมต่อ go2rtc...</span>
@@ -1230,7 +1234,7 @@ function initOfficeCCTV(){
           onerror="this.style.display='none';document.getElementById('officeLoader${i}').style.display='flex';document.getElementById('officeLoader${i}').innerHTML='<i class=\\'fas fa-exclamation-triangle\\'></i><span>ไม่สามารถเชื่อมต่อกล้องได้</span><span style=\\'font-size:.6rem;opacity:.5\\'>ตรวจสอบว่า go2rtc server ทำงานอยู่</span>'"
         />
         <div style="position:absolute;bottom:0;left:0;right:0;padding:6px 10px;background:linear-gradient(transparent,rgba(0,0,0,0.7));display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:.65rem;color:rgba(255,255,255,0.7)">${cam.src}</span>
+          <span style="font-size:.65rem;color:rgba(255,255,255,0.7)" id="officeCamSrc${i}">${cam.src}</span>
           <div style="display:flex;gap:4px">
             <button onclick="refreshOfficeCam(${i})" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.6rem;cursor:pointer;font-family:Sarabun,sans-serif" title="รีเฟรช">
               <i class="fas fa-sync-alt"></i>
@@ -1238,24 +1242,57 @@ function initOfficeCCTV(){
             <button onclick="window.open('${streamUrl}','_blank')" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.6rem;cursor:pointer;font-family:Sarabun,sans-serif" title="เปิด-streamแบบเต็มจอ">
               <i class="fas fa-expand"></i>
             </button>
+            <button onclick="stopOfficeCam(${i})" id="officeStopBtn${i}" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(220,38,38,0.3);background:rgba(220,38,38,0.15);color:#ef4444;font-size:.6rem;cursor:pointer;font-family:Sarabun,sans-serif" title="หยุดดูกล้อง">
+              <i class="fas fa-stop"></i>
+            </button>
           </div>
         </div>
       </div>
     </div>`;
   }).join('');
   OFFICE_CAMS.forEach((cam,i)=>{
-    setInterval(()=>refreshOfficeCam(i),10000);
+    const t=setInterval(()=>refreshOfficeCam(i),10000);
+    officeCamTimers.push(t);
   });
 }
 
 function refreshOfficeCam(i){
   const img=document.getElementById('officeSnap'+i);
-  if(img){
+  const card=document.getElementById('officeCamCard'+i);
+  if(img && card && !card.dataset.stopped){
     img.style.display='none';
     const loader=document.getElementById('officeLoader'+i);
     loader.style.display='flex';
     loader.innerHTML='<div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--yellow);border-radius:50%;animation:spin 1s linear infinite"></div><span>กำลังเชื่อมต่อ...</span>';
     img.src=GO2RTC_BASE+'/api/frame.jpeg?src='+OFFICE_CAMS[i].src+'&_t='+Date.now();
+  }
+}
+
+function stopOfficeCam(i){
+  const card=document.getElementById('officeCamCard'+i);
+  const body=document.getElementById('officeCamBody'+i);
+  const btn=document.getElementById('officeStopBtn'+i);
+  const img=document.getElementById('officeSnap'+i);
+  const loader=document.getElementById('officeLoader'+i);
+
+  if(card.dataset.stopped){
+    delete card.dataset.stopped;
+    btn.innerHTML='<i class="fas fa-stop"></i>';
+    btn.style.background='rgba(220,38,38,0.15)';
+    btn.style.color='#ef4444';
+    btn.title='หยุดดูกล้อง';
+    refreshOfficeCam(i);
+  }else{
+    card.dataset.stopped='1';
+    if(img) img.style.display='none';
+    if(loader){
+      loader.style.display='flex';
+      loader.innerHTML='<i class="fas fa-pause" style="font-size:1.5rem;color:rgba(255,255,255,0.3)"></i><span style="color:rgba(255,255,255,0.4)">หยุดชมแล้ว</span>';
+    }
+    btn.innerHTML='<i class="fas fa-play"></i>';
+    btn.style.background='rgba(5,150,105,0.15)';
+    btn.style.color='#10b981';
+    btn.title='เริ่มดูกล้องใหม่';
   }
 }
 
