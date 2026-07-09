@@ -769,6 +769,11 @@ async function fetchWithTimeout(url, token, timeout=8000){
 
 function extractVal(v){ return (v!=null && typeof v==='object' && 'value' in v) ? +v.value : (v!=null ? +v : null); }
 function fmt(v){ return v!=null ? (+v).toFixed(1) : '--'; }
+function degToCompass(deg){
+  if(deg==null) return '--';
+  const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg/22.5)%16];
+}
 
 const THAI_STANDARDS = {
   pm25: { limit:37.5, unit:'µg/m³', label:'มาตรฐาน' },
@@ -798,6 +803,8 @@ async function fetchAmataStation(stationId){
       temp: extractVal(d.Temperature),
       humidity: extractVal(d.RH),
       wind: extractVal(d.WS),
+      windDir: extractVal(d.WD),
+      rain: extractVal(d.Rain),
       pressure: extractVal(d.Pressure),
       pm25: null,
       online: true,
@@ -828,7 +835,7 @@ async function fetchAmataStation(stationId){
     }
     return result;
   } catch(e){
-    return { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, pressure:null, online:false };
+    return { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, windDir:null, rain:null, pressure:null, online:false };
   }
 }
 
@@ -853,12 +860,14 @@ async function fetchPT5Station(){
       temp: pv(d.Value9, d.Status9),
       humidity: pv(d.Value10, d.Status10),
       wind: pv(d.Value7, d.Status7),
+      windDir: pv(d.Value8, d.Status8),
+      rain: pv(d.Value12, d.Status12),
       pressure: pv(d.Value11, d.Status11),
       online: true,
       timestamp: d.Date_Time || null,
     };
   } catch(e){
-    return { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, pressure:null, online:false };
+    return { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, windDir:null, rain:null, pressure:null, online:false };
   }
 }
 
@@ -949,6 +958,8 @@ function renderStations(){
             <div class="gauge-meta-item"><i class="fas fa-thermometer-half"></i><span class="val">${fmt(d.temp)}</span><span class="unit">°C</span></div>
             <div class="gauge-meta-item"><i class="fas fa-tint"></i><span class="val">${fmt(d.humidity)}</span><span class="unit">%</span></div>
             <div class="gauge-meta-item"><i class="fas fa-wind"></i><span class="val">${fmt(d.wind)}</span><span class="unit">m/s</span></div>
+            <div class="gauge-meta-item"><i class="fas fa-compass"></i><span class="val">${d.windDir!=null?degToCompass(d.windDir):'--'}</span><span class="unit">${fmt(d.windDir)}°</span></div>
+            <div class="gauge-meta-item"><i class="fas fa-cloud-rain"></i><span class="val">${fmt(d.rain)}</span><span class="unit">mm</span></div>
             <div class="gauge-meta-item"><i class="fas fa-compress-arrows-alt"></i><span class="val">${fmt(d.pressure)}</span><span class="unit">hPa</span></div>
           </div>
         </div>
@@ -1071,6 +1082,8 @@ function openModal(id){
     <div class="modal-stat"><div class="label">อุณหภูมิ</div><div class="value">${fmt(d.temp)}</div><div class="unit">°C</div></div>
     <div class="modal-stat"><div class="label">ความชื้น</div><div class="value">${fmt(d.humidity)}</div><div class="unit">%</div></div>
     <div class="modal-stat"><div class="label">ลม</div><div class="value">${fmt(d.wind)}</div><div class="unit">m/s</div></div>
+    <div class="modal-stat"><div class="label">ทิศลม</div><div class="value">${d.windDir!=null?degToCompass(d.windDir):'--'}</div><div class="unit">${fmt(d.windDir)}°</div></div>
+    <div class="modal-stat"><div class="label">ปริมาณฝน</div><div class="value">${fmt(d.rain)}</div><div class="unit">mm</div></div>
     <div class="modal-stat"><div class="label">ความกดอากาศ</div><div class="value">${fmt(d.pressure)}</div><div class="unit">hPa</div></div>
   `;
   if(modalChartInstance)modalChartInstance.destroy();
