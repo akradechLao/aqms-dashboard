@@ -322,8 +322,20 @@ body{
 }
 .cctv-header .cctv-name{font-size:.82rem;font-weight:600;color:var(--text-primary);line-height:1.3}
 .cctv-header .cctv-site{font-size:.7rem;color:var(--text-muted)}
+.cctv-cameras{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+}
+.cctv-cam{
+  position:relative;border-right:1px solid rgba(0,0,0,0.06);
+}
+.cctv-cam:last-child{border-right:none}
+.cctv-cam-label{
+  text-align:center;font-size:.65rem;font-weight:600;
+  padding:4px 0;background:rgba(0,0,0,0.03);color:var(--text-muted);
+  border-bottom:1px solid rgba(0,0,0,0.06);
+}
 .cctv-body{
-  height:180px;display:flex;align-items:center;justify-content:center;
+  height:140px;display:flex;align-items:center;justify-content:center;
   background:linear-gradient(135deg,#1e293b,#334155);position:relative;
 }
 .cctv-body .no-signal{
@@ -1038,7 +1050,6 @@ function refreshMapMarkers(){
 function initCCTV(){
   const grid=document.getElementById('cctvGrid');
   grid.innerHTML=STATIONS.map(s=>{
-    const camUrl=null;
     return `<div class="cctv-card" data-station="${s.id}">
       <div class="cctv-header">
         <div class="cctv-icon"><i class="fas fa-video"></i></div>
@@ -1047,9 +1058,17 @@ function initCCTV(){
           <div class="cctv-site">${s.site}</div>
         </div>
       </div>
-      <div class="cctv-body">
-        ${camUrl?`<iframe src="${camUrl}" style="width:100%;height:100%;border:none" allowfullscreen></iframe><div class="live-badge active">LIVE</div>`
-          :`<div class="no-signal"><i class="fas fa-video-slash"></i><span>รอเชื่อมต่อกล้อง</span></div>`}
+      <div class="cctv-cameras">
+        ${[1,2,3].map(n=>{
+          const camUrl=null;
+          return `<div class="cctv-cam">
+            <div class="cctv-cam-label">กล้อง ${n}</div>
+            <div class="cctv-body">
+              ${camUrl?`<iframe src="${camUrl}" style="width:100%;height:100%;border:none" allowfullscreen></iframe><div class="live-badge active">LIVE</div>`
+                :`<div class="no-signal"><i class="fas fa-video-slash"></i><span>รอเชื่อมต่อ</span></div>`}
+            </div>
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
   }).join('');
