@@ -312,6 +312,23 @@ body{
 .map-locate-btn.loading{animation:spin 1s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .cctv-section{margin:28px 0}
+.cctv-tabs{
+  display:flex;gap:4px;margin-bottom:16px;
+  background:rgba(0,0,0,0.04);padding:4px;border-radius:10px;width:fit-content;
+}
+.cctv-tab{
+  padding:8px 18px;border-radius:8px;border:none;cursor:pointer;
+  font-family:'Sarabun',sans-serif;font-size:.85rem;font-weight:600;
+  background:transparent;color:var(--text-muted);transition:all .2s;
+  display:flex;align-items:center;gap:6px;
+}
+.cctv-tab:hover{color:var(--text-secondary)}
+.cctv-tab.active{background:var(--bg-card);color:var(--accent);box-shadow:var(--shadow)}
+.cctv-tab-content{display:none}
+.cctv-tab-content.active{display:block}
+.cctv-office-grid{
+  grid-template-columns:repeat(auto-fill,minmax(350px,1fr));
+}
 .cctv-grid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
 }
@@ -602,8 +619,16 @@ body{
 </div>
 
 <div class="cctv-section">
-  <div class="section-title"><i class="fas fa-video"></i> กล้องวงจรปิด (CCTV)</div>
-  <div class="cctv-grid" id="cctvGrid"></div>
+  <div class="cctv-tabs">
+    <button class="cctv-tab active" onclick="switchCCTVTab('station')"><i class="fas fa-broadcast-tower"></i> กล้องสถานี</button>
+    <button class="cctv-tab" onclick="switchCCTVTab('office')"><i class="fas fa-building"></i> กล้องออฟฟิศ</button>
+  </div>
+  <div class="cctv-tab-content active" id="cctvStationTab">
+    <div class="cctv-grid" id="cctvGrid"></div>
+  </div>
+  <div class="cctv-tab-content" id="cctvOfficeTab">
+    <div class="cctv-grid cctv-office-grid" id="cctvOfficeGrid"></div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
@@ -1158,6 +1183,56 @@ function initCCTV(){
   }).join('');
 }
 
+const OFFICE_CAMS = [
+  { name:'กล้องเซนเซอร์วัดระดับน้ำ', location:'คลองห้วยใหญ่', rtsp:'rtsp://admin:servM0de@172.18.5.8:554/cam/realmonitor?channel=1&subtype=1' },
+  { name:'กล้องดูระดับน้ำ', location:'คลองห้วยใหญ่', rtsp:'rtsp://admin:servM0de@172.18.5.9:554/cam/realmonitor?channel=1&subtype=1' },
+];
+
+function initOfficeCCTV(){
+  const grid=document.getElementById('cctvOfficeGrid');
+  grid.innerHTML=OFFICE_CAMS.map((cam,i)=>{
+    return `<div class="cctv-card" style="cursor:default">
+      <div class="cctv-header">
+        <div class="cctv-icon" style="background:rgba(234,179,8,0.1);color:var(--yellow)"><i class="fas fa-video"></i></div>
+        <div>
+          <div class="cctv-name">${cam.name}</div>
+          <div class="cctv-site">${cam.location}</div>
+        </div>
+      </div>
+      <div class="cctv-body" style="height:200px">
+        <div class="no-signal">
+          <i class="fas fa-lock" style="font-size:1.5rem"></i>
+          <span style="font-size:.75rem">RTSP Stream</span>
+          <span style="font-size:.65rem;opacity:.6">ไม่แสดงในเบราว์เซอร์ได้โดยตรง</span>
+          <button onclick="copyRTSP('${cam.rtsp}')" style="margin-top:6px;padding:4px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif">
+            <i class="fas fa-copy"></i> คัดลอกลิงค์ RTSP
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyRTSP(url){
+  navigator.clipboard.writeText(url).then(()=>{
+    alert('คัดลอกลิงค์ RTSP แล้ว\n\nนำไปวางใน VLC หรือ media player ที่รองรับ RTSP ได้เลย');
+  }).catch(()=>{
+    prompt('คัดลอกลิงค์นี้:',url);
+  });
+}
+
+function switchCCTVTab(tab){
+  document.querySelectorAll('.cctv-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.cctv-tab-content').forEach(t=>t.classList.remove('active'));
+  if(tab==='station'){
+    document.querySelectorAll('.cctv-tab')[0].classList.add('active');
+    document.getElementById('cctvStationTab').classList.add('active');
+  }else{
+    document.querySelectorAll('.cctv-tab')[1].classList.add('active');
+    document.getElementById('cctvOfficeTab').classList.add('active');
+  }
+}
+
 function openCCTV(stationId){
   const s=STATIONS.find(x=>x.id===stationId);
   if(!s) return;
@@ -1208,6 +1283,7 @@ async function init(){
   await fetchAllStations();
   initMap();
   initCCTV();
+  initOfficeCCTV();
   refreshMapMarkers();
   document.getElementById('loadingOverlay').classList.add('hidden');
   fetchInterval = setInterval(()=>{
