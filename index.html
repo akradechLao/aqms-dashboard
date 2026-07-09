@@ -1184,8 +1184,8 @@ function initCCTV(){
 }
 
 const OFFICE_CAMS = [
-  { name:'กล้องเซนเซอร์วัดระดับน้ำ', location:'คลองห้วยใหญ่', rtsp:'rtsp://admin:servM0de@172.18.5.8:554/cam/realmonitor?channel=1&subtype=1' },
-  { name:'กล้องดูระดับน้ำ', location:'คลองห้วยใหญ่', rtsp:'rtsp://admin:servM0de@172.18.5.9:554/cam/realmonitor?channel=1&subtype=1' },
+  { name:'กล้องเซนเซอร์วัดระดับน้ำ', location:'คลองห้วยใหญ่', ip:'172.18.5.8', rtsp:'rtsp://admin:servM0de@172.18.5.8:554/cam/realmonitor?channel=1&subtype=1', mjpeg:'http://172.18.5.8/cgi-bin/mjpg/video.cgi?channel=1&subtype=1', snap:'http://172.18.5.8/cgi-bin/snapshot.cgi?channel=1' },
+  { name:'กล้องดูระดับน้ำ', location:'คลองห้วยใหญ่', ip:'172.18.5.9', rtsp:'rtsp://admin:servM0de@172.18.5.9:554/cam/realmonitor?channel=1&subtype=1', mjpeg:'http://172.18.5.9/cgi-bin/mjpg/video.cgi?channel=1&subtype=1', snap:'http://172.18.5.9/cgi-bin/snapshot.cgi?channel=1' },
 ];
 
 function initOfficeCCTV(){
@@ -1199,18 +1199,44 @@ function initOfficeCCTV(){
           <div class="cctv-site">${cam.location}</div>
         </div>
       </div>
-      <div class="cctv-body" style="height:200px">
-        <div class="no-signal">
-          <i class="fas fa-lock" style="font-size:1.5rem"></i>
-          <span style="font-size:.75rem">RTSP Stream</span>
-          <span style="font-size:.65rem;opacity:.6">ไม่แสดงในเบราว์เซอร์ได้โดยตรง</span>
-          <button onclick="copyRTSP('${cam.rtsp}')" style="margin-top:6px;padding:4px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.7rem;cursor:pointer;font-family:Sarabun,sans-serif">
-            <i class="fas fa-copy"></i> คัดลอกลิงค์ RTSP
-          </button>
+      <div class="cctv-body" style="height:240px;background:#000;position:relative">
+        <img id="officeSnap${i}" src="${cam.snap}?_t=${Date.now()}" alt="loading..."
+          style="width:100%;height:100%;object-fit:contain;display:none"
+          onload="this.style.display='block';document.getElementById('officeLoader${i}').style.display='none'"
+          onerror="this.style.display='none';document.getElementById('officeLoader${i}').style.display='flex';document.getElementById('officeLoader${i}').innerHTML='<i class=\\'fas fa-exclamation-triangle\\'></i><span>ไม่สามารถเชื่อมต่อกล้องได้</span><span style=\\'font-size:.6rem;opacity:.5\\'>ตรวจสอบ IP กล้องในเครือข่ายเดียวกัน</span>'"
+        />
+        <div id="officeLoader${i}" class="no-signal" style="display:flex">
+          <div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite"></div>
+          <span>กำลังเชื่อมต่อ...</span>
+        </div>
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:6px 10px;background:linear-gradient(transparent,rgba(0,0,0,0.7));display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.65rem;color:rgba(255,255,255,0.7)">${cam.ip}</span>
+          <div style="display:flex;gap:4px">
+            <button onclick="refreshOfficeCam(${i})" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.6rem;cursor:pointer;font-family:Sarabun,sans-serif" title="รีเฟรช">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            <button onclick="copyRTSP('${cam.rtsp}')" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.6rem;cursor:pointer;font-family:Sarabun,sans-serif" title="คัดลอก RTSP">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>`;
   }).join('');
+  OFFICE_CAMS.forEach((cam,i)=>{
+    setInterval(()=>refreshOfficeCam(i),30000);
+  });
+}
+
+function refreshOfficeCam(i){
+  const img=document.getElementById('officeSnap'+i);
+  if(img){
+    img.style.display='none';
+    const loader=document.getElementById('officeLoader'+i);
+    loader.style.display='flex';
+    loader.innerHTML='<div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite"></div><span>กำลังเชื่อมต่อ...</span>';
+    img.src=OFFICE_CAMS[i].snap+'?_t='+Date.now();
+  }
 }
 
 function copyRTSP(url){
