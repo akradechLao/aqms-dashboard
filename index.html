@@ -1197,40 +1197,46 @@ function initCCTV(){
   }).join('');
 }
 
+const GO2RTC_BASE = 'http://172.18.35.176:1984';
 const OFFICE_CAMS = [
-  { name:'กล้องเซนเซอร์วัดระดับน้ำ', location:'คลองห้วยใหญ่', ip:'172.18.5.8', rtsp:'rtsp://admin:servM0de@172.18.5.8:554/cam/realmonitor?channel=1&subtype=1', mjpeg:'http://172.18.5.8/cgi-bin/mjpg/video.cgi?channel=1&subtype=1', snap:'http://172.18.5.8/cgi-bin/snapshot.cgi?channel=1' },
-  { name:'กล้องดูระดับน้ำ', location:'คลองห้วยใหญ่', ip:'172.18.5.9', rtsp:'rtsp://admin:servM0de@172.18.5.9:554/cam/realmonitor?channel=1&subtype=1', mjpeg:'http://172.18.5.9/cgi-bin/mjpg/video.cgi?channel=1&subtype=1', snap:'http://172.18.5.9/cgi-bin/snapshot.cgi?channel=1' },
+  { name:'กล้องวงจรปิดเซนเซอร์วัดระดับน้ำ', location:'คลองห้วยใหญ่', src:'camera_01' },
+  { name:'กล้องวงจรปิดดูระดับน้ำ', location:'คลองห้วยใหญ่', src:'camera_02' },
 ];
 
 function initOfficeCCTV(){
   const grid=document.getElementById('cctvOfficeGrid');
   grid.innerHTML=OFFICE_CAMS.map((cam,i)=>{
+    const streamUrl = GO2RTC_BASE+'/stream.html?src='+cam.src+'&mode=mse';
+    const snapshotUrl = GO2RTC_BASE+'/api/frame.jpeg?src='+cam.src;
     return `<div class="cctv-card" style="cursor:default">
       <div class="cctv-header">
         <div class="cctv-icon" style="background:rgba(234,179,8,0.1);color:var(--yellow)"><i class="fas fa-video"></i></div>
-        <div>
+        <div style="flex:1">
           <div class="cctv-name">${cam.name}</div>
           <div class="cctv-site">${cam.location}</div>
         </div>
+        <a href="${GO2RTC_BASE}/links.html?src=${cam.src}" target="_blank" style="font-size:.7rem;color:var(--accent);text-decoration:none;flex-shrink:0" title="เปิดลิงค์ทั้งหมด">
+          <i class="fas fa-external-link-alt"></i>
+        </a>
       </div>
       <div class="cctv-body" style="height:240px;background:#000;position:relative">
-        <img id="officeSnap${i}" src="${cam.snap}?_t=${Date.now()}" alt="loading..."
+        <div id="officeLoader${i}" class="no-signal" style="display:flex">
+          <div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--yellow);border-radius:50%;animation:spin 1s linear infinite"></div>
+          <span>กำลังเชื่อมต่อ go2rtc...</span>
+        </div>
+        <img id="officeSnap${i}" src="${snapshotUrl}" alt="loading..."
           style="width:100%;height:100%;object-fit:contain;display:none"
           onload="this.style.display='block';document.getElementById('officeLoader${i}').style.display='none'"
-          onerror="this.style.display='none';document.getElementById('officeLoader${i}').style.display='flex';document.getElementById('officeLoader${i}').innerHTML='<i class=\\'fas fa-exclamation-triangle\\'></i><span>ไม่สามารถเชื่อมต่อกล้องได้</span><span style=\\'font-size:.6rem;opacity:.5\\'>ตรวจสอบ IP กล้องในเครือข่ายเดียวกัน</span>'"
+          onerror="this.style.display='none';document.getElementById('officeLoader${i}').style.display='flex';document.getElementById('officeLoader${i}').innerHTML='<i class=\\'fas fa-exclamation-triangle\\'></i><span>ไม่สามารถเชื่อมต่อกล้องได้</span><span style=\\'font-size:.6rem;opacity:.5\\'>ตรวจสอบว่า go2rtc server ทำงานอยู่</span>'"
         />
-        <div id="officeLoader${i}" class="no-signal" style="display:flex">
-          <div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite"></div>
-          <span>กำลังเชื่อมต่อ...</span>
-        </div>
         <div style="position:absolute;bottom:0;left:0;right:0;padding:6px 10px;background:linear-gradient(transparent,rgba(0,0,0,0.7));display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:.65rem;color:rgba(255,255,255,0.7)">${cam.ip}</span>
+          <span style="font-size:.65rem;color:rgba(255,255,255,0.7)">${cam.src}</span>
           <div style="display:flex;gap:4px">
             <button onclick="refreshOfficeCam(${i})" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.6rem;cursor:pointer;font-family:Sarabun,sans-serif" title="รีเฟรช">
               <i class="fas fa-sync-alt"></i>
             </button>
-            <button onclick="copyRTSP('${cam.rtsp}')" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.6rem;cursor:pointer;font-family:Sarabun,sans-serif" title="คัดลอก RTSP">
-              <i class="fas fa-copy"></i>
+            <button onclick="window.open('${streamUrl}','_blank')" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:.6rem;cursor:pointer;font-family:Sarabun,sans-serif" title="เปิด-streamแบบเต็มจอ">
+              <i class="fas fa-expand"></i>
             </button>
           </div>
         </div>
@@ -1238,7 +1244,7 @@ function initOfficeCCTV(){
     </div>`;
   }).join('');
   OFFICE_CAMS.forEach((cam,i)=>{
-    setInterval(()=>refreshOfficeCam(i),30000);
+    setInterval(()=>refreshOfficeCam(i),10000);
   });
 }
 
@@ -1248,8 +1254,8 @@ function refreshOfficeCam(i){
     img.style.display='none';
     const loader=document.getElementById('officeLoader'+i);
     loader.style.display='flex';
-    loader.innerHTML='<div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite"></div><span>กำลังเชื่อมต่อ...</span>';
-    img.src=OFFICE_CAMS[i].snap+'?_t='+Date.now();
+    loader.innerHTML='<div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--yellow);border-radius:50%;animation:spin 1s linear infinite"></div><span>กำลังเชื่อมต่อ...</span>';
+    img.src=GO2RTC_BASE+'/api/frame.jpeg?src='+OFFICE_CAMS[i].src+'&_t='+Date.now();
   }
 }
 
