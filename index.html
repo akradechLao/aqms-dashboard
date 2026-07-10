@@ -670,7 +670,7 @@ const STATIONS = [
   { id:'005', name:'วัดพนานิคม', site:'นิคมอมตะซิตี้ ระยอง', source:'amata', lat:'12.918358', lng:'101.107194' },
   { id:'006', name:'รพ.สต.มาบยางพร', site:'นิคมอมตะซิตี้ ระยอง', source:'amata', lat:'12.990007', lng:'101.132882' },
   { id:'PT5', name:'สถานี ปิ่นทอง โครงการ 5', site:'นิคมปิ่นทอง 5', source:'pt5', lat:'13.092803', lng:'101.157933' },
-  { id:'BYY', name:'โรงเรียนบ้านยายจั่น', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'standalone', lat:'12.705699', lng:'101.469729' },
+  { id:'BYY', name:'โรงเรียนบ้านยายจั่น', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'lakchai', lat:'12.705699', lng:'101.469729' },
 ];
 
 const AMATA_TOKEN = '1|uDd7ptCf9hdOR3irFocfHbLgm2ePrSRXPugUCvz7d4283131';
@@ -922,7 +922,7 @@ function renderStations(){
     const no2StdPct = Math.min((120/250)*100,100);
     const statusClass = d.online ? 'online' : 'offline';
     const statusText = d.online ? 'LIVE' : 'OFFLINE';
-    const sourceLabel = s.source==='pt5' ? '<span class="source-badge"><i class="fas fa-cloud"></i>PT5</span>' : '<span class="source-badge"><i class="fas fa-industry"></i>AMATA</span>';
+    const sourceLabel = s.source==='pt5' ? '<span class="source-badge"><i class="fas fa-cloud"></i>PT5</span>' : s.source==='lakchai' ? '<span class="source-badge"><i class="fas fa-tree"></i>LAKCHAI</span>' : '<span class="source-badge"><i class="fas fa-industry"></i>AMATA</span>';
     const timeStr = d.lastUpdate ? d.lastUpdate.toLocaleTimeString('th-TH',{hour12:false}) : '--:--:--';
     const hist = d.history && d.history.length>1 ? d.history : Array(24).fill(aqiVal||0);
 
