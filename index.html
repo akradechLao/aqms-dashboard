@@ -592,7 +592,7 @@ body{
 </div>
 
 <div class="main-content">
-  <div class="section-title"><i class="fas fa-map-marked-alt"></i> สถานีเฝ้าระวังคุณภาพอากาศ 8 แห่ง</div>
+  <div class="section-title"><i class="fas fa-map-marked-alt"></i> สถานีเฝ้าระวังคุณภาพอากาศ 9 แห่ง</div>
   <div class="stations-grid" id="stationsGrid"></div>
   <div class="legend-section">
     <div class="legend-title"><i class="fas fa-info-circle"></i> ระดับค่าดัชนีคุณภาพอากาศ (AQI) ตามกรมควบคุมมลพิษ</div>
@@ -671,6 +671,7 @@ const STATIONS = [
   { id:'006', name:'รพ.สต.มาบยางพร', site:'นิคมอมตะซิตี้ ระยอง', source:'amata', lat:'12.990007', lng:'101.132882' },
   { id:'PT5', name:'สถานี ปิ่นทอง โครงการ 5', site:'นิคมปิ่นทอง 5', source:'pt5', lat:'13.092803', lng:'101.157933' },
   { id:'BYY', name:'โรงเรียนบ้านยายจั่น', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'lakchai', lat:'12.705699', lng:'101.469729' },
+  { id:'RF01', name:'สถานีวัดปริมาณน้ำฝน', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.727041', lng:'101.467966', image:'https://www.tisi.go.kr/uploads/tisi/facility/image/2023/04/17/3a3a7a6c-2f7e-4e1b-9c6e-0a1b2c3d4e5f.png' },
 ];
 
 const AMATA_TOKEN = '1|uDd7ptCf9hdOR3irFocfHbLgm2ePrSRXPugUCvz7d4283131';
@@ -922,7 +923,7 @@ function renderStations(){
     const no2StdPct = Math.min((120/250)*100,100);
     const statusClass = d.online ? 'online' : 'offline';
     const statusText = d.online ? 'LIVE' : 'OFFLINE';
-    const sourceLabel = s.source==='pt5' ? '<span class="source-badge"><i class="fas fa-cloud"></i>PT5</span>' : s.source==='lakchai' ? '<span class="source-badge"><i class="fas fa-tree"></i>LAKCHAI</span>' : '<span class="source-badge"><i class="fas fa-industry"></i>AMATA</span>';
+    const sourceLabel = s.source==='pt5' ? '<span class="source-badge"><i class="fas fa-cloud"></i>PT5</span>' : s.source==='lakchai' ? '<span class="source-badge"><i class="fas fa-tree"></i>LAKCHAI</span>' : s.source==='rainfall' ? '<span class="source-badge" style="background:rgba(14,165,233,0.1);color:#0ea5e9;border-color:rgba(14,165,233,0.25)"><i class="fas fa-cloud-rain"></i>RAINGAUGE</span>' : '<span class="source-badge"><i class="fas fa-industry"></i>AMATA</span>';
     const timeStr = d.lastUpdate ? d.lastUpdate.toLocaleTimeString('th-TH',{hour12:false}) : '--:--:--';
     const hist = d.history && d.history.length>1 ? d.history : Array(24).fill(aqiVal||0);
 
@@ -1120,7 +1121,7 @@ function updateClock(){
 }
 
 function initMap(){
-  const map=L.map('stationMap').setView([13.20,101.06],11);
+  const map=L.map('stationMap').setView([13.05,101.15],9);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'&copy; OpenStreetMap contributors'
   }).addTo(map);
@@ -1132,36 +1133,59 @@ function initMap(){
     unhealthy:L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]}),
     'very-unhealthy':L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#7c3aed;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]}),
     hazardous:L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#991b1b;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]}),
-    offline:L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#64748b;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]})
+    offline:L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#64748b;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]}),
+    rainfall:L.divIcon({className:'',html:'<div style="width:32px;height:32px;border-radius:50%;background:#0ea5e9;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center"><i class="fas fa-cloud-rain" style="color:#fff;font-size:14px"></i></div>',iconSize:[32,32],iconAnchor:[16,16]})
   };
 
   STATIONS.forEach(s=>{
     const d=stationData[s.id]||{};
     const aqi=d.aqi;
     const lv=getAQILevel(aqi);
-    const marker=L.marker([parseFloat(s.lat),parseFloat(s.lng)],{icon:icons[lv.level]||icons.offline}).addTo(map);
-    const popupHtml=`<div style="font-family:Sarabun,sans-serif;min-width:220px;padding:4px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-        <b style="font-size:.9rem">${s.name}</b>
-      </div>
-      <div style="font-size:.72rem;color:#666;margin-bottom:8px">${s.site}</div>
-      <div style="background:${lv.bg};border-radius:6px;padding:6px 10px;margin-bottom:8px">
-        <b style="color:${lv.color};font-size:1.1rem">AQI ${aqi!=null?aqi:'--'}</b>
-        <span style="font-size:.75rem;color:#666;margin-left:4px">${lv.label}</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.75rem">
-        ${d.pm25!=null?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
-        <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM10</span><br><b>${fmt(d.pm10)}</b> µg/m³</div>
-        <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">TSP</span><br><b>${fmt(d.tsp)}</b> µg/m³</div>
-        <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">SO₂</span><br><b>${fmt(d.so2)}</b> ppb</div>
-        <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">NO₂</span><br><b>${fmt(d.no2)}</b> ppb</div>
-        <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">อุณหภูมิ</span><br><b>${fmt(d.temp)}</b> °C</div>
-        <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">ความชื้น</span><br><b>${fmt(d.humidity)}</b> %</div>
-        <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">ลม</span><br><b>${fmt(d.wind)}</b> m/s ${d.windDir!=null?'('+degToCompass(d.windDir)+')':''}</div>
-        <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">ฝน</span><br><b>${fmt(d.rain)}</b> mm</div>
-      </div>
-    </div>`;
-    marker.bindPopup(popupHtml,{maxWidth:280});
+    const isRainfall=s.source==='rainfall';
+    const markerIcon=isRainfall?icons.rainfall:(icons[lv.level]||icons.offline);
+    const marker=L.marker([parseFloat(s.lat),parseFloat(s.lng)],{icon:markerIcon}).addTo(map);
+    
+    let popupHtml;
+    if(isRainfall){
+      popupHtml=`<div style="font-family:Sarabun,sans-serif;min-width:260px;padding:4px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <i class="fas fa-cloud-rain" style="color:#0ea5e9;font-size:1.1rem"></i>
+          <b style="font-size:.9rem">${s.name}</b>
+        </div>
+        <div style="font-size:.72rem;color:#666;margin-bottom:8px">${s.site}</div>
+        <div style="background:rgba(14,165,233,0.08);border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:.8rem;color:#0369a1">
+          <i class="fas fa-info-circle"></i> สถานีวัดปริมาณน้ำฝนอัตโนมัติ
+        </div>
+        ${s.image?`<img src="${s.image}" style="width:100%;height:150px;object-fit:cover;border-radius:6px;margin-bottom:8px" onerror="this.style.display='none'" alt="เครื่องวัดปริมาณน้ำฝน"/>`:''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.75rem">
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">พิกัด</span><br><b>${s.lat}, ${s.lng}</b></div>
+          <div style="background:rgba(14,165,233,0.08);padding:4px 6px;border-radius:4px"><span style="color:#0369a1">ประเภท</span><br><b>Rain Gauge</b></div>
+        </div>
+      </div>`;
+    }else{
+      popupHtml=`<div style="font-family:Sarabun,sans-serif;min-width:220px;padding:4px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <b style="font-size:.9rem">${s.name}</b>
+        </div>
+        <div style="font-size:.72rem;color:#666;margin-bottom:8px">${s.site}</div>
+        <div style="background:${lv.bg};border-radius:6px;padding:6px 10px;margin-bottom:8px">
+          <b style="color:${lv.color};font-size:1.1rem">AQI ${aqi!=null?aqi:'--'}</b>
+          <span style="font-size:.75rem;color:#666;margin-left:4px">${lv.label}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.75rem">
+          ${d.pm25!=null?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM10</span><br><b>${fmt(d.pm10)}</b> µg/m³</div>
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">TSP</span><br><b>${fmt(d.tsp)}</b> µg/m³</div>
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">SO₂</span><br><b>${fmt(d.so2)}</b> ppb</div>
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">NO₂</span><br><b>${fmt(d.no2)}</b> ppb</div>
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">อุณหภูมิ</span><br><b>${fmt(d.temp)}</b> °C</div>
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">ความชื้น</span><br><b>${fmt(d.humidity)}</b> %</div>
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">ลม</span><br><b>${fmt(d.wind)}</b> m/s ${d.windDir!=null?'('+degToCompass(d.windDir)+')':''}</div>
+          <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">ฝน</span><br><b>${fmt(d.rain)}</b> mm</div>
+        </div>
+      </div>`;
+    }
+    marker.bindPopup(popupHtml,{maxWidth:300});
     s._marker=marker;
     s._icon=icons;
   });
