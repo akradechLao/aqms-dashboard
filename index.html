@@ -925,7 +925,33 @@ function renderStations(){
     const statusText = d.online ? 'LIVE' : 'OFFLINE';
     const sourceLabel = s.source==='pt5' ? '<span class="source-badge"><i class="fas fa-cloud"></i>PT5</span>' : s.source==='lakchai' ? '<span class="source-badge"><i class="fas fa-tree"></i>LAKCHAI</span>' : s.source==='rainfall' ? '<span class="source-badge" style="background:rgba(14,165,233,0.1);color:#0ea5e9;border-color:rgba(14,165,233,0.25)"><i class="fas fa-cloud-rain"></i>RAINGAUGE</span>' : '<span class="source-badge"><i class="fas fa-industry"></i>AMATA</span>';
     const timeStr = d.lastUpdate ? d.lastUpdate.toLocaleTimeString('th-TH',{hour12:false}) : '--:--:--';
-    const hist = d.history && d.history.length>1 ? d.history : Array(24).fill(aqiVal||0);
+    const isRainfall = s.source==='rainfall';
+
+    if(isRainfall){
+      return`
+      <div class="station-card" data-level="offline" onclick="openModal('${s.id}')" style="border-left:3px solid #0ea5e9">
+        <div class="station-header">
+          <div class="station-name-wrap">
+            <span class="station-num" style="background:rgba(14,165,233,0.1);color:#0ea5e9">${s.id}</span>
+            <div>
+              <div class="station-name">${s.name}${sourceLabel}</div>
+              <div class="station-site"><i class="fas fa-map-pin"></i> ${s.site}</div>
+            </div>
+          </div>
+          <div class="station-live offline"><span class="blink"></span> OFFLINE</div>
+        </div>
+        <div style="padding:20px;text-align:center">
+          <i class="fas fa-cloud-rain" style="font-size:2.5rem;color:#0ea5e9;margin-bottom:12px"></i>
+          <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:4px">ปริมาณน้ำฝน</div>
+          <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:700;color:#0ea5e9">-- mm</div>
+          <div style="font-size:.7rem;color:var(--text-muted);margin-top:8px">รอเชื่อมต่อเซนเซอร์</div>
+        </div>
+        <div class="station-footer">
+          <div class="trend-info"><i class="fas fa-clock" style="color:var(--text-muted)"></i><span style="color:var(--text-muted)">อัปเดตล่าสุด</span></div>
+          <div class="station-time"><i class="far fa-clock"></i> ${timeStr}</div>
+        </div>
+      </div>`;
+    }
 
     return`
     <div class="station-card" data-level="${info.level}" onclick="openModal('${s.id}')">
