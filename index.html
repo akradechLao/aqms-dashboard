@@ -721,10 +721,10 @@ const STATIONS = [
   { id:'006', name:'รพ.สต.มาบยางพร', site:'นิคมอมตะซิตี้ ระยอง', source:'amata', lat:'12.990007', lng:'101.132882' },
   { id:'PT5', name:'สถานี ปิ่นทอง โครงการ 5', site:'นิคมปิ่นทอง 5', source:'pt5', lat:'13.092803', lng:'101.157933' },
   { id:'BYY', name:'โรงเรียนบ้านยายจั่น', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'lakchai', lat:'12.705699', lng:'101.469729' },
-  { id:'RF01', name:'สถานีวัดปริมาณน้ำฝน', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.727041', lng:'101.467966', image:'https://www.tisi.go.kr/uploads/tisi/facility/image/2023/04/17/3a3a7a6c-2f7e-4e1b-9c6e-0a1b2c3d4e5f.png' },
-  { id:'RF02', name:'สถานีวัดปริมาณน้ำฝน (แห่งที่ 2)', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.718200', lng:'101.463500', image:'https://www.tisi.go.kr/uploads/tisi/facility/image/2023/04/17/3a3a7a6c-2f7e-4e1b-9c6e-0a1b2c3d4e5f.png' },
-  { id:'WL01', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 1', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.710500', lng:'101.471200', image:'https://cdn-icons-png.flaticon.com/512/2928/2928897.png' },
-  { id:'WL02', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 2', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.715800', lng:'101.475100', image:'https://cdn-icons-png.flaticon.com/512/2928/2928897.png' },
+  { id:'RF01', name:'สถานีวัดปริมาณน้ำฝน', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.727041', lng:'101.467966', image:'assets/rf1.jpg' },
+  { id:'RF02', name:'สถานีวัดปริมาณน้ำฝน (แห่งที่ 2)', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.718200', lng:'101.463500', image:'assets/rf2.jpg' },
+  { id:'WL01', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 1', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.710500', lng:'101.471200', image:'assets/wl1.jpg' },
+  { id:'WL02', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 2', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.715800', lng:'101.475100', image:'assets/wl2.jpg' },
 ];
 
 const AMATA_TOKEN = '1|uDd7ptCf9hdOR3irFocfHbLgm2ePrSRXPugUCvz7d4283131';
@@ -1123,6 +1123,7 @@ function renderRainGauges(){
     const isOnline=d.online?'online':'';
     return`
     <div class="rain-card" onclick="openModal('${s.id}')">
+      ${s.image?`<img src="${s.image}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:12px" onerror="this.style.display='none'" alt="${s.name}"/>`:''}
       <div class="rain-header">
         <span class="rain-id"><i class="fas fa-cloud-rain"></i> ${s.id}</span>
         <div class="rain-status ${isOnline}"><span class="blink"></span> ${d.online?'LIVE':'OFFLINE'}</div>
@@ -1150,6 +1151,7 @@ function renderWaterLevelStations(){
     const isOnline=d.online?'online':'';
     return`
     <div class="water-card" onclick="openModal('${s.id}')">
+      ${s.image?`<img src="${s.image}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:12px" onerror="this.style.display='none'" alt="${s.name}"/>`:''}
       <div class="water-header">
         <span class="water-id"><i class="fas fa-water"></i> ${s.id}</span>
         <div class="water-status ${isOnline}"><span class="blink"></span> ${d.online?'LIVE':'OFFLINE'}</div>
@@ -1243,6 +1245,7 @@ function openModal(id){
   if(isRainfall){
     document.getElementById('modalTitle').innerHTML=`<i class="fas fa-cloud-rain" style="color:#0ea5e9"></i> ${s.id} ${s.name}`;
     document.getElementById('modalGrid').innerHTML=`
+      ${s.image?`<div style="grid-column:1/-1"><img src="${s.image}" style="width:100%;height:180px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'" alt="${s.name}"/></div>`:''}
       <div class="modal-stat" style="grid-column:1/-1;background:rgba(14,165,233,0.05);border-color:rgba(14,165,233,0.2)">
         <div class="label" style="color:#0369a1">ปริมาณน้ำฝน</div>
         <div class="value" style="color:#0ea5e9;font-size:2rem">${d.rain!=null?d.rain.toFixed(1):'--'} mm</div>
@@ -1258,6 +1261,7 @@ function openModal(id){
   }else if(isWaterLevel){
     document.getElementById('modalTitle').innerHTML=`<i class="fas fa-water" style="color:#10b981"></i> ${s.id} ${s.name}`;
     document.getElementById('modalGrid').innerHTML=`
+      ${s.image?`<div style="grid-column:1/-1"><img src="${s.image}" style="width:100%;height:180px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'" alt="${s.name}"/></div>`:''}
       <div class="modal-stat" style="grid-column:1/-1;background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)">
         <div class="label" style="color:#047857">ระดับน้ำ</div>
         <div class="value" style="color:#10b981;font-size:2rem">${d.waterLevel!=null?d.waterLevel.toFixed(2):'--'} m</div>
