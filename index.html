@@ -336,6 +336,23 @@ body{
 .modal-stat .unit{font-size:.68rem;color:var(--text-muted);font-weight:500}
 .modal-chart-wrap{height:260px;margin-top:20px}
 .modal-chart-wrap canvas{width:100%!important;height:100%!important}
+.time-tabs{display:flex;gap:4px;margin:16px 0 8px;flex-wrap:wrap}
+.time-tab{padding:5px 12px;border-radius:16px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid rgba(0,0,0,0.1);background:rgba(0,0,0,0.03);color:var(--text-muted);transition:all .2s}
+.time-tab:hover{background:rgba(0,0,0,0.06)}
+.time-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.modal-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.modal-stat-box{background:rgba(0,0,0,0.03);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(0,0,0,0.05)}
+.modal-stat-box .ms-label{font-size:.65rem;color:var(--text-muted);margin-bottom:2px}
+.modal-stat-box .ms-value{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:var(--text-primary)}
+.modal-stat-box .ms-unit{font-size:.58rem;color:var(--text-muted)}
+.modal-insights{margin-top:14px;border-top:1px solid rgba(0,0,0,0.06);padding-top:12px}
+.modal-insights-title{font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.insight-item{display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:6px;margin-bottom:4px;font-size:.75rem;line-height:1.4}
+.insight-item.danger{background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.15)}
+.insight-item.warning{background:rgba(234,88,12,0.06);border:1px solid rgba(234,88,12,0.15)}
+.insight-item.info{background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.15)}
+.insight-item.neutral{background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.06)}
+.modal-station-image{width:100%;height:180px;object-fit:cover;border-radius:8px;margin-bottom:12px}
 
 .map-section{
   margin:20px 0;position:relative;
@@ -863,6 +880,105 @@ const SIM = {
 SIM.init();
 setInterval(()=>{ SIM.init(); }, 60000);
 
+const HistData = {
+  _store: {},
+  generate(type, hours, baseFn){
+    const key=type+'_'+hours;
+    const now=Date.now();
+    const points=hours<=24? hours*4 : hours<=168? hours : hours<=720? hours*2 : 365;
+    const step=(hours*3600*1000)/points;
+    const data=[];
+    for(let i=0;i<points;i++){
+      const t=new Date(now-(points-1-i)*step);
+      const v=baseFn(t,i,points);
+      data.push({t,v:+v.toFixed(2)});
+    }
+    this._store[key]=data;
+    return data;
+  },
+  getRainfall(hours){
+    const cacheKey='rf_'+hours;
+    if(this._store[cacheKey]) return this._store[cacheKey];
+    return this.generate('rf_'+hours,hours,(t,i,n)=>{
+      const h=t.getHours();
+      const isRainy=(h>=12&&h<=18);
+      const seasonal=Math.sin((t.getDate()/30)*Math.PI)*3;
+      const daily=isRainy? Math.random()*8+2 : Math.random()*1.5;
+      return Math.max(0,daily+seasonal+(Math.random()-0.5)*2);
+    });
+  },
+  getWaterLevel(idx,hours){
+    const cacheKey='wl_'+idx+'_'+hours;
+    if(this._store[cacheKey]) return this._store[cacheKey];
+    const base=SIM._wlBase[idx]||2.0;
+    return this.generate(cacheKey,hours,(t,i,n)=>{
+      const h=t.getHours();
+      const tide=Math.sin((h/24)*Math.PI*2)*0.2;
+      const slow=Math.sin((i/n)*Math.PI*4)*0.1;
+      return base+tide+slow+(Math.random()-0.5)*0.05;
+    });
+  },
+  getFlowRate(idx,hours){
+    const cacheKey='fl_'+idx+'_'+hours;
+    if(this._store[cacheKey]) return this._store[cacheKey];
+    const base=SIM._flowBase[idx]||40;
+    return this.generate(cacheKey,hours,(t,i,n)=>{
+      const h=t.getHours();
+      const usage=Math.sin((h/24)*Math.PI*2)*8;
+      return Math.max(0,base+usage+(Math.random()-0.5)*5);
+    });
+  },
+  clear(){this._store={};}
+};
+setInterval(()=>{HistData.clear();},300000);
+
+function calcStats(arr){
+  if(!arr||arr.length===0) return {min:0,max:0,avg:0,sum:0,std:0,trend:0};
+  const vals=arr.map(d=>d.v);
+  const min=Math.min(...vals);
+  const max=Math.max(...vals);
+  const sum=vals.reduce((a,b)=>a+b,0);
+  const avg=sum/vals.length;
+  const std=Math.sqrt(vals.reduce((s,v)=>s+(v-avg)**2,0)/vals.length);
+  const first=vals.slice(0,Math.floor(vals.length/3));
+  const last=vals.slice(-Math.floor(vals.length/3));
+  const fAvg=first.reduce((a,b)=>a+b,0)/first.length;
+  const lAvg=last.reduce((a,b)=>a+b,0)/last.length;
+  const trend=lAvg-fAvg;
+  return {min:+min.toFixed(2),max:+max.toFixed(2),avg:+avg.toFixed(2),sum:+sum.toFixed(2),std:+std.toFixed(2),trend:+trend.toFixed(2)};
+}
+
+function getInsights(type,d,stats){
+  const insights=[];
+  if(type==='rainfall'){
+    if(stats.max>20) insights.push({icon:'⚠️',color:'#dc2626',text:`ฝนตกหนักสุด ${stats.max} mm — อาจเกิดน้ำท่วมขัง`,level:'danger'});
+    else if(stats.max>10) insights.push({icon:'🌧️',color:'#ea580c',text:`ฝนตกหนัก ${stats.max} mm — ตรวจสอบระบบระบายน้ำ`,level:'warning'});
+    if(stats.avg<1&&stats.sum<5) insights.push({icon:'☀️',color:'#059669',text:'ปริมาณฝนต่ำ — น้ำในบ่ออาจลดลง ควรสำรองน้ำ',level:'info'});
+    if(stats.trend>2) insights.push({icon:'📈',color:'#ea580c',text:'แนวโน้มฝนเพิ่มขึ้น — เตรียมรับมือน้ำฝน',level:'warning'});
+    else if(stats.trend<-2) insights.push({icon:'📉',color:'#059669',text:'แนวโน้มฝนลดลง — สถานการณ์ปกติ',level:'info'});
+    const intensity=stats.max>0?(stats.max/1).toFixed(1):0;
+    if(intensity>30) insights.push({icon:'🌊',color:'#dc2626',text:'ความรุนแรงฝนสูง >30mm/ชม. — ระดับเตือนภัย',level:'danger'});
+    insights.push({icon:'🌱',color:'#0369a1',text:'ใช้ข้อมูลฝนวางแผนการชลประทานและการเกษตร',level:'info'});
+  } else if(type==='waterLevel'){
+    if(stats.max>3.0) insights.push({icon:'⚠️',color:'#dc2626',text:`ระดับน้ำสูงสุด ${stats.max} m — เฝ้าระวังน้ำล้น`,level:'danger'});
+    else if(stats.max>2.8) insights.push({icon:'📈',color:'#ea580c',text:`ระดับน้ำใกล้จุดสูง ${stats.max} m`,level:'warning'});
+    if(stats.min<1.5) insights.push({icon:'📉',color:'#ea580c',text:`ระดับน้ำต่ำสุด ${stats.min} m — ตรวจสอบปั๊ม`,level:'warning'});
+    if(stats.std>0.3) insights.push({icon:'📊',color:'#ea580c',text:'ระดับน้ำผันผวนมาก — ตรวจสอบวาล์วควบคุม',level:'warning'});
+    if(Math.abs(stats.trend)>0.2) insights.push({icon:stats.trend>0?'📈':'📉',color:'#0369a1',text:`แนวโน้มระดับน้ำ${stats.trend>0?'เพิ่มขึ้น':'ลดลง'} ${Math.abs(stats.trend).toFixed(2)} m`,level:'info'});
+    insights.push({icon:'💧',color:'#047857',text:'คำนวณอัตราการสูบน้ำจากค่าระดับน้ำและการไหล',level:'info'});
+  } else if(type==='flowRate'){
+    if(stats.max>80) insights.push({icon:'⚠️',color:'#dc2626',text:`อัตราการไหลสูง ${stats.max} m³/h — ตรวจสอบท่อ`,level:'danger'});
+    if(stats.avg<10) insights.push({icon:'📉',color:'#ea580c',text:`อัตราการไหลต่ำเฉลี่ย ${stats.avg} m³/h — อาจมีการอุดตัน`,level:'warning'});
+    if(stats.std>15) insights.push({icon:'📊',color:'#ea580c',text:'อัตราการไหลผันผวน — ตรวจสอบปั๊มและวาล์ว',level:'warning'});
+    const dailyTotal=stats.avg*24;
+    insights.push({icon:'📦',color:'#0369a1',text:`ปริมาณน้ำใช้ต่อวันประมาณ ${dailyTotal.toFixed(0)} m³/วัน`,level:'info'});
+    insights.push({icon:'🏭',color:'#047857',text:'เปรียบเทียบอัตราการไหลกับความต้องการของโรงงาน',level:'info'});
+  }
+  if(stats.trend>0) insights.push({icon:'↗️',color:'#64748b',text:`ค่าเพิ่มขึ้น ${stats.trend.toFixed(2)} จากช่วงต้น`,level:'neutral'});
+  else if(stats.trend<0) insights.push({icon:'↘️',color:'#64748b',text:`ค่าลดลง ${Math.abs(stats.trend).toFixed(2)} จากช่วงต้น`,level:'neutral'});
+  return insights;
+}
+
 const THAI_STANDARDS = {
   pm25: { limit:37.5, unit:'µg/m³', label:'มาตรฐาน' },
   pm10: { limit:100, unit:'µg/m³', label:'มาตรฐาน' },
@@ -1243,48 +1359,81 @@ function openModal(id){
   const isWaterLevel=s.source==='waterLevel';
   
   if(isRainfall){
+    const rainVal=d.rain!=null?d.rain.toFixed(1):'--';
     document.getElementById('modalTitle').innerHTML=`<i class="fas fa-cloud-rain" style="color:#0ea5e9"></i> ${s.id} ${s.name}`;
     document.getElementById('modalGrid').innerHTML=`
-      ${s.image?`<div style="grid-column:1/-1"><img src="${s.image}" style="width:100%;height:180px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'" alt="${s.name}"/></div>`:''}
+      ${s.image?`<img class="modal-station-image" src="${s.image}" onerror="this.style.display='none'" alt="${s.name}"/>`:''}
       <div class="modal-stat" style="grid-column:1/-1;background:rgba(14,165,233,0.05);border-color:rgba(14,165,233,0.2)">
-        <div class="label" style="color:#0369a1">ปริมาณน้ำฝน</div>
-        <div class="value" style="color:#0ea5e9;font-size:2rem">${d.rain!=null?d.rain.toFixed(1):'--'} mm</div>
-        <div class="unit">สะสม 24 ชม.</div>
+        <div class="label" style="color:#0369a1">ปริมาณน้ำฝนปัจจุบัน</div>
+        <div class="value" style="color:#0ea5e9;font-size:2rem">${rainVal} mm</div>
+        <div class="unit">วัดล่าสุด</div>
       </div>
+      <div style="grid-column:1/-1">
+        <div class="time-tabs" id="rfTimeTabs">
+          <div class="time-tab active" onclick="switchTimeTab('rainfall','${s.id}',1,this)">1 ชม.</div>
+          <div class="time-tab" onclick="switchTimeTab('rainfall','${s.id}',6,this)">6 ชม.</div>
+          <div class="time-tab" onclick="switchTimeTab('rainfall','${s.id}',24,this)">24 ชม.</div>
+          <div class="time-tab" onclick="switchTimeTab('rainfall','${s.id}',168,this)">7 วัน</div>
+          <div class="time-tab" onclick="switchTimeTab('rainfall','${s.id}',720,this)">30 วัน</div>
+        </div>
+        <div class="modal-chart-wrap" style="height:200px;margin-top:4px"><canvas id="modalChart"></canvas></div>
+      </div>
+      <div id="rfStatsArea" style="grid-column:1/-1"></div>
+      <div id="rfInsightsArea" style="grid-column:1/-1"></div>
       <div class="modal-stat" style="grid-column:1/-1">
         <div class="label">พิกัดที่ตั้ง</div>
         <div class="value" style="font-size:1rem">${s.lat}, ${s.lng}</div>
         <div class="unit">${s.site}</div>
       </div>
     `;
-    document.querySelector('.modal-chart-wrap').style.display='none';
+    document.querySelector('.modal-chart-wrap').style.display='';
+    switchTimeTab('rainfall',s.id,1,null);
   }else if(isWaterLevel){
+    const wlVal=d.waterLevel!=null?d.waterLevel.toFixed(2):'--';
+    const flVal=d.flowRate!=null?d.flowRate.toFixed(1):'--';
     document.getElementById('modalTitle').innerHTML=`<i class="fas fa-water" style="color:#10b981"></i> ${s.id} ${s.name}`;
     document.getElementById('modalGrid').innerHTML=`
-      ${s.image?`<div style="grid-column:1/-1"><img src="${s.image}" style="width:100%;height:180px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'" alt="${s.name}"/></div>`:''}
-      <div class="modal-stat" style="grid-column:1/-1;background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)">
+      ${s.image?`<img class="modal-station-image" src="${s.image}" onerror="this.style.display='none'" alt="${s.name}"/>`:''}
+      <div class="modal-stat" style="background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)">
         <div class="label" style="color:#047857">ระดับน้ำ</div>
-        <div class="value" style="color:#10b981;font-size:2rem">${d.waterLevel!=null?d.waterLevel.toFixed(2):'--'} m</div>
-        <div class="unit">ระดับปัจจุบัน</div>
+        <div class="value" style="color:#10b981;font-size:1.8rem">${wlVal} m</div>
+        <div class="unit">ปัจจุบัน</div>
       </div>
-      <div class="modal-stat" style="grid-column:1/-1;background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)">
+      <div class="modal-stat" style="background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)">
         <div class="label" style="color:#047857">อัตราการไหล</div>
-        <div class="value" style="color:#10b981;font-size:2rem">${d.flowRate!=null?d.flowRate.toFixed(1):'--'} m³/h</div>
-        <div class="unit">อัตราการไหลปัจจุบัน</div>
+        <div class="value" style="color:#10b981;font-size:1.8rem">${flVal} m³/h</div>
+        <div class="unit">ปัจจุบัน</div>
       </div>
+      <div style="grid-column:1/-1">
+        <div class="time-tabs" id="wlTimeTabs">
+          <div class="time-tab active" onclick="switchTimeTab('waterLevel','${s.id}',1,this)">1 ชม.</div>
+          <div class="time-tab" onclick="switchTimeTab('waterLevel','${s.id}',6,this)">6 ชม.</div>
+          <div class="time-tab" onclick="switchTimeTab('waterLevel','${s.id}',24,this)">24 ชม.</div>
+          <div class="time-tab" onclick="switchTimeTab('waterLevel','${s.id}',168,this)">7 วัน</div>
+          <div class="time-tab" onclick="switchTimeTab('waterLevel','${s.id}',720,this)">30 วัน</div>
+        </div>
+        <div class="modal-chart-wrap" style="height:200px;margin-top:4px"><canvas id="modalChart"></canvas></div>
+      </div>
+      <div id="wlStatsArea" style="grid-column:1/-1"></div>
+      <div id="wlInsightsArea" style="grid-column:1/-1"></div>
       <div class="modal-stat" style="grid-column:1/-1">
         <div class="label">พิกัดที่ตั้ง</div>
         <div class="value" style="font-size:1rem">${s.lat}, ${s.lng}</div>
         <div class="unit">${s.site}</div>
       </div>
     `;
-    document.querySelector('.modal-chart-wrap').style.display='none';
+    document.querySelector('.modal-chart-wrap').style.display='';
+    switchTimeTab('waterLevel',s.id,1,null);
   }else{
     document.querySelector('.modal-chart-wrap').style.display='';
     const info=getAQILevel(d.aqi);
     document.getElementById('modalTitle').innerHTML=`<span style="color:${info.color}">${s.id}</span> ${s.name}`;
     document.getElementById('modalGrid').innerHTML=`
-      <div class="modal-stat"><div class="label">AQI</div><div class="value" style="color:${info.color}">${d.aqi!=null?d.aqi:'--'}</div><div class="unit">${info.label}</div></div>
+      <div class="modal-stat" style="grid-column:1/-1;background:${info.bg};border-color:${info.color}20">
+        <div class="label" style="color:${info.color}">ดัชนีคุณภาพอากาศ (AQI)</div>
+        <div class="value" style="color:${info.color};font-size:2.2rem">${d.aqi!=null?d.aqi:'--'}</div>
+        <div class="unit">${info.label}</div>
+      </div>
       ${d.pm25!=null?`<div class="modal-stat"><div class="label">PM2.5</div><div class="value">${fmt(d.pm25)}</div><div class="unit">µg/m³ (มาตรฐาน 37.5)</div></div>`:''}
       <div class="modal-stat"><div class="label">PM10</div><div class="value">${fmt(d.pm10)}</div><div class="unit">µg/m³ (มาตรฐาน 100)</div></div>
       <div class="modal-stat"><div class="label">TSP</div><div class="value">${fmt(d.tsp)}</div><div class="unit">µg/m³ (มาตรฐาน 200)</div></div>
@@ -1292,36 +1441,163 @@ function openModal(id){
       <div class="modal-stat"><div class="label">NO₂</div><div class="value">${fmt(d.no2)}</div><div class="unit">ppb (มาตรฐาน 120)</div></div>
       <div class="modal-stat"><div class="label">อุณหภูมิ</div><div class="value">${fmt(d.temp)}</div><div class="unit">°C</div></div>
       <div class="modal-stat"><div class="label">ความชื้น</div><div class="value">${fmt(d.humidity)}</div><div class="unit">%</div></div>
-      <div class="modal-stat"><div class="label">ลม</div><div class="value">${fmt(d.wind)}</div><div class="unit">m/s</div></div>
-      <div class="modal-stat"><div class="label">ทิศลม</div><div class="value">${d.windDir!=null?degToCompass(d.windDir):'--'}</div><div class="unit">${fmt(d.windDir)}°</div></div>
+      <div class="modal-stat"><div class="label">ลม</div><div class="value">${fmt(d.wind)}</div><div class="unit">m/s ${d.windDir!=null?'('+degToCompass(d.windDir)+')':''}</div></div>
       <div class="modal-stat"><div class="label">ปริมาณฝน</div><div class="value">${fmt(d.rain)}</div><div class="unit">mm</div></div>
       <div class="modal-stat"><div class="label">ความกดอากาศ</div><div class="value">${fmt(d.pressure)}</div><div class="unit">hPa</div></div>
+      <div style="grid-column:1/-1">
+        <div class="time-tabs" id="aqTimeTabs">
+          <div class="time-tab active" onclick="switchAQTab('${s.id}',24,this)">24 ชม.</div>
+          <div class="time-tab" onclick="switchAQTab('${s.id}',168,this)">7 วัน</div>
+          <div class="time-tab" onclick="switchAQTab('${s.id}',720,this)">30 วัน</div>
+        </div>
+        <div class="modal-chart-wrap" style="height:200px;margin-top:4px"><canvas id="modalChart"></canvas></div>
+      </div>
+      <div id="aqStatsArea" style="grid-column:1/-1"></div>
     `;
-    if(modalChartInstance)modalChartInstance.destroy();
-    const ctx=document.getElementById('modalChart').getContext('2d');
-    const hist=d.history&&d.history.length>0?d.history:[0];
-    modalChartInstance=new Chart(ctx,{
-      type:'line',
-      data:{
-        labels:hist.map((_,i)=>`${hist.length-i} ชม.`),
-        datasets:[{
-          label:'AQI',data:hist,borderColor:info.color,borderWidth:2.5,
-          fill:true,backgroundColor:info.color+'15',pointRadius:3,pointBackgroundColor:info.color,
-          pointBorderColor:'#fff',pointBorderWidth:1.5,tension:.3,
-        }]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{labels:{color:'#475569',font:{size:12,family:'Sarabun'},usePointStyle:true}}},
-        scales:{
-          x:{ticks:{color:'#64748b',font:{size:11,family:'Sarabun'},maxTicksLimit:8},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'}},
-          y:{ticks:{color:'#64748b',font:{size:11,family:'Sarabun'}},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'},beginAtZero:true}
-        }
-      }
-    });
+    switchAQTab(s.id,24,null);
   }
   document.getElementById('modalOverlay').classList.add('active');
 }
+function switchTimeTab(type,stationId,hours,tabEl){
+  if(tabEl){
+    const tabs=tabEl.parentElement.querySelectorAll('.time-tab');
+    tabs.forEach(t=>t.classList.remove('active'));
+    tabEl.classList.add('active');
+  }
+  let data,label,unit,color,bgColor;
+  if(type==='rainfall'){
+    data=HistData.getRainfall(hours);
+    label='ปริมาณน้ำฝน';unit='mm';color='#0ea5e9';bgColor='rgba(14,165,233,0.1)';
+    const stats=calcStats(data);
+    const insights=getInsights('rainfall',d,stats);
+    document.getElementById('rfStatsArea').innerHTML=`
+      <div class="modal-stats-grid">
+        <div class="modal-stat-box"><div class="ms-label">ต่ำสุด</div><div class="ms-value" style="color:#0ea5e9">${stats.min}</div><div class="ms-unit">mm</div></div>
+        <div class="modal-stat-box"><div class="ms-label">สูงสุด</div><div class="ms-value" style="color:#dc2626">${stats.max}</div><div class="ms-unit">mm</div></div>
+        <div class="modal-stat-box"><div class="ms-label">เฉลี่ย</div><div class="ms-value" style="color:#0369a1">${stats.avg}</div><div class="ms-unit">mm</div></div>
+        <div class="modal-stat-box"><div class="ms-label">สะสมรวม</div><div class="ms-value" style="color:#0ea5e9">${stats.sum}</div><div class="ms-unit">mm</div></div>
+        <div class="modal-stat-box"><div class="ms-label">ค่าเบี่ยงเบน</div><div class="ms-value" style="color:#64748b">${stats.std}</div><div class="ms-unit">mm</div></div>
+        <div class="modal-stat-box"><div class="ms-label">แนวโน้ม</div><div class="ms-value" style="color:${stats.trend>0?'#dc2626':'#059669'}">${stats.trend>0?'+':''}${stats.trend}</div><div class="ms-unit">mm</div></div>
+      </div>
+    `;
+    document.getElementById('rfInsightsArea').innerHTML=`
+      <div class="modal-insights">
+        <div class="modal-insights-title"><i class="fas fa-lightbulb" style="color:#eab308"></i> ข้อมูลเชิงลึก</div>
+        ${insights.map(i=>`<div class="insight-item ${i.level}"><span>${i.icon}</span><span style="color:${i.color}">${i.text}</span></div>`).join('')}
+      </div>
+    `;
+  }else if(type==='waterLevel'){
+    const s=STATIONS.find(x=>x.id===stationId);
+    const wlIdx=s.id==='WL01'?0:1;
+    const wlData=HistData.getWaterLevel(wlIdx,hours);
+    const flData=HistData.getFlowRate(wlIdx,hours);
+    data=wlData;label='ระดับน้ำ';unit='m';color='#10b981';bgColor='rgba(16,185,129,0.1)';
+    const wlStats=calcStats(wlData);
+    const flStats=calcStats(flData);
+    const insightsWL=getInsights('waterLevel',d,wlStats);
+    const insightsFL=getInsights('flowRate',d,flStats);
+    document.getElementById('wlStatsArea').innerHTML=`
+      <div style="font-size:.75rem;font-weight:700;color:var(--text);margin:10px 0 6px"><i class="fas fa-water" style="color:#10b981"></i> ระดับน้ำ</div>
+      <div class="modal-stats-grid">
+        <div class="modal-stat-box"><div class="ms-label">ต่ำสุด</div><div class="ms-value" style="color:#10b981">${wlStats.min}</div><div class="ms-unit">m</div></div>
+        <div class="modal-stat-box"><div class="ms-label">สูงสุด</div><div class="ms-value" style="color:#dc2626">${wlStats.max}</div><div class="ms-unit">m</div></div>
+        <div class="modal-stat-box"><div class="ms-label">เฉลี่ย</div><div class="ms-value" style="color:#047857">${wlStats.avg}</div><div class="ms-unit">m</div></div>
+      </div>
+      <div style="font-size:.75rem;font-weight:700;color:var(--text);margin:10px 0 6px"><i class="fas fa-exchange-alt" style="color:#10b981"></i> อัตราการไหล</div>
+      <div class="modal-stats-grid">
+        <div class="modal-stat-box"><div class="ms-label">ต่ำสุด</div><div class="ms-value" style="color:#10b981">${flStats.min}</div><div class="ms-unit">m³/h</div></div>
+        <div class="modal-stat-box"><div class="ms-label">สูงสุด</div><div class="ms-value" style="color:#dc2626">${flStats.max}</div><div class="ms-unit">m³/h</div></div>
+        <div class="modal-stat-box"><div class="ms-label">เฉลี่ย</div><div class="ms-value" style="color:#047857">${flStats.avg}</div><div class="ms-unit">m³/h</div></div>
+        <div class="modal-stat-box"><div class="ms-label">น้ำใช้/วัน</div><div class="ms-value" style="color:#0369a1">${(flStats.avg*24).toFixed(0)}</div><div class="ms-unit">m³</div></div>
+        <div class="modal-stat-box"><div class="ms-label">ค่าเบี่ยงเบน</div><div class="ms-value" style="color:#64748b">${flStats.std}</div><div class="ms-unit">m³/h</div></div>
+        <div class="modal-stat-box"><div class="ms-label">แนวโน้ม</div><div class="ms-value" style="color:${flStats.trend>0?'#dc2626':'#059669'}">${flStats.trend>0?'+':''}${flStats.trend}</div><div class="ms-unit">m³/h</div></div>
+      </div>
+    `;
+    document.getElementById('wlInsightsArea').innerHTML=`
+      <div class="modal-insights">
+        <div class="modal-insights-title"><i class="fas fa-lightbulb" style="color:#eab308"></i> ข้อมูลเชิงลึก</div>
+        ${[...insightsWL,...insightsFL].map(i=>`<div class="insight-item ${i.level}"><span>${i.icon}</span><span style="color:${i.color}">${i.text}</span></div>`).join('')}
+      </div>
+    `;
+  }
+  if(modalChartInstance)modalChartInstance.destroy();
+  const ctx=document.getElementById('modalChart').getContext('2d');
+  const labels=data.map(d=>{const t=new Date(d.t);return hours<=24?t.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false}):t.toLocaleDateString('th-TH',{day:'2-digit',month:'short'});});
+  const isWL=type==='waterLevel';
+  modalChartInstance=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:label,data:data.map(d=>d.v),borderColor:color,borderWidth:2,
+        fill:true,backgroundColor:bgColor,pointRadius:0,tension:.3,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#475569',font:{size:11,family:'Sarabun'},usePointStyle:true}},
+        tooltip:{callbacks:{label:ctx=>`${label}: ${ctx.parsed.y} ${unit}`}}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxTicksLimit:8},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'}},
+        y:{ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'}},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'},beginAtZero:isWL?false:true}
+      },
+      interaction:{intersect:false,mode:'index'},
+      animation:{duration:800}
+    }
+  });
+}
+
+function switchAQTab(stationId,hours,tabEl){
+  if(tabEl){
+    const tabs=tabEl.parentElement.querySelectorAll('.time-tab');
+    tabs.forEach(t=>t.classList.remove('active'));
+    tabEl.classList.add('active');
+  }
+  const d=stationData[stationId]||{};
+  const info=getAQILevel(d.aqi);
+  const hist=d.history&&d.history.length>0?d.history:[0];
+  const labels=hist.map((_,i)=>hours<=24?`${hist.length-i} ชม.`:`วันที่ ${hist.length-i}`);
+  if(modalChartInstance)modalChartInstance.destroy();
+  const ctx=document.getElementById('modalChart').getContext('2d');
+  modalChartInstance=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:'AQI',data:hist,borderColor:info.color,borderWidth:2.5,
+        fill:true,backgroundColor:info.color+'15',pointRadius:3,pointBackgroundColor:info.color,
+        pointBorderColor:'#fff',pointBorderWidth:1.5,tension:.3,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#475569',font:{size:11,family:'Sarabun'},usePointStyle:true}}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxTicksLimit:8},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'}},
+        y:{ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'}},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'},beginAtZero:true}
+      },
+      animation:{duration:800}
+    }
+  });
+  const stats=calcStats(hist.map((v,i)=>({t:i,v:v})));
+  const aqiInsights=[];
+  if(d.aqi!=null){
+    if(d.aqi<=25) aqiInsights.push({icon:'🌿',color:'#059669',text:'อากาศดี เหมาะกับกิจกรรมกลางแจ้ง',level:'info'});
+    else if(d.aqi<=50) aqiInsights.push({icon:'😊',color:'#eab308',text:'อากาศปานกลาง กลุ่มเสี่ยงควรระวัง',level:'info'});
+    else if(d.aqi<=100) aqiInsights.push({icon:'⚠️',color:'#ea580c',text:'เริ่มมีผลต่อสุขภาพ กลุ่มเสี่ยงควรงดกิจกรรมกลางแจ้ง',level:'warning'});
+    else aqiInsights.push({icon:'🚨',color:'#dc2626',text:'มีผลต่อสุขภาพทุกกลุ่ม ควรหลีกเลี่ยงกิจกรรมกลางแจ้ง',level:'danger'});
+  }
+  document.getElementById('aqStatsArea').innerHTML=`
+    <div class="modal-stats-grid" style="margin-top:12px">
+      <div class="modal-stat-box"><div class="ms-label">AQI ต่ำสุด</div><div class="ms-value" style="color:#059669">${stats.min}</div></div>
+      <div class="modal-stat-box"><div class="ms-label">AQI สูงสุด</div><div class="ms-value" style="color:#dc2626">${stats.max}</div></div>
+      <div class="modal-stat-box"><div class="ms-label">AQI เฉลี่ย</div><div class="ms-value" style="color:${info.color}">${stats.avg}</div></div>
+    </div>
+    ${aqiInsights.length?`<div class="modal-insights"><div class="modal-insights-title"><i class="fas fa-heart" style="color:#dc2626"></i> คำแนะนำด้านสุขภาพ</div>
+    ${aqiInsights.map(i=>`<div class="insight-item ${i.level}"><span>${i.icon}</span><span style="color:${i.color}">${i.text}</span></div>`).join('')}</div>`:''}
+  `;
+}
+
 function closeModal(){document.getElementById('modalOverlay').classList.remove('active')}
 document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
