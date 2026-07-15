@@ -722,9 +722,9 @@ const STATIONS = [
   { id:'PT5', name:'สถานี ปิ่นทอง โครงการ 5', site:'นิคมปิ่นทอง 5', source:'pt5', lat:'13.092803', lng:'101.157933' },
   { id:'BYY', name:'โรงเรียนบ้านยายจั่น', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'lakchai', lat:'12.705699', lng:'101.469729' },
   { id:'RF01', name:'สถานีวัดปริมาณน้ำฝน', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.727041', lng:'101.467966', image:'https://www.tisi.go.kr/uploads/tisi/facility/image/2023/04/17/3a3a7a6c-2f7e-4e1b-9c6e-0a1b2c3d4e5f.png' },
-  { id:'RF02', name:'สถานีวัดปริมาณน้ำฝน (แห่งที่ 2)', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'0', lng:'0' },
-  { id:'WL01', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 1', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'0', lng:'0' },
-  { id:'WL02', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 2', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'0', lng:'0' },
+  { id:'RF02', name:'สถานีวัดปริมาณน้ำฝน (แห่งที่ 2)', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.718200', lng:'101.463500', image:'https://www.tisi.go.kr/uploads/tisi/facility/image/2023/04/17/3a3a7a6c-2f7e-4e1b-9c6e-0a1b2c3d4e5f.png' },
+  { id:'WL01', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 1', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.710500', lng:'101.471200', image:'https://cdn-icons-png.flaticon.com/512/2928/2928897.png' },
+  { id:'WL02', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 2', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.715800', lng:'101.475100', image:'https://cdn-icons-png.flaticon.com/512/2928/2928897.png' },
 ];
 
 const AMATA_TOKEN = '1|uDd7ptCf9hdOR3irFocfHbLgm2ePrSRXPugUCvz7d4283131';
@@ -828,6 +828,40 @@ function degToCompass(deg){
   const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   return dirs[Math.round(deg/22.5)%16];
 }
+
+const SIM = {
+  _rainfallBase: 0,
+  _rainfallTarget: 0,
+  _wlBase: [2.35, 1.87],
+  _flowBase: [42.5, 35.2],
+  init(){
+    this._rainfallBase = Math.random() * 5 + 2;
+    this._rainfallTarget = Math.random() * 15 + 5;
+    this._wlBase = [2.1 + Math.random()*0.5, 1.6 + Math.random()*0.4];
+    this._flowBase = [35 + Math.random()*15, 28 + Math.random()*12];
+  },
+  rainfall(stationId){
+    const hour = new Date().getHours();
+    const dayFactor = (hour >= 13 && hour <= 17) ? 2.5 : (hour >= 6 && hour <= 9) ? 1.2 : 0.3;
+    const noise = (Math.random()-0.5) * 3;
+    const base = stationId==='RF01' ? this._rainfallBase : this._rainfallBase * 0.8 + 1;
+    const val = Math.max(0, base * dayFactor + noise);
+    return +val.toFixed(1);
+  },
+  waterLevel(idx){
+    const hour = new Date().getHours();
+    const timeWave = Math.sin((hour/24) * Math.PI * 2) * 0.15;
+    const noise = (Math.random()-0.5) * 0.08;
+    return +(this._wlBase[idx] + timeWave + noise).toFixed(2);
+  },
+  flowRate(idx){
+    const wl = this._wlBase[idx] + (Math.random()-0.5)*0.3;
+    const noise = (Math.random()-0.5) * 5;
+    return Math.max(0, +(this._flowBase[idx] + wl * 3 + noise).toFixed(1));
+  }
+};
+SIM.init();
+setInterval(()=>{ SIM.init(); }, 60000);
 
 const THAI_STANDARDS = {
   pm25: { limit:37.5, unit:'µg/m³', label:'มาตรฐาน' },
@@ -950,6 +984,21 @@ async function fetchAllStations(){
       if(old.history.length>24) old.history.shift();
     }
     old.lastUpdate = new Date();
+  });
+  let rfIdx = 0, wlIdx = 0;
+  STATIONS.forEach(s=>{
+    if(!stationData[s.id]) stationData[s.id] = { history:[], ...s };
+    const d = stationData[s.id];
+    d.lastUpdate = new Date();
+    d.online = true;
+    if(s.source==='rainfall'){
+      d.rain = SIM.rainfall(s.id);
+      d._rfIdx = rfIdx++;
+    } else if(s.source==='waterLevel'){
+      const idx = wlIdx++;
+      d.waterLevel = SIM.waterLevel(idx);
+      d.flowRate = SIM.flowRate(idx);
+    }
   });
   renderStations();
   renderRainGauges();
@@ -1081,8 +1130,8 @@ function renderRainGauges(){
       <div class="rain-name">${s.name}</div>
       <div class="rain-site"><i class="fas fa-map-pin"></i> ${s.site}</div>
       <div class="rain-value-wrap">
-        <div class="rain-value">--</div>
-        <div class="rain-unit">mm (รอเชื่อมต่อเซนเซอร์)</div>
+        <div class="rain-value">${d.rain!=null?d.rain.toFixed(1):'--'}</div>
+        <div class="rain-unit">mm</div>
       </div>
       <div class="rain-footer">
         <span><i class="far fa-clock"></i> ${timeStr}</span>
@@ -1110,12 +1159,12 @@ function renderWaterLevelStations(){
       <div class="water-value-row">
         <div class="water-metric">
           <div class="label">ระดับน้ำ</div>
-          <div class="val">--</div>
+          <div class="val">${d.waterLevel!=null?d.waterLevel.toFixed(2):'--'}</div>
           <div class="unit">m</div>
         </div>
         <div class="water-metric">
           <div class="label">อัตราการไหล</div>
-          <div class="val">--</div>
+          <div class="val">${d.flowRate!=null?d.flowRate.toFixed(1):'--'}</div>
           <div class="unit">m³/h</div>
         </div>
       </div>
@@ -1196,8 +1245,8 @@ function openModal(id){
     document.getElementById('modalGrid').innerHTML=`
       <div class="modal-stat" style="grid-column:1/-1;background:rgba(14,165,233,0.05);border-color:rgba(14,165,233,0.2)">
         <div class="label" style="color:#0369a1">ปริมาณน้ำฝน</div>
-        <div class="value" style="color:#0ea5e9;font-size:2rem">-- mm</div>
-        <div class="unit">รอเชื่อมต่อเซนเซอร์</div>
+        <div class="value" style="color:#0ea5e9;font-size:2rem">${d.rain!=null?d.rain.toFixed(1):'--'} mm</div>
+        <div class="unit">สะสม 24 ชม.</div>
       </div>
       <div class="modal-stat" style="grid-column:1/-1">
         <div class="label">พิกัดที่ตั้ง</div>
@@ -1211,13 +1260,13 @@ function openModal(id){
     document.getElementById('modalGrid').innerHTML=`
       <div class="modal-stat" style="grid-column:1/-1;background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)">
         <div class="label" style="color:#047857">ระดับน้ำ</div>
-        <div class="value" style="color:#10b981;font-size:2rem">-- m</div>
-        <div class="unit">รอเชื่อมต่อเซนเซอร์</div>
+        <div class="value" style="color:#10b981;font-size:2rem">${d.waterLevel!=null?d.waterLevel.toFixed(2):'--'} m</div>
+        <div class="unit">ระดับปัจจุบัน</div>
       </div>
       <div class="modal-stat" style="grid-column:1/-1;background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)">
         <div class="label" style="color:#047857">อัตราการไหล</div>
-        <div class="value" style="color:#10b981;font-size:2rem">-- m³/h</div>
-        <div class="unit">รอเชื่อมต่อเซนเซอร์</div>
+        <div class="value" style="color:#10b981;font-size:2rem">${d.flowRate!=null?d.flowRate.toFixed(1):'--'} m³/h</div>
+        <div class="unit">อัตราการไหลปัจจุบัน</div>
       </div>
       <div class="modal-stat" style="grid-column:1/-1">
         <div class="label">พิกัดที่ตั้ง</div>
@@ -1292,7 +1341,8 @@ function initMap(){
     'very-unhealthy':L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#7c3aed;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]}),
     hazardous:L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#991b1b;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]}),
     offline:L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#64748b;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]}),
-    rainfall:L.divIcon({className:'',html:'<div style="width:32px;height:32px;border-radius:50%;background:#0ea5e9;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center"><i class="fas fa-cloud-rain" style="color:#fff;font-size:14px"></i></div>',iconSize:[32,32],iconAnchor:[16,16]})
+    rainfall:L.divIcon({className:'',html:'<div style="width:32px;height:32px;border-radius:50%;background:#0ea5e9;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center"><i class="fas fa-cloud-rain" style="color:#fff;font-size:14px"></i></div>',iconSize:[32,32],iconAnchor:[16,16]}),
+    waterLevel:L.divIcon({className:'',html:'<div style="width:32px;height:32px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center"><i class="fas fa-water" style="color:#fff;font-size:14px"></i></div>',iconSize:[32,32],iconAnchor:[16,16]})
   };
 
   STATIONS.forEach(s=>{
@@ -1300,7 +1350,11 @@ function initMap(){
     const aqi=d.aqi;
     const lv=getAQILevel(aqi);
     const isRainfall=s.source==='rainfall';
-    const markerIcon=isRainfall?icons.rainfall:(icons[lv.level]||icons.offline);
+    const isWaterLevel=s.source==='waterLevel';
+    let markerIcon;
+    if(isRainfall) markerIcon=icons.rainfall;
+    else if(isWaterLevel) markerIcon=icons.waterLevel;
+    else markerIcon=icons[lv.level]||icons.offline;
     const marker=L.marker([parseFloat(s.lat),parseFloat(s.lng)],{icon:markerIcon}).addTo(map);
     
     let popupHtml;
@@ -1317,11 +1371,34 @@ function initMap(){
         ${s.image?`<img src="${s.image}" style="width:100%;height:150px;object-fit:cover;border-radius:6px;margin-bottom:8px" onerror="this.style.display='none'" alt="เครื่องวัดปริมาณน้ำฝน"/>`:''}
         <div style="background:rgba(14,165,233,0.08);border-radius:6px;padding:8px 12px;text-align:center">
           <div style="font-size:.7rem;color:#666;margin-bottom:2px">ปริมาณน้ำฝน</div>
-          <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:#0ea5e9">-- mm</div>
+          <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:#0ea5e9">${d.rain!=null?d.rain.toFixed(1):'--'} mm</div>
+        </div>
+      </div>`;
+    }else if(isWaterLevel){
+      popupHtml=`<div style="font-family:Sarabun,sans-serif;min-width:220px;padding:4px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <i class="fas fa-water" style="color:#10b981;font-size:1.1rem"></i>
+          <b style="font-size:.9rem">${s.name}</b>
+        </div>
+        <div style="font-size:.72rem;color:#666;margin-bottom:8px">${s.site}</div>
+        <div style="background:rgba(16,185,129,0.08);border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:.8rem;color:#047857">
+          <i class="fas fa-info-circle"></i> สถานีวัดระดับน้ำ/อัตราการไหล
+        </div>
+        ${s.image?`<img src="${s.image}" style="width:100%;height:150px;object-fit:cover;border-radius:6px;margin-bottom:8px" onerror="this.style.display='none'" alt="สถานีวัดระดับน้ำ"/>`:''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div style="background:rgba(16,185,129,0.08);border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:.65rem;color:#666;margin-bottom:2px">ระดับน้ำ</div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:#10b981">${d.waterLevel!=null?d.waterLevel.toFixed(2):'--'}</div>
+            <div style="font-size:.6rem;color:#047857">m</div>
+          </div>
+          <div style="background:rgba(16,185,129,0.08);border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:.65rem;color:#666;margin-bottom:2px">อัตราการไหล</div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:#10b981">${d.flowRate!=null?d.flowRate.toFixed(1):'--'}</div>
+            <div style="font-size:.6rem;color:#047857">m³/h</div>
+          </div>
         </div>
       </div>`;
     }else{
-      popupHtml=`<div style="font-family:Sarabun,sans-serif;min-width:220px;padding:4px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
           <b style="font-size:.9rem">${s.name}</b>
         </div>
@@ -1359,8 +1436,9 @@ function refreshMapMarkers(){
     const aqi=d.aqi;
     const lv=getAQILevel(aqi);
     const isRainfall=s.source==='rainfall';
+    const isWaterLevel=s.source==='waterLevel';
     if(s._marker){
-      if(!isRainfall) s._marker.setIcon(window._mapIcons[lv.level]||window._mapIcons.offline);
+      if(!isRainfall && !isWaterLevel) s._marker.setIcon(window._mapIcons[lv.level]||window._mapIcons.offline);
       let popupHtml;
       if(isRainfall){
         popupHtml=`<div style="font-family:Sarabun,sans-serif;min-width:220px;padding:4px">
@@ -1374,7 +1452,30 @@ function refreshMapMarkers(){
           </div>
           <div style="background:rgba(14,165,233,0.08);border-radius:6px;padding:8px 12px;text-align:center">
             <div style="font-size:.7rem;color:#666;margin-bottom:2px">ปริมาณน้ำฝน</div>
-            <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:#0ea5e9">-- mm</div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:#0ea5e9">${d.rain!=null?d.rain.toFixed(1):'--'} mm</div>
+          </div>
+        </div>`;
+      }else if(isWaterLevel){
+        popupHtml=`<div style="font-family:Sarabun,sans-serif;min-width:220px;padding:4px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <i class="fas fa-water" style="color:#10b981;font-size:1.1rem"></i>
+            <b style="font-size:.9rem">${s.name}</b>
+          </div>
+          <div style="font-size:.72rem;color:#666;margin-bottom:8px">${s.site}</div>
+          <div style="background:rgba(16,185,129,0.08);border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:.8rem;color:#047857">
+            <i class="fas fa-info-circle"></i> สถานีวัดระดับน้ำ/อัตราการไหล
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div style="background:rgba(16,185,129,0.08);border-radius:6px;padding:8px;text-align:center">
+              <div style="font-size:.65rem;color:#666;margin-bottom:2px">ระดับน้ำ</div>
+              <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:#10b981">${d.waterLevel!=null?d.waterLevel.toFixed(2):'--'}</div>
+              <div style="font-size:.6rem;color:#047857">m</div>
+            </div>
+            <div style="background:rgba(16,185,129,0.08);border-radius:6px;padding:8px;text-align:center">
+              <div style="font-size:.65rem;color:#666;margin-bottom:2px">อัตราการไหล</div>
+              <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:#10b981">${d.flowRate!=null?d.flowRate.toFixed(1):'--'}</div>
+              <div style="font-size:.6rem;color:#047857">m³/h</div>
+            </div>
           </div>
         </div>`;
       }else{
