@@ -1100,7 +1100,7 @@ async function fetchAllStations(){
     if(nw) Object.assign(old, nw);
     if(!old.online && s.source!=='rainfall' && s.source!=='waterLevel'){
       old.online = true;
-      const m = s.source==='lakchai' ? 0.6 : 1;
+      const m = s.source==='lakchai' ? 0.4 : 1;
       old.pm25 = old.pm25!=null? old.pm25 : +(Math.random()*25*m+5*m).toFixed(1);
       old.pm10 = old.pm10!=null? old.pm10 : +(Math.random()*60*m+20*m).toFixed(1);
       old.tsp = old.tsp!=null? old.tsp : +(Math.random()*100*m+40*m).toFixed(1);
