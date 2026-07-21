@@ -2290,15 +2290,29 @@ async function renderComparisonChart(){
 
     readings.sort(function(a,b){ return a.t - b.t; });
 
+    var displayData;
+    if(compareHours <= 24){
+      displayData = readings;
+    } else {
+      displayData = [];
+      var bucketSize = compareHours <= 168 ? 4 : 12;
+      for(var b=0; b<readings.length; b+=bucketSize){
+        var chunk = readings.slice(b, b+bucketSize);
+        var chunkVals = chunk.map(function(r){return r.v;}).sort(function(a,b){return a-b;});
+        var median = chunkVals[Math.floor(chunkVals.length/2)];
+        displayData.push({ t: chunk[Math.floor(chunk.length/2)].t, v: median });
+      }
+    }
+
     var smoothed = [];
-    if(readings.length >= 2){
-      for(var k=0; k<readings.length-1; k++){
-        var x0 = readings[Math.max(k-1,0)].v;
-        var y0 = readings[k].v;
-        var y1 = readings[k+1].v;
-        var x1 = readings[Math.min(k+2,readings.length-1)].v;
-        var t0 = readings[k].t;
-        var t1 = readings[k+1].t;
+    if(displayData.length >= 2 && compareHours <= 24){
+      for(var k=0; k<displayData.length-1; k++){
+        var x0 = displayData[Math.max(k-1,0)].v;
+        var y0 = displayData[k].v;
+        var y1 = displayData[k+1].v;
+        var x1 = displayData[Math.min(k+2,displayData.length-1)].v;
+        var t0 = displayData[k].t;
+        var t1 = displayData[k+1].t;
         var segPts = 8;
         for(var s=0; s<segPts; s++){
           var ratio = s / segPts;
@@ -2312,9 +2326,9 @@ async function renderComparisonChart(){
           smoothed.push({ t: tt, v: +vv.toFixed(2) });
         }
       }
-      smoothed.push(readings[readings.length-1]);
+      smoothed.push(displayData[displayData.length-1]);
     } else {
-      smoothed = readings;
+      smoothed = displayData;
     }
 
     var color = COMPARE_COLORS[idx % COMPARE_COLORS.length];
@@ -2328,14 +2342,16 @@ async function renderComparisonChart(){
     });
 
     if(readings.length>0){
-      var vals = readings.map(function(r){ return r.v; });
-      var min = Math.min.apply(null,vals);
-      var max = Math.max.apply(null,vals);
-      var avg = vals.reduce(function(a,b){return a+b;},0)/vals.length;
+      var vals = readings.map(function(r){ return r.v; }).sort(function(a,b){return a-b;});
+      var min = vals[0];
+      var max = vals[vals.length-1];
+      var median = vals[Math.floor(vals.length/2)];
+      var label = compareHours<=24 ? 'ค่าล่าสุด' : 'Median';
+      var mainVal = compareHours<=24 ? vals[vals.length-1] : median;
       summaryHtml += '<div class="compare-stat-card" style="border-left:3px solid '+color+'">'
         + '<div class="cs-name">'+stId+'</div>'
-        + '<div class="cs-val" style="color:'+color+'">'+avg.toFixed(1)+'</div>'
-        + '<div class="cs-sub">ต่ำสุด '+min.toFixed(1)+' | สูงสุด '+max.toFixed(1)+'</div>'
+        + '<div class="cs-val" style="color:'+color+'">'+mainVal.toFixed(1)+'</div>'
+        + '<div class="cs-sub">'+label+' | ต่ำสุด '+min.toFixed(1)+' | สูงสุด '+max.toFixed(1)+'</div>'
         + '</div>';
     }
     idx++;
