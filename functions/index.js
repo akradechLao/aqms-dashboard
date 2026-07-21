@@ -9,8 +9,9 @@ const AMATA_TOKEN = "1|uDd7ptCf9hdOR3irFocfHbLgm2ePrSRXPugUCvz7d4283131";
 const AMATA_PM25_TOKEN = "1|f7MPVH175GVeXbdG7VrOW2OChWVFC172KJdPA3DH0d1266f7";
 const AMATA_PM25_STATIONS = ["002", "004", "005"];
 const PT5_TOKEN = "1|SnpQPAiDIE8BjMPfOMbF0TjtHxFeo2PqP5ztKpzm33be5594";
-
 const AQ_STATIONS = ["001", "002", "003", "004", "005", "006"];
+const MAX_DUST_RETRY = 3;
+const DUST_RETRY_DELAY_MS = 60000;
 
 async function fetchWithTimeout(url, token, timeout = 8000) {
   const ctrl = new AbortController();
@@ -171,6 +172,38 @@ function calcOverallAQI(d) {
   return vals.length > 0 ? Math.max(...vals) : null;
 }
 
+async function getLastDustValues(stationId) {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const snap = await db
+      .ref(`readings/${today}/${stationId}`)
+      .orderByChild("pm25")
+      .limitToLast(1)
+      .once("value");
+    let last = null;
+    snap.forEach((child) => {
+      last = child.val();
+    });
+    return last;
+  } catch (e) {
+    return null;
+  }
+}
+
+function hasNewDustValues(current, lastRecord) {
+  if (!lastRecord) return true;
+  if (current.pm25 != null && lastRecord.pm25 != null && current.pm25 === lastRecord.pm25 &&
+      current.pm10 != null && lastRecord.pm10 != null && current.pm10 === lastRecord.pm10 &&
+      current.tsp != null && lastRecord.tsp != null && current.tsp === lastRecord.tsp) {
+    return false;
+  }
+  return true;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 exports.fetchAqData = onSchedule(
   {
     schedule: "every 1 minutes",
@@ -183,18 +216,17 @@ exports.fetchAqData = onSchedule(
     const today = now.toISOString().split("T")[0];
     const ts = Date.now();
     const minute = now.getMinutes();
-    const hour = now.getHours();
     const isNewHour = minute === 0;
     const updates = {};
 
     console.log(`Running at ${now.toISOString()} | isNewHour: ${isNewHour}`);
 
-    // Fetch AQ stations
     for (const stationId of AQ_STATIONS) {
       try {
         const data = await fetchAmataStation(stationId);
         if (data && data.online) {
           data.aqi = calcOverallAQI(data);
+
           const record = {
             so2: data.so2 != null ? +data.so2 : null,
             no2: data.no2 != null ? +data.no2 : null,
@@ -210,11 +242,36 @@ exports.fetchAqData = onSchedule(
             timestamp: ts,
             source: "cloud",
           };
+
           if (isNewHour) {
-            record.pm25 = data.pm25 != null ? +data.pm25 : null;
-            record.pm10 = data.pm10 != null ? +data.pm10 : null;
-            record.tsp = data.tsp != null ? +data.tsp : null;
+            let dustReady = false;
+            for (let retry = 0; retry < MAX_DUST_RETRY; retry++) {
+              const last = await getLastDustValues(stationId);
+              if (hasNewDustValues(data, last)) {
+                record.pm25 = data.pm25 != null ? +data.pm25 : null;
+                record.pm10 = data.pm10 != null ? +data.pm10 : null;
+                record.tsp = data.tsp != null ? +data.tsp : null;
+                dustReady = true;
+                console.log(`[${stationId}] New dust values found (retry ${retry})`);
+                break;
+              }
+              console.log(`[${stationId}] Dust values unchanged, retry ${retry + 1}/${MAX_DUST_RETRY}...`);
+              await sleep(DUST_RETRY_DELAY_MS);
+              const freshData = await fetchAmataStation(stationId);
+              if (freshData && freshData.online) {
+                data.pm25 = freshData.pm25;
+                data.pm10 = freshData.pm10;
+                data.tsp = freshData.tsp;
+              }
+            }
+            if (!dustReady) {
+              console.log(`[${stationId}] No new dust values after ${MAX_DUST_RETRY} retries, saving anyway`);
+              record.pm25 = data.pm25 != null ? +data.pm25 : null;
+              record.pm10 = data.pm10 != null ? +data.pm10 : null;
+              record.tsp = data.tsp != null ? +data.tsp : null;
+            }
           }
+
           updates[`readings/${today}/${stationId}/${ts}`] = record;
         }
       } catch (e) {
@@ -222,7 +279,6 @@ exports.fetchAqData = onSchedule(
       }
     }
 
-    // Fetch PT5
     try {
       const data = await fetchPT5Station();
       if (data && data.online) {
@@ -242,11 +298,36 @@ exports.fetchAqData = onSchedule(
           timestamp: ts,
           source: "cloud",
         };
+
         if (isNewHour) {
-          record.pm25 = data.pm25 != null ? +data.pm25 : null;
-          record.pm10 = data.pm10 != null ? +data.pm10 : null;
-          record.tsp = data.tsp != null ? +data.tsp : null;
+          let dustReady = false;
+          for (let retry = 0; retry < MAX_DUST_RETRY; retry++) {
+            const last = await getLastDustValues("PT5");
+            if (hasNewDustValues(data, last)) {
+              record.pm25 = data.pm25 != null ? +data.pm25 : null;
+              record.pm10 = data.pm10 != null ? +data.pm10 : null;
+              record.tsp = data.tsp != null ? +data.tsp : null;
+              dustReady = true;
+              console.log(`[PT5] New dust values found (retry ${retry})`);
+              break;
+            }
+            console.log(`[PT5] Dust values unchanged, retry ${retry + 1}/${MAX_DUST_RETRY}...`);
+            await sleep(DUST_RETRY_DELAY_MS);
+            const freshData = await fetchPT5Station();
+            if (freshData && freshData.online) {
+              data.pm25 = freshData.pm25;
+              data.pm10 = freshData.pm10;
+              data.tsp = freshData.tsp;
+            }
+          }
+          if (!dustReady) {
+            console.log(`[PT5] No new dust values after ${MAX_DUST_RETRY} retries, saving anyway`);
+            record.pm25 = data.pm25 != null ? +data.pm25 : null;
+            record.pm10 = data.pm10 != null ? +data.pm10 : null;
+            record.tsp = data.tsp != null ? +data.tsp : null;
+          }
         }
+
         updates[`readings/${today}/PT5/${ts}`] = record;
       }
     } catch (e) {
@@ -260,7 +341,6 @@ exports.fetchAqData = onSchedule(
       console.warn("No data fetched, skipping write");
     }
 
-    // Cleanup old data (90 days)
     if (isNewHour) {
       try {
         const cutoff = new Date();
