@@ -35,29 +35,11 @@ body{
     radial-gradient(ellipse 80% 50% at 50% -20%,rgba(14,165,233,0.06),transparent),
     radial-gradient(ellipse 60% 40% at 80% 100%,rgba(5,150,105,0.04),transparent);
 }
-.page-wrapper{
-  max-width:95vw;margin:0 auto;padding:0 1vw;
-}
+
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:var(--bg-primary)}
 ::-webkit-scrollbar-thumb{background:var(--accent-light);border-radius:3px}
-.header{
-  position:sticky;top:0;z-index:100;
-  background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-  padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
-  gap:14px;flex-wrap:wrap;
-  box-shadow:0 1px 8px rgba(0,0,0,0.04);
-  margin:0 -1vw;
-}
-.header-left{display:flex;align-items:center;gap:16px}
-.logo{
-  font-family:'Orbitron',monospace;font-weight:900;font-size:1.5rem;
-  background:linear-gradient(135deg,var(--accent),var(--green));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  letter-spacing:2px;white-space:nowrap;
-}
-.logo i{margin-right:8px;-webkit-text-fill-color:var(--accent)}
+
 .sys-status{
   display:flex;align-items:center;gap:8px;
   padding:6px 14px;border-radius:20px;font-size:.88rem;font-weight:600;
@@ -65,10 +47,7 @@ body{
 }
 .sys-status .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse-dot 2s infinite}
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
-.header-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.clock{font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--accent);letter-spacing:1px}
-.refresh-info{font-size:.88rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;font-weight:500}
-.refresh-info i{animation:spin 4s linear infinite}
+
 @keyframes spin{to{transform:rotate(360deg)}}
 .emergency-banner{
   background:linear-gradient(90deg,rgba(220,38,38,0.08),rgba(220,38,38,0.03),rgba(220,38,38,0.08));
@@ -98,7 +77,7 @@ body{
 .emergency-banner .close-alert:hover{background:rgba(220,38,38,0.1)}
 .summary-bar{
   display:grid;grid-template-columns:repeat(6,1fr);gap:12px;
-  padding:14px 24px;margin:0 -1vw;
+  padding:14px 24px;
   background:var(--glass);border-bottom:1px solid var(--glass-border);
 }
 .summary-card{
@@ -136,11 +115,11 @@ body{
 .summary-card:nth-child(4) .value{color:var(--red)}
 .summary-card:nth-child(5) .value{color:var(--purple)}
 .summary-card:nth-child(6) .value{color:var(--accent)}
-.main-content{padding:0 32px 32px}
+
 .section-title{
   font-size:1.15rem;font-weight:700;color:var(--text-primary);
-  margin-bottom:16px;display:flex;align-items:center;gap:8px;
-  letter-spacing:.3px;
+  margin-bottom:20px;display:flex;align-items:center;gap:8px;
+  letter-spacing:.3px;border-bottom:2px solid rgba(14,165,233,0.1);padding-bottom:10px;
 }
 .section-title i{color:var(--accent)}
 .stations-grid{
@@ -190,6 +169,11 @@ body{
 .water-card .water-metric .val{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:#10b981;line-height:1}
 .water-card .water-metric .unit{font-size:.65rem;color:#047857;margin-top:2px}
 .water-card .water-footer{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--text-muted)}
+.water-metrics{display:flex;gap:12px;padding:14px 0;border-top:1px solid rgba(16,185,129,0.1);border-bottom:1px solid rgba(16,185,129,0.1);margin-bottom:12px}
+.water-metric{flex:1;text-align:center}
+.water-metric-label{font-size:.65rem;color:var(--text-muted);margin-bottom:2px;display:flex;align-items:center;justify-content:center;gap:4px}
+.water-metric .val{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:#10b981;line-height:1}
+.water-metric .unit{font-size:.65rem;color:#047857;margin-top:2px}
 .station-card{
   background:var(--glass);backdrop-filter:blur(16px);
   border:1px solid var(--glass-border);border-radius:var(--radius);
@@ -217,7 +201,7 @@ body{
 }
 .station-name-wrap{display:flex;align-items:center;gap:12px}
 .station-num{
-  font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;
+  font-family:'Sarabun',sans-serif;font-size:.72rem;font-weight:700;
   background:rgba(2,132,199,0.1);color:var(--accent);
   padding:4px 10px;border-radius:6px;letter-spacing:1px;white-space:nowrap;
 }
@@ -270,8 +254,6 @@ body{
 .pollutant-standard{position:absolute;top:-2px;width:2px;height:16px;background:rgba(0,0,0,0.45);z-index:1}
 .pollutant-standard::after{content:attr(data-label);position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:.5rem;color:var(--text-muted);white-space:nowrap;font-weight:500}
 .pollutant-val{font-family:'Orbitron',monospace;font-size:.72rem;min-width:100px;text-align:right;color:var(--text-secondary);font-weight:500;white-space:nowrap;flex-shrink:0}
-.sparkline-area{padding:0 20px 10px;height:60px}
-.sparkline-area canvas{width:100%!important;height:60px!important}
 .station-footer{
   padding:12px 20px;border-top:1px solid rgba(0,0,0,0.05);
   display:flex;align-items:center;justify-content:space-between;
@@ -356,10 +338,6 @@ body{
 .insight-item.neutral{background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.06)}
 .modal-station-image{width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:12px}
 
-.map-section{
-  margin:20px 0;position:relative;
-}
-.map-section .section-title{margin-bottom:12px}
 .map-wrap{
   width:100%;height:400px;border-radius:var(--radius);overflow:hidden;
   border:1px solid var(--border);box-shadow:var(--shadow);position:relative;
@@ -374,7 +352,6 @@ body{
 .map-locate-btn:hover{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(14,165,233,0.4)}
 .map-locate-btn.loading{animation:spin 1s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.cctv-section{margin:28px 0}
 .cctv-tabs{
   display:flex;gap:4px;margin-bottom:16px;
   background:rgba(0,0,0,0.04);padding:4px;border-radius:10px;width:fit-content;
@@ -501,14 +478,10 @@ body{
 
 @media(max-width:768px){
   html{font-size:14px}
-  .page-wrapper{padding:0 0.5vw}
-  .header{padding:10px 12px;margin:0 -0.5vw}
   .summary-bar{padding:10px 12px}
-  .main-content{padding:0 12px 12px}
   .stations-grid{grid-template-columns:1fr}
   .rain-grid{grid-template-columns:1fr}
   .water-grid{grid-template-columns:1fr}
-  .logo{font-size:1.1rem}
   .emergency-banner{padding:8px 12px}
   .legend-bar-wrap{height:32px}
   .legend-segment span{font-size:.6rem}
@@ -524,9 +497,7 @@ body{
   .pollutant-val{min-width:80px;font-size:.65rem}
 }
 @media(max-width:480px){
-  .page-wrapper{padding:0 0.3vw}
   .summary-bar{grid-template-columns:repeat(3,1fr);gap:8px}
-  .header-right .clock{font-size:1rem}
   .legend-bar-wrap{height:28px}
   .legend-segment span{font-size:.5rem}
   .legend-labels{font-size:.6rem}
@@ -588,7 +559,11 @@ body{
   font-family:'Sarabun',sans-serif;white-space:nowrap;
 }
 .export-btn:hover{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(14,165,233,0.3)}
-.compare-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:24px 0}
+.compare-section{
+  background:linear-gradient(135deg,rgba(14,165,233,0.03),rgba(255,255,255,0.95));
+  border:1px solid rgba(14,165,233,0.15);
+  border-radius:var(--radius);padding:24px;margin:24px 0;
+}
 .compare-section .section-title{margin-bottom:16px}
 .compare-controls{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px}
 .compare-control-group{display:flex;flex-direction:column;gap:4px}
@@ -622,160 +597,378 @@ body{
 .compare-stat-card .cs-name{font-size:.68rem;color:var(--text-muted);margin-bottom:2px;font-weight:600}
 .compare-stat-card .cs-val{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700}
 .compare-stat-card .cs-sub{font-size:.58rem;color:var(--text-muted)}
+
+/* ===== ENHANCED UI ===== */
+.progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--green-light));z-index:9999;transition:width .3s ease;box-shadow:0 0 8px rgba(14,165,233,0.4)}
+.progress-bar.complete{width:100%!important;opacity:0;transition:width .2s,opacity .4s .2s}
+
+.last-updated{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.75rem;color:var(--text-muted);
+}
+.last-updated .pulse-dot-sm{
+  width:7px;height:7px;border-radius:50%;background:var(--green-light);
+  animation:pulse-dot 2s infinite;
+}
+
+.map-section .section-title{margin-bottom:12px}
+.map-section{
+  background:var(--glass);backdrop-filter:blur(12px);
+  border:1px solid var(--glass-border);border-radius:var(--radius);
+  padding:24px;margin:24px 0;box-shadow:var(--shadow);
+}
+.cctv-section{
+  background:var(--glass);backdrop-filter:blur(12px);
+  border:1px solid var(--glass-border);border-radius:var(--radius);
+  padding:24px;margin:24px 0;box-shadow:var(--shadow);
+}
+.cctv-section .section-title{margin-bottom:14px}
+
+.summary-card{transition:transform .3s,box-shadow .3s}
+.summary-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+
+.modal-stat{
+  transition:transform .2s,box-shadow .2s;
+}
+.modal-stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+
+.legend-section{
+  animation:fadeIn .6s ease both;animation-delay:.4s;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ===== SIDEBAR LAYOUT ===== */
+.app-layout{display:flex;min-height:100vh}
+.sidebar{
+  width:240px;flex-shrink:0;background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;
+  box-shadow:2px 0 12px rgba(0,0,0,0.15);transition:transform .3s ease;
+}
+.sidebar-header{padding:20px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sidebar-logo{
+  font-family:'Orbitron',monospace;font-weight:900;font-size:1.1rem;
+  color:#fff;letter-spacing:1.5px;display:flex;align-items:center;gap:8px;
+}
+.sidebar-logo i{font-size:1.2rem;color:var(--accent-light)}
+.sidebar-subtitle{font-size:.68rem;color:rgba(255,255,255,0.4);margin-top:4px;font-family:'Sarabun',sans-serif;font-weight:500}
+.sidebar-menu{flex:1;padding:12px 0;overflow-y:auto}
+.sidebar-item{
+  display:flex;align-items:center;gap:12px;padding:12px 20px;
+  color:rgba(255,255,255,0.6);font-size:.88rem;font-weight:600;cursor:pointer;
+  transition:all .2s;border-left:3px solid transparent;text-decoration:none;
+  font-family:'Sarabun',sans-serif;
+}
+.sidebar-item:hover{color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.05)}
+.sidebar-item.active{color:#fff;background:rgba(14,165,233,0.15);border-left-color:var(--accent-light)}
+.sidebar-item i{width:20px;text-align:center;font-size:.95rem}
+.sidebar-divider{height:1px;background:rgba(255,255,255,0.08);margin:8px 20px}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.08)}
+.sidebar-footer .sys-status{font-size:.78rem;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:6px}
+.sidebar-footer .dot{width:6px;height:6px;border-radius:50%;background:var(--green-light)}
+
+.main-area{flex:1;margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
+.top-bar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:12px 24px;display:flex;align-items:center;justify-content:flex-end;
+  gap:16px;flex-wrap:wrap;box-shadow:0 1px 8px rgba(0,0,0,0.04);
+}
+.menu-toggle{
+  display:none;width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg-card);color:var(--accent);cursor:pointer;font-size:1.1rem;
+  align-items:center;justify-content:center;margin-right:auto;
+}
+.page-content{flex:1;padding:24px 28px}
+.page{display:none}
+.page.active{display:block;animation:pageIn .3s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.page-title{
+  font-size:1.4rem;font-weight:700;color:var(--text-primary);
+  margin-bottom:20px;display:flex;align-items:center;gap:10px;
+  padding-bottom:12px;border-bottom:2px solid rgba(14,165,233,0.12);
+}
+.page-title i{color:var(--accent);font-size:1.2rem}
+.page-subtitle{font-size:.85rem;color:var(--text-muted);font-weight:500;margin-top:4px}
+
+.page-stations-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px;margin-bottom:24px;
+}
+.page-section{margin-bottom:28px}
+.page-section-title{
+  font-size:1.1rem;font-weight:700;color:var(--text-primary);
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;
+  padding-bottom:8px;border-bottom:1px solid rgba(14,165,233,0.1);
+}
+.page-section-title i{color:var(--accent)}
+
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:199;
+}
+.sidebar-overlay.active{display:block}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.active{display:block}
+  .main-area{margin-left:0}
+  .menu-toggle{display:flex}
+  .top-bar{justify-content:flex-end}
+  .page-content{padding:16px 12px}
+  .page-stations-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
-<div class="page-wrapper">
+<div class="progress-bar" id="progressBar" style="width:0%"></div>
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
   <div class="loading-text">กำลังเชื่อมต่อระบบเฝ้าระวัง...</div>
 </div>
 
-<header class="header">
-  <div class="header-left">
-    <div class="logo"><i class="fas fa-wind"></i>AQMS MONITOR</div>
-    <div class="sys-status" id="sysStatus"><span class="dot"></span>กำลังเชื่อมต่อ...</div>
-  </div>
-  <div class="header-right">
-    <button class="export-btn" onclick="exportCSV()" title="ดาวน์โหลดข้อมูล CSV"><i class="fas fa-download"></i> Export CSV</button>
-    <div class="refresh-info"><i class="fas fa-sync-alt"></i> อัปเดตทุก 60 วินาที</div>
-    <div class="clock" id="clock">--:--:--</div>
-  </div>
-</header>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<div class="emergency-banner" id="emergencyBanner">
-  <div class="alert-icon"><i class="fas fa-exclamation-triangle" style="color:#fff"></i></div>
-  <div class="marquee-wrap">
-    <div class="marquee" id="marqueeText"></div>
-  </div>
-  <button class="close-alert" onclick="document.getElementById('emergencyBanner').classList.remove('active')">
-    <i class="fas fa-times"></i> ปิด
-  </button>
-</div>
+<div class="app-layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i class="fas fa-wind"></i> AQMS MONITOR</div>
+      <div class="sidebar-subtitle">ระบบเฝ้าระวังคุณภาพอากาศ</div>
+    </div>
+    <div class="sidebar-menu">
+      <a class="sidebar-item active" data-page="overview" onclick="navigateTo('overview',this)">
+        <i class="fas fa-home"></i><span>ภาพรวม</span>
+      </a>
+      <a class="sidebar-item" data-page="amata" onclick="navigateTo('amata',this)">
+        <i class="fas fa-industry"></i><span>Amata City</span>
+      </a>
+      <a class="sidebar-item" data-page="lakchai" onclick="navigateTo('lakchai',this)">
+        <i class="fas fa-tree"></i><span>Lakchai ระยอง</span>
+      </a>
+      <a class="sidebar-item" data-page="pinthong" onclick="navigateTo('pinthong',this)">
+        <i class="fas fa-building"></i><span>Pinthong IPT5</span>
+      </a>
+      <div class="sidebar-divider"></div>
+      <a class="sidebar-item" data-page="cctv-office" onclick="navigateTo('cctv-office',this)">
+        <i class="fas fa-video"></i><span>CCTV ออฟฟิศ</span>
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sys-status" id="sysStatus"><span class="dot"></span> กำลังเชื่อมต่อ...</div>
+    </div>
+  </nav>
 
-<div class="summary-bar">
-  <div class="summary-card">
-    <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
-    <div class="summary-info">
-      <div class="label">ดี</div>
-      <div class="value" id="countGood">0</div>
+  <main class="main-area">
+    <div class="top-bar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <button class="export-btn" onclick="exportCSV()" title="ดาวน์โหลดข้อมูล CSV"><i class="fas fa-download"></i> Export CSV</button>
+      <div class="last-updated" id="lastUpdated"><span class="pulse-dot-sm"></span> <span id="lastUpdatedTime">--:--</span></div>
+      <div class="refresh-info"><i class="fas fa-sync-alt"></i> อัปเดตทุก 60 วินาที</div>
+      <div class="clock" id="clock">--:--:--</div>
     </div>
-  </div>
-  <div class="summary-card">
-    <div class="summary-icon"><i class="fas fa-info-circle"></i></div>
-    <div class="summary-info">
-      <div class="label">ปานกลาง</div>
-      <div class="value" id="countModerate">0</div>
-    </div>
-  </div>
-  <div class="summary-card">
-    <div class="summary-icon"><i class="fas fa-exclamation-circle"></i></div>
-    <div class="summary-info">
-      <div class="label">ไม่ดีต่อ<br>กลุ่มเสี่ยง</div>
-      <div class="value" id="countSensitive">0</div>
-    </div>
-  </div>
-  <div class="summary-card">
-    <div class="summary-icon"><i class="fas fa-skull-crossbones"></i></div>
-    <div class="summary-info">
-      <div class="label">ไม่ดี</div>
-      <div class="value" id="countUnhealthy">0</div>
-    </div>
-  </div>
-  <div class="summary-card">
-    <div class="summary-icon"><i class="fas fa-heartbeat"></i></div>
-    <div class="summary-info">
-      <div class="label">AQI เฉลี่ย</div>
-      <div class="value" id="avgAqi">--</div>
-    </div>
-  </div>
-  <div class="summary-card">
-    <div class="summary-icon"><i class="fas fa-server"></i></div>
-    <div class="summary-info">
-      <div class="label">สถานีเชื่อมต่อ</div>
-      <div class="value" id="countOnline">0/8</div>
-    </div>
-  </div>
-</div>
 
-<div class="main-content">
-  <div class="section-title"><i class="fas fa-map-marked-alt"></i> สถานีเฝ้าระวังคุณภาพอากาศ 8 แห่ง</div>
-  <div class="stations-grid" id="stationsGrid"></div>
-  <div class="legend-section">
-    <div class="legend-title"><i class="fas fa-info-circle"></i> ระดับค่าดัชนีคุณภาพอากาศ (AQI) ตามกรมควบคุมมลพิษ</div>
-    <div class="legend-bar-wrap">
-      <div class="legend-segment" style="background:#059669;flex:25"><span>0</span></div>
-      <div class="legend-segment" style="background:#eab308;flex:25"><span>26</span></div>
-      <div class="legend-segment" style="background:#ea580c;flex:50"><span>51</span></div>
-      <div class="legend-segment" style="background:#dc2626;flex:100"><span>101</span></div>
-      <div class="legend-segment" style="background:#7c3aed;flex:100"><span>201</span></div>
-      <div class="legend-segment" style="background:#991b1b;flex:100;position:relative"><span>301</span><span class="legend-end">400+</span></div>
-    </div>
-    <div class="legend-labels">
-      <span>ดี<br>0-25</span><span>ปานกลาง<br>26-50</span><span>เริ่มมีผล<br>ต่อสุขภาพ<br>51-100</span>
-      <span>มีผลต่อ<br>สุขภาพ<br>101-200</span><span>มีผลต่อสุขภาพ<br>อย่างมาก<br>201-300</span><span>เป็นอันตราย<br>ต่อสุขภาพ<br>301+</span>
-    </div>
-  </div>
-  <div class="section-title" style="margin-top:24px"><i class="fas fa-cloud-rain"></i> สถานีวัดปริมาณน้ำฝน</div>
-  <div class="rain-grid" id="rainGrid"></div>
-  <div class="section-title" style="margin-top:24px"><i class="fas fa-water"></i> สถานีวัดระดับน้ำ/อัตราการไหล บ่อน้ำเข้า</div>
-  <div class="water-grid" id="waterGrid"></div>
-</div>
+    <div class="page-content">
 
-<div class="compare-section">
-  <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบข้อมูลสถานี</div>
-  <div class="compare-controls">
-    <div class="compare-control-group">
-      <label>พารามิเตอร์</label>
-      <select id="compareParam" onchange="renderComparisonChart()">
-        <option value="aqi">AQI</option>
-        <option value="pm25">PM2.5</option>
-        <option value="pm10">PM10</option>
-        <option value="tsp">TSP</option>
-        <option value="so2">SO2</option>
-        <option value="no2">NO2</option>
-        <option value="temp">อุณหภูมิ</option>
-        <option value="humidity">ความชื้น</option>
-        <option value="rain">ปริมาณฝน</option>
-      </select>
-    </div>
-    <div class="compare-control-group">
-      <label>ช่วงเวลา</label>
-      <div class="time-tabs" id="compareTimeTabs">
-        <div class="time-tab active" onclick="switchCompareTime(24,this)">24 ชม.</div>
-        <div class="time-tab" onclick="switchCompareTime(168,this)">7 วัน</div>
-        <div class="time-tab" onclick="switchCompareTime(720,this)">30 วัน</div>
+      <!-- ===== PAGE: OVERVIEW ===== -->
+      <div class="page active" id="page-overview">
+        <div class="emergency-banner" id="emergencyBanner">
+          <div class="alert-icon"><i class="fas fa-exclamation-triangle" style="color:#fff"></i></div>
+          <div class="marquee-wrap">
+            <div class="marquee" id="marqueeText"></div>
+          </div>
+          <button class="close-alert" onclick="document.getElementById('emergencyBanner').classList.remove('active')">
+            <i class="fas fa-times"></i> ปิด
+          </button>
+        </div>
+        <div class="summary-bar">
+          <div class="summary-card">
+            <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="summary-info">
+              <div class="label">ดี</div>
+              <div class="value" id="countGood">0</div>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="fas fa-info-circle"></i></div>
+            <div class="summary-info">
+              <div class="label">ปานกลาง</div>
+              <div class="value" id="countModerate">0</div>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="summary-info">
+              <div class="label">ไม่ดีต่อ<br>กลุ่มเสี่ยง</div>
+              <div class="value" id="countSensitive">0</div>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="fas fa-skull-crossbones"></i></div>
+            <div class="summary-info">
+              <div class="label">ไม่ดี</div>
+              <div class="value" id="countUnhealthy">0</div>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="fas fa-heartbeat"></i></div>
+            <div class="summary-info">
+              <div class="label">AQI เฉลี่ย</div>
+              <div class="value" id="avgAqi">--</div>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon"><i class="fas fa-server"></i></div>
+            <div class="summary-info">
+              <div class="label">สถานีเชื่อมต่อ</div>
+              <div class="value" id="countOnline">0/8</div>
+            </div>
+          </div>
+        </div>
+        <div class="page-section">
+          <div class="page-section-title"><i class="fas fa-map-marked-alt"></i> แผนที่ตำแหน่งสถานีทั้งหมด</div>
+          <div class="map-wrap" id="stationMap">
+            <button class="map-locate-btn" id="mapLocateBtn" onclick="locateMe()" title="ไปยังตำแหน่งปัจจุบัน"><i class="fas fa-crosshairs"></i></button>
+          </div>
+        </div>
+        <div class="legend-section">
+          <div class="legend-title"><i class="fas fa-info-circle"></i> ระดับค่าดัชนีคุณภาพอากาศ (AQI) ตามกรมควบคุมมลพิษ</div>
+          <div class="legend-bar-wrap">
+            <div class="legend-segment" style="background:#059669;flex:25"><span>0</span></div>
+            <div class="legend-segment" style="background:#eab308;flex:25"><span>26</span></div>
+            <div class="legend-segment" style="background:#ea580c;flex:50"><span>51</span></div>
+            <div class="legend-segment" style="background:#dc2626;flex:100"><span>101</span></div>
+            <div class="legend-segment" style="background:#7c3aed;flex:100"><span>201</span></div>
+            <div class="legend-segment" style="background:#991b1b;flex:100;position:relative"><span>301</span><span class="legend-end">400+</span></div>
+          </div>
+          <div class="legend-labels">
+            <span>ดี<br>0-25</span><span>ปานกลาง<br>26-50</span><span>เริ่มมีผล<br>ต่อสุขภาพ<br>51-100</span>
+            <span>มีผลต่อ<br>สุขภาพ<br>101-200</span><span>มีผลต่อสุขภาพ<br>อย่างมาก<br>201-300</span><span>เป็นอันตราย<br>ต่อสุขภาพ<br>301+</span>
+          </div>
+        </div>
       </div>
+
+      <!-- ===== PAGE: AMATA CITY ===== -->
+      <div class="page" id="page-amata">
+        <div class="page-title"><i class="fas fa-industry"></i> Amata City ชลบุรี & ระยอง<div class="page-subtitle">สถานีเฝ้าระวังคุณภาพอากาศ 6 แห่ง</div></div>
+        <div class="page-stations-grid" id="amataGrid"></div>
+        <div class="compare-section" id="amataCompareSection">
+          <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบข้อมูลสถานี Amata City</div>
+          <div class="compare-controls">
+            <div class="compare-control-group">
+              <label>พารามิเตอร์</label>
+              <select id="amataCompareParam" onchange="renderPageComparisonChart('amata')">
+                <option value="aqi">AQI</option><option value="pm25">PM2.5</option><option value="pm10">PM10</option>
+                <option value="tsp">TSP</option><option value="so2">SO2</option><option value="no2">NO2</option>
+                <option value="temp">อุณหภูมิ</option><option value="humidity">ความชื้น</option><option value="rain">ปริมาณฝน</option>
+              </select>
+            </div>
+            <div class="compare-control-group">
+              <label>ช่วงเวลา</label>
+              <div class="time-tabs" id="amataTimeTabs">
+                <div class="time-tab active" onclick="switchPageCompareTime('amata',24,this)">24 ชม.</div>
+                <div class="time-tab" onclick="switchPageCompareTime('amata',168,this)">7 วัน</div>
+                <div class="time-tab" onclick="switchPageCompareTime('amata',720,this)">30 วัน</div>
+              </div>
+            </div>
+          </div>
+          <div class="compare-stations-row">
+            <label>เลือกสถานี:</label>
+            <div class="compare-station-chips" id="amataStationChips"></div>
+          </div>
+          <div class="compare-chart-wrap"><canvas id="amataCompareChart"></canvas></div>
+          <div class="compare-summary" id="amataCompareSummary"></div>
+        </div>
+        <div class="cctv-section">
+          <div class="section-title"><i class="fas fa-video"></i> กล้องวงจรปิด สถานี Amata City</div>
+          <div class="cctv-grid" id="amataCctvGrid"></div>
+        </div>
+      </div>
+
+      <!-- ===== PAGE: LAKCHAI ===== -->
+      <div class="page" id="page-lakchai">
+        <div class="page-title"><i class="fas fa-tree"></i> Lakchai ระยอง<div class="page-subtitle">สถานีหลักชัยเมืองยาง — AQMS, น้ำฝน, ระดับน้ำ</div></div>
+        <div class="page-section">
+          <div class="page-section-title"><i class="fas fa-wind"></i> สถานีวัดคุณภาพอากาศ</div>
+          <div class="page-stations-grid" id="lakchaiAqGrid"></div>
+        </div>
+        <div class="page-section">
+          <div class="page-section-title"><i class="fas fa-cloud-rain"></i> สถานีวัดปริมาณน้ำฝน</div>
+          <div class="rain-grid" id="lakchaiRainGrid"></div>
+        </div>
+        <div class="page-section">
+          <div class="page-section-title"><i class="fas fa-water"></i> สถานีวัดระดับน้ำ / อัตราการไหล</div>
+          <div class="water-grid" id="lakchaiWaterGrid"></div>
+        </div>
+        <div class="compare-section" id="lakchaiCompareSection">
+          <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบข้อมูลสถานี Lakchai</div>
+          <div class="compare-controls">
+            <div class="compare-control-group">
+              <label>พารามิเตอร์</label>
+              <select id="lakchaiCompareParam" onchange="renderPageComparisonChart('lakchai')">
+                <option value="aqi">AQI</option><option value="pm25">PM2.5</option><option value="pm10">PM10</option>
+                <option value="tsp">TSP</option><option value="so2">SO2</option><option value="no2">NO2</option>
+                <option value="temp">อุณหภูมิ</option><option value="humidity">ความชื้น</option><option value="rain">ปริมาณฝน</option>
+              </select>
+            </div>
+            <div class="compare-control-group">
+              <label>ช่วงเวลา</label>
+              <div class="time-tabs" id="lakchaiTimeTabs">
+                <div class="time-tab active" onclick="switchPageCompareTime('lakchai',24,this)">24 ชม.</div>
+                <div class="time-tab" onclick="switchPageCompareTime('lakchai',168,this)">7 วัน</div>
+                <div class="time-tab" onclick="switchPageCompareTime('lakchai',720,this)">30 วัน</div>
+              </div>
+            </div>
+          </div>
+          <div class="compare-chart-wrap"><canvas id="lakchaiCompareChart"></canvas></div>
+          <div class="compare-summary" id="lakchaiCompareSummary"></div>
+        </div>
+        <div class="cctv-section">
+          <div class="section-title"><i class="fas fa-video"></i> กล้องวงจรปิด สถานี Lakchai</div>
+          <div class="cctv-grid" id="lakchaiCctvGrid"></div>
+        </div>
+      </div>
+
+      <!-- ===== PAGE: PINTHONG ===== -->
+      <div class="page" id="page-pinthong">
+        <div class="page-title"><i class="fas fa-building"></i> Pinthong Industrial Park 5<div class="page-subtitle">สถานีเฝ้าระวังคุณภาพอากาศ 1 แห่ง</div></div>
+        <div class="page-stations-grid" id="pinthongGrid"></div>
+        <div class="compare-section" id="pinthongCompareSection">
+          <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบข้อมูล Pinthong IPT5</div>
+          <div class="compare-controls">
+            <div class="compare-control-group">
+              <label>พารามิเตอร์</label>
+              <select id="pinthongCompareParam" onchange="renderPageComparisonChart('pinthong')">
+                <option value="aqi">AQI</option><option value="pm25">PM2.5</option><option value="pm10">PM10</option>
+                <option value="tsp">TSP</option><option value="so2">SO2</option><option value="no2">NO2</option>
+                <option value="temp">อุณหภูมิ</option><option value="humidity">ความชื้น</option><option value="rain">ปริมาณฝน</option>
+              </select>
+            </div>
+            <div class="compare-control-group">
+              <label>ช่วงเวลา</label>
+              <div class="time-tabs" id="pinthongTimeTabs">
+                <div class="time-tab active" onclick="switchPageCompareTime('pinthong',24,this)">24 ชม.</div>
+                <div class="time-tab" onclick="switchPageCompareTime('pinthong',168,this)">7 วัน</div>
+                <div class="time-tab" onclick="switchPageCompareTime('pinthong',720,this)">30 วัน</div>
+              </div>
+            </div>
+          </div>
+          <div class="compare-chart-wrap"><canvas id="pinthongCompareChart"></canvas></div>
+          <div class="compare-summary" id="pinthongCompareSummary"></div>
+        </div>
+        <div class="cctv-section">
+          <div class="section-title"><i class="fas fa-video"></i> กล้องวงจรปิด สถานี Pinthong IPT5</div>
+          <div class="cctv-grid" id="pinthongCctvGrid"></div>
+        </div>
+      </div>
+
+      <!-- ===== PAGE: CCTV OFFICE ===== -->
+      <div class="page" id="page-cctv-office">
+        <div class="page-title"><i class="fas fa-video"></i> กล้องวงจรปิด ออฟฟิศ</div>
+        <div class="cctv-grid cctv-office-grid" id="officeCctvGrid"></div>
+      </div>
+
     </div>
-  </div>
-  <div class="compare-stations-row">
-    <label>เลือกสถานี:</label>
-    <div class="compare-station-chips" id="compareStationChips"></div>
-  </div>
-  <div class="compare-chart-wrap">
-    <canvas id="compareChart"></canvas>
-  </div>
-  <div class="compare-summary" id="compareSummary"></div>
-</div>
-
-<div class="map-section">
-  <div class="section-title"><i class="fas fa-map-marked-alt"></i> แผนที่ตำแหน่งสถานี</div>
-  <div class="map-wrap" id="stationMap">
-    <button class="map-locate-btn" id="mapLocateBtn" onclick="locateMe()" title="ไปยังตำแหน่งปัจจุบัน"><i class="fas fa-crosshairs"></i></button>
-  </div>
-</div>
-
-<div class="cctv-section">
-  <div class="cctv-tabs">
-    <button class="cctv-tab active" onclick="switchCCTVTab('station')"><i class="fas fa-broadcast-tower"></i> กล้องสถานี</button>
-    <button class="cctv-tab" onclick="switchCCTVTab('office')"><i class="fas fa-building"></i> กล้องออฟฟิศ</button>
-  </div>
-  <div class="cctv-tab-content active" id="cctvStationTab">
-    <div class="cctv-grid" id="cctvGrid"></div>
-  </div>
-  <div class="cctv-tab-content" id="cctvOfficeTab">
-    <div class="cctv-grid cctv-office-grid" id="cctvOfficeGrid"></div>
-  </div>
+  </main>
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
@@ -790,7 +983,6 @@ body{
     </div>
   </div>
 </div>
-</div><!-- .page-wrapper -->
 
 <div class="cctv-overlay" id="cctvOverlay">
   <div class="cctv-expanded">
@@ -842,7 +1034,6 @@ const fbApp = firebase.initializeApp(firebaseConfig);
 const fbDB = firebase.database();
 
 let stationData = {};
-let sparklineCharts = {};
 let modalChartInstance = null;
 let fetchInterval = null;
 
@@ -1211,6 +1402,8 @@ async function fetchPT5Station(){
 }
 
 async function fetchAllStations(){
+  const pb = document.getElementById('progressBar');
+  pb.style.width = '10%';
   const results = {};
   const promises = STATIONS.filter(s=>s.source!=='rainfall'&&s.source!=='waterLevel').map(async s => {
     try{
@@ -1272,16 +1465,17 @@ async function fetchAllStations(){
     }
     saveToFirebase(s.id, d);
   });
-  renderStations();
-  renderRainGauges();
-  renderWaterLevelStations();
+  renderPageContent(currentPage);
   updateSummary();
   checkAlerts();
+  pb.style.width = '100%';
+  pb.classList.add('complete');
+  setTimeout(()=>{ pb.style.width='0%'; pb.classList.remove('complete'); },600);
+  const now = new Date();
+  document.getElementById('lastUpdatedTime').textContent = now.toLocaleTimeString('th-TH',{hour12:false,hour:'2-digit',minute:'2-digit'});
 }
 
-function renderStations(){
-  const grid = document.getElementById('stationsGrid');
-  grid.innerHTML = STATIONS.filter(s=>s.source!=='rainfall'&&s.source!=='waterLevel').map(s => {
+function renderStationCardHTML(s){
     const d = stationData[s.id] || s;
     const info = getAQILevel(d.aqi);
     const circumference = 2*Math.PI*40;
@@ -1350,40 +1544,11 @@ function renderStations(){
           <div class="pollutant-row"><span class="pollutant-name">NO₂</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${no2Pct}%;background:var(--orange)"></div><div class="pollutant-standard" style="left:${no2StdPct}%" data-label="120"></div></div><span class="pollutant-val">${fmt(d.no2)} ppb</span></div>
         </div>
       </div>
-      <div class="sparkline-area"><canvas id="spark-${s.id}"></canvas></div>
       <div class="station-footer">
         <div class="trend-info"><i class="fas fa-clock" style="color:var(--text-muted)"></i><span style="color:var(--text-muted)">อัปเดตล่าสุด</span></div>
         <div class="station-time"><i class="far fa-clock"></i> ${timeStr}</div>
       </div>
     </div>`;
-  }).join('');
-  STATIONS.forEach(s => renderSparkline(s));
-}
-
-function renderSparkline(s){
-  const canvas = document.getElementById('spark-'+s.id);
-  if(!canvas) return;
-  if(sparklineCharts[s.id]) sparklineCharts[s.id].destroy();
-  const d = stationData[s.id] || {};
-  const info = getAQILevel(d.aqi);
-  const hist = d.history && d.history.length>0 ? d.history : [0];
-  sparklineCharts[s.id] = new Chart(canvas,{
-    type:'line',
-    data:{
-      labels:hist.map((_,i)=>i),
-      datasets:[{
-        data:hist,borderColor:info.color,borderWidth:2,
-        fill:true,backgroundColor:info.color+'18',
-        pointRadius:0,tension:.4,
-      }]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{enabled:false}},
-      scales:{x:{display:false},y:{display:false,beginAtZero:true}},
-      animation:{duration:1500}
-    }
-  });
 }
 
 function renderRainGauges(){
@@ -1819,10 +1984,10 @@ function updateClock(){
 }
 
 function initMap(){
-  const map=L.map('stationMap').setView([13.05,101.15],9);
+  window._map=L.map('stationMap').setView([13.05,101.15],9);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'&copy; OpenStreetMap contributors'
-  }).addTo(map);
+  }).addTo(window._map);
 
   const icons={
     good:L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#059669;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',iconSize:[28,28],iconAnchor:[14,14]}),
@@ -1846,7 +2011,7 @@ function initMap(){
     if(isRainfall) markerIcon=icons.rainfall;
     else if(isWaterLevel) markerIcon=icons.waterLevel;
     else markerIcon=icons[lv.level]||icons.offline;
-    const marker=L.marker([parseFloat(s.lat),parseFloat(s.lng)],{icon:markerIcon}).addTo(map);
+    const marker=L.marker([parseFloat(s.lat),parseFloat(s.lng)],{icon:markerIcon}).addTo(window._map);
     
     let popupHtml;
     if(isRainfall){
@@ -1917,7 +2082,6 @@ function initMap(){
     s._icon=icons;
   });
 
-  window._map=map;
   window._mapIcons=icons;
 }
 
@@ -2242,6 +2406,30 @@ async function renderComparisonChart(){
   var paramLabels = { aqi:'AQI', pm25:'PM2.5', pm10:'PM10', tsp:'TSP', so2:'SO2', no2:'NO2', temp:'อุณหภูมิ', humidity:'ความชื้น', rain:'ปริมาณฝน' };
   var paramUnits = { aqi:'', pm25:'µg/m³', pm10:'µg/m³', tsp:'µg/m³', so2:'ppb', no2:'ppb', temp:'°C', humidity:'%', rain:'mm' };
 
+  var now = Date.now();
+  var allHourKeys = [];
+  var hourKeyToLabel = {};
+  var hourKeyToTs = {};
+  for(var h=0; h<compareHours; h++){
+    var t = now - (compareHours-1-h)*3600000;
+    var d = new Date(t);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+    allHourKeys.push(key);
+    hourKeyToTs[key] = t;
+    if(compareHours<=24){
+      hourKeyToLabel[key] = String(d.getHours()).padStart(2,'0')+':00';
+    } else if(compareHours<=168){
+      hourKeyToLabel[key] = d.getDate()+'/'+(d.getMonth()+1)+' '+String(d.getHours()).padStart(2,'0')+':00';
+    } else {
+      var dayNames = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+      hourKeyToLabel[key] = d.getDate()+'/'+(d.getMonth()+1)+' '+dayNames[d.getDay()];
+    }
+  }
+
+  var maxLabels = compareHours<=24 ? 12 : compareHours<=168 ? 14 : 15;
+  var labelStep = Math.max(1, Math.floor(allHourKeys.length / maxLabels));
+  var chartLabels = allHourKeys.map(function(k,i){ return i%labelStep===0 ? hourKeyToLabel[k] : ''; });
+
   var datasets = [];
   var summaryHtml = '';
   var idx = 0;
@@ -2273,7 +2461,6 @@ async function renderComparisonChart(){
     if(readings.length===0){
       var sd = stationData[stId];
       if(sd && sd[param]!=null){
-        var now = Date.now();
         var base = sd[param] || 10;
         for(var h=0; h<compareHours; h++){
           var t = now - (compareHours-1-h)*3600000;
@@ -2296,37 +2483,32 @@ async function renderComparisonChart(){
       hourlyData[hourKey].push(r.v);
     });
 
-    var displayData = [];
-    var hourKeys = Object.keys(hourlyData).sort();
-    hourKeys.forEach(function(key){
-      var vals = hourKeys.indexOf(key);
-      var ts = new Date(key).getTime();
+    var mappedValues = allHourKeys.map(function(key){
       var bucket = hourlyData[key];
-      if(compareHours <= 24){
-        displayData.push({ t: ts, v: bucket[bucket.length-1] });
-      } else {
-        var sorted = bucket.slice().sort(function(a,b){return a-b;});
-        displayData.push({ t: ts, v: sorted[Math.floor(sorted.length/2)] });
-      }
+      if(!bucket || bucket.length===0) return null;
+      if(compareHours<=24) return bucket[bucket.length-1];
+      var sorted = bucket.slice().sort(function(a,b){return a-b;});
+      return sorted[Math.floor(sorted.length/2)];
     });
 
     var color = COMPARE_COLORS[idx % COMPARE_COLORS.length];
     datasets.push({
       label: stId+' '+s.name,
-      data: displayData.map(function(r){ return { x: r.t, y: r.v }; }),
+      data: mappedValues,
       borderColor: color, borderWidth: 2.5, pointRadius: compareHours<=24?2:0,
       tension: 0.3, fill: true, backgroundColor: color+'12', spanGaps: true,
       hoverBorderWidth: 3, hoverPointRadius: 5, hoverPointBackgroundColor: color,
       hoverBorderColor: '#fff'
     });
 
-    if(displayData.length>0){
-      var vals = displayData.map(function(r){ return r.v; }).sort(function(a,b){return a-b;});
-      var min = vals[0];
-      var max = vals[vals.length-1];
-      var median = vals[Math.floor(vals.length/2)];
+    var nonNull = mappedValues.filter(function(v){ return v!==null; });
+    if(nonNull.length>0){
+      var sorted = nonNull.slice().sort(function(a,b){return a-b;});
+      var min = sorted[0];
+      var max = sorted[sorted.length-1];
+      var median = sorted[Math.floor(sorted.length/2)];
       var label = compareHours<=24 ? 'ค่าล่าสุด' : 'Median';
-      var mainVal = compareHours<=24 ? vals[vals.length-1] : median;
+      var mainVal = compareHours<=24 ? sorted[sorted.length-1] : median;
       summaryHtml += '<div class="compare-stat-card" style="border-left:3px solid '+color+'">'
         + '<div class="cs-name">'+stId+'</div>'
         + '<div class="cs-val" style="color:'+color+'">'+mainVal.toFixed(1)+'</div>'
@@ -2344,19 +2526,20 @@ async function renderComparisonChart(){
   gradientBg.addColorStop(0,'rgba(14,165,233,0.04)');
   gradientBg.addColorStop(0.5,'rgba(14,165,233,0.01)');
   gradientBg.addColorStop(1,'rgba(14,165,233,0.0)');
+  var xTitle = compareHours<=24 ? 'เวลา (รายชั่วโมง)' : compareHours<=168 ? 'เวลา (รายชั่วโมง - 7 วัน)' : 'เวลา (รายวัน - 30 วัน)';
   compareChartInstance = new Chart(c2d, {
     type: 'line',
-    data: { datasets: datasets },
+    data: { labels: chartLabels, datasets: datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color:'#334155', font:{ size:11, family:'Sarabun', weight:'600' }, usePointStyle:true, pointStyle:'circle', padding:14 }},
         tooltip: { mode:'index', intersect:false, backgroundColor:'rgba(15,23,42,0.9)', titleFont:{ family:'Sarabun', size:12 }, bodyFont:{ family:'Sarabun', size:11 }, padding:10, cornerRadius:8,
-          callbacks:{ label: function(ctx){ return '● '+ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+' '+paramUnits[param]; } } }
+          callbacks:{ label: function(ctx){ return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' '+paramUnits[param]; } } }
       },
       scales: {
-        x: { type:'linear', title:{ display:true, text:'เวลา (รายชั่วโมง)', font:{ family:'Sarabun', size:12, weight:'600' }, color:'#475569' },
-          ticks: { color:'#94a3b8', font:{ size:10, family:'Sarabun' }, callback: function(v){ var d=new Date(v); if(compareHours<=24){ return d.getHours()+':00'; } return d.getDate()+'/'+(d.getMonth()+1)+' '+d.getHours()+':00'; }, maxTicksLimit:12 },
+        x: { title:{ display:true, text:xTitle, font:{ family:'Sarabun', size:12, weight:'600' }, color:'#475569' },
+          ticks: { color:'#94a3b8', font:{ size:10, family:'Sarabun' }, maxRotation:45, autoSkip:false },
           grid:{ color:'rgba(14,165,233,0.06)', drawBorder:false }, border:{ display:false }
         },
         y: { title:{ display:true, text:paramLabels[param]+' ('+paramUnits[param]+')', font:{ family:'Sarabun', size:12, weight:'600' }, color:'#475569' },
@@ -2398,14 +2581,300 @@ async function exportCSV() {
   } catch(e) { console.warn('exportCSV error:',e); alert('เกิดข้อผิดพลาดในการดาวน์โหลด'); }
 }
 
+/* ===== SIDEBAR NAVIGATION ===== */
+var currentPage = 'overview';
+function navigateTo(page, el){
+  currentPage = page;
+  document.querySelectorAll('.sidebar-item').forEach(function(i){ i.classList.remove('active'); });
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  var target = document.getElementById('page-'+page);
+  if(target) target.classList.add('active');
+  closeSidebar();
+  if(page==='overview' && typeof window._map!=='undefined' && window._map){ 
+    setTimeout(function(){ window._map.invalidateSize(); },100); 
+  }
+  setTimeout(function(){ renderPageContent(page); },50);
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+}
+
+/* ===== PAGE-SPECIFIC COMPARISON CHARTS ===== */
+var PAGE_COMPARE = {
+  amata:   { chartInstance:null, selectedStations:['001','002','003','004','005','006'], hours:24 },
+  lakchai: { chartInstance:null, selectedStations:['BYY'], hours:24 },
+  pinthong:{ chartInstance:null, selectedStations:['PT5'], hours:24 }
+};
+
+function switchPageCompareTime(page, hours, tabEl){
+  PAGE_COMPARE[page].hours = hours;
+  var tabs = tabEl.parentElement.querySelectorAll('.time-tab');
+  tabs.forEach(function(t){ t.classList.remove('active'); });
+  tabEl.classList.add('active');
+  renderPageComparisonChart(page);
+}
+
+async function renderPageComparisonChart(page){
+  var pc = PAGE_COMPARE[page];
+  var paramEl = document.getElementById(page+'CompareParam');
+  if(!paramEl || !pc) return;
+  var param = paramEl.value;
+  var paramLabels = { aqi:'AQI', pm25:'PM2.5', pm10:'PM10', tsp:'TSP', so2:'SO2', no2:'NO2', temp:'อุณหภูมิ', humidity:'ความชื้น', rain:'ปริมาณฝน' };
+  var paramUnits = { aqi:'', pm25:'µg/m³', pm10:'µg/m³', tsp:'µg/m³', so2:'ppb', no2:'ppb', temp:'°C', humidity:'%', rain:'mm' };
+  var compareHours = pc.hours;
+
+  var now = Date.now();
+  var allHourKeys = [];
+  var hourKeyToLabel = {};
+  for(var h=0; h<compareHours; h++){
+    var t = now - (compareHours-1-h)*3600000;
+    var d = new Date(t);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+    allHourKeys.push(key);
+    if(compareHours<=24) hourKeyToLabel[key] = String(d.getHours()).padStart(2,'0')+':00';
+    else if(compareHours<=168) hourKeyToLabel[key] = d.getDate()+'/'+(d.getMonth()+1)+' '+String(d.getHours()).padStart(2,'0')+':00';
+    else { var dn=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.']; hourKeyToLabel[key]=d.getDate()+'/'+(d.getMonth()+1)+' '+dn[d.getDay()]; }
+  }
+  var maxLabels = compareHours<=24?12:compareHours<=168?14:15;
+  var labelStep = Math.max(1, Math.floor(allHourKeys.length / maxLabels));
+  var chartLabels = allHourKeys.map(function(k,i){ return i%labelStep===0 ? hourKeyToLabel[k] : ''; });
+
+  var datasets = [];
+  var summaryHtml = '';
+  var idx = 0;
+
+  for(var si=0; si<pc.selectedStations.length; si++){
+    var stId = pc.selectedStations[si];
+    var s = STATIONS.find(function(x){ return x.id===stId; });
+    if(!s) continue;
+    var readings = [];
+    try {
+      var snap = await fbDB.ref('readings').orderByKey().once('value');
+      snap.forEach(function(daySnap){
+        if(daySnap.hasChild(stId)){
+          var stSnap = daySnap.child(stId);
+          stSnap.forEach(function(rSnap){
+            var r = rSnap.val();
+            if(r && r.timestamp){
+              var cutoff = Date.now() - compareHours*3600*1000;
+              if(r.timestamp >= cutoff && r[param]!=null) readings.push({ t: r.timestamp, v: r[param] });
+            }
+          });
+        }
+      });
+    } catch(e){}
+
+    if(readings.length===0){
+      var sd = stationData[stId];
+      if(sd && sd[param]!=null){
+        var base = sd[param]||10;
+        for(var h=0; h<compareHours; h++){
+          var t = now-(compareHours-1-h)*3600000;
+          var ratio=h/compareHours;
+          var w1=Math.sin(ratio*Math.PI*2.5)*base*0.1;
+          var w2=Math.sin(ratio*Math.PI*5+0.8)*base*0.04;
+          var tr=(ratio-0.5)*base*0.06;
+          readings.push({t:t,v:+(base+w1+w2+tr).toFixed(2)});
+        }
+      }
+    }
+    readings.sort(function(a,b){return a.t-b.t;});
+
+    var hourlyData={};
+    readings.forEach(function(r){
+      var d=new Date(r.t);
+      var hk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+      if(!hourlyData[hk]) hourlyData[hk]=[];
+      hourlyData[hk].push(r.v);
+    });
+
+    var mappedValues = allHourKeys.map(function(key){
+      var bucket=hourlyData[key];
+      if(!bucket||bucket.length===0) return null;
+      if(compareHours<=24) return bucket[bucket.length-1];
+      var sorted=bucket.slice().sort(function(a,b){return a-b;});
+      return sorted[Math.floor(sorted.length/2)];
+    });
+
+    var color = COMPARE_COLORS[idx%COMPARE_COLORS.length];
+    datasets.push({
+      label:stId+' '+s.name, data:mappedValues,
+      borderColor:color,borderWidth:2.5,pointRadius:compareHours<=24?2:0,
+      tension:0.3,fill:true,backgroundColor:color+'12',spanGaps:true,
+      hoverBorderWidth:3,hoverPointRadius:5,hoverPointBackgroundColor:color,hoverBorderColor:'#fff'
+    });
+
+    var nonNull=mappedValues.filter(function(v){return v!==null;});
+    if(nonNull.length>0){
+      var sorted=nonNull.slice().sort(function(a,b){return a-b;});
+      var min=sorted[0],max=sorted[sorted.length-1],median=sorted[Math.floor(sorted.length/2)];
+      var lbl=compareHours<=24?'ค่าล่าสุด':'Median';
+      var mainVal=compareHours<=24?sorted[sorted.length-1]:median;
+      summaryHtml+='<div class="compare-stat-card" style="border-left:3px solid '+color+'"><div class="cs-name">'+stId+'</div><div class="cs-val" style="color:'+color+'">'+mainVal.toFixed(1)+'</div><div class="cs-sub">'+lbl+' | ต่ำสุด '+min.toFixed(1)+' | สูงสุด '+max.toFixed(1)+'</div></div>';
+    }
+    idx++;
+  }
+
+  if(pc.chartInstance) pc.chartInstance.destroy();
+  var canvasId = page+'CompareChart';
+  var ctx=document.getElementById(canvasId);
+  if(!ctx) return;
+  var c2d=ctx.getContext('2d');
+  var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
+  pc.chartInstance=new Chart(c2d,{
+    type:'line',data:{labels:chartLabels,datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},
+        tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,
+          callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' '+paramUnits[param];}}}
+      },
+      scales:{
+        x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},
+        y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}
+      },
+      interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}
+    }
+  });
+  var sumEl = document.getElementById(page+'CompareSummary');
+  if(sumEl) sumEl.innerHTML = summaryHtml;
+}
+
+function renderPageContent(page){
+  if(page==='amata') renderPageAmata();
+  else if(page==='lakchai') renderPageLakchai();
+  else if(page==='pinthong') renderPagePinthong();
+  else if(page==='cctv-office') initOfficeCCTVPage();
+  else if(page==='overview'){ /* map already renders */ }
+}
+
+function renderPageAmata(){
+  var grid=document.getElementById('amataGrid');
+  var amataStations=STATIONS.filter(function(s){return s.source==='amata';});
+  grid.innerHTML=amataStations.map(function(s){
+    return renderStationCardHTML(s);
+  }).join('');
+  initPageStationChips('amata',amataStations);
+  renderPageComparisonChart('amata');
+  renderPageCCTV('amata');
+}
+
+function renderPageLakchai(){
+  var aqGrid=document.getElementById('lakchaiAqGrid');
+  var byy=STATIONS.find(function(s){return s.id==='BYY';});
+  if(byy) aqGrid.innerHTML=renderStationCardHTML(byy);
+  
+  var rfStations=STATIONS.filter(function(s){return s.source==='rainfall';});
+  var rfGrid=document.getElementById('lakchaiRainGrid');
+  rfGrid.innerHTML=rfStations.map(function(s){
+    var d=stationData[s.id]||s;
+    var timeStr=d.lastUpdate?d.lastUpdate.toLocaleTimeString('th-TH',{hour12:false}):'--:--:--';
+    var isOnline=d.online?'online':'';
+    return '<div class="rain-card" onclick="openModal(\''+s.id+'\')">'
+      +(s.image?'<img src="'+s.image+'" style="width:100%;height:110px;object-fit:cover;border-radius:8px;margin-bottom:10px" onerror="this.style.display=\'none\'" alt="'+s.name+'"/>':'')
+      +'<div class="rain-header"><div class="rain-id">'+s.id+'</div><div class="rain-status '+isOnline+'"><span class="blink"></span> '+(d.online?'LIVE':'OFFLINE')+'</div></div>'
+      +'<div class="rain-name">'+s.name+'</div><div class="rain-site"><i class="fas fa-map-pin"></i> '+s.site+'</div>'
+      +'<div class="rain-value-wrap"><div class="rain-value">'+(d.rain!=null?d.rain.toFixed(1):'--')+'</div><div class="rain-unit">mm</div></div>'
+      +'<div class="rain-footer"><span><i class="far fa-clock"></i> '+timeStr+'</span><span>'+s.site+'</span></div>'
+      +'</div>';
+  }).join('');
+
+  var wlStations=STATIONS.filter(function(s){return s.source==='waterLevel';});
+  var wlGrid=document.getElementById('lakchaiWaterGrid');
+  wlGrid.innerHTML=wlStations.map(function(s){
+    var d=stationData[s.id]||s;
+    var timeStr=d.lastUpdate?d.lastUpdate.toLocaleTimeString('th-TH',{hour12:false}):'--:--:--';
+    var isOnline=d.online?'online':'';
+    return '<div class="water-card" onclick="openModal(\''+s.id+'\')">'
+      +(s.image?'<img src="'+s.image+'" style="width:100%;height:110px;object-fit:cover;border-radius:8px;margin-bottom:10px" onerror="this.style.display=\'none\'" alt="'+s.name+'"/>':'')
+      +'<div class="water-header"><div class="water-id">'+s.id+'</div><div class="water-status '+isOnline+'"><span class="blink"></span> '+(d.online?'LIVE':'OFFLINE')+'</div></div>'
+      +'<div class="water-name">'+s.name+'</div><div class="water-site"><i class="fas fa-map-pin"></i> '+s.site+'</div>'
+      +'<div class="water-metrics">'
+      +'<div class="water-metric"><div class="water-metric-label"><i class="fas fa-water"></i> ระดับน้ำ</div><div class="val">'+(d.waterLevel!=null?d.waterLevel.toFixed(2):'--')+'</div><div class="unit">m</div></div>'
+      +'<div class="water-metric"><div class="water-metric-label"><i class="fas fa-exchange-alt"></i> อัตราการไหล</div><div class="val">'+(d.flowRate!=null?d.flowRate.toFixed(1):'--')+'</div><div class="unit">m³/s</div></div>'
+      +'</div>'
+      +'<div class="water-footer"><span><i class="far fa-clock"></i> '+timeStr+'</span><span>'+s.site+'</span></div>'
+      +'</div>';
+  }).join('');
+
+  initPageStationChips('lakchai',[byy].filter(Boolean));
+  renderPageComparisonChart('lakchai');
+  renderPageCCTV('lakchai');
+}
+
+function renderPagePinthong(){
+  var grid=document.getElementById('pinthongGrid');
+  var pt5=STATIONS.find(function(s){return s.id==='PT5';});
+  if(pt5) grid.innerHTML=renderStationCardHTML(pt5);
+  initPageStationChips('pinthong',[pt5].filter(Boolean));
+  renderPageComparisonChart('pinthong');
+  renderPageCCTV('pinthong');
+}
+
+function initPageStationChips(page, stations){
+  PAGE_COMPARE[page].selectedStations = stations.map(function(s){return s.id;});
+}
+
+function renderPageCCTV(page){
+  var gridId, stationIds;
+  if(page==='amata'){ gridId='amataCctvGrid'; stationIds=['001','002','003','004','005','006']; }
+  else if(page==='lakchai'){ gridId='lakchaiCctvGrid'; stationIds=['BYY','RF01','RF02','WL01','WL02']; }
+  else if(page==='pinthong'){ gridId='pinthongCctvGrid'; stationIds=['PT5']; }
+  else return;
+  var grid=document.getElementById(gridId);
+  if(!grid) return;
+  grid.innerHTML=stationIds.map(function(stId){
+    var s=STATIONS.find(function(x){return x.id===stId;});
+    if(!s) return '';
+    return '<div class="cctv-card" onclick="openCCTV(\''+stId+'\')">'
+      +'<div class="cctv-header"><div class="cctv-icon"><i class="fas fa-video"></i></div><div><div class="cctv-name">'+s.name+'</div><div class="cctv-site">'+s.site+'</div></div></div>'
+      +'<div class="cctv-cameras">'+[1,2,3].map(function(n){
+        return '<div class="cctv-cam"><div class="cctv-cam-label">กล้อง '+n+'</div><div class="cctv-body"><div class="no-signal"><i class="fas fa-video-slash"></i><span>รอเชื่อมต่อ</span></div></div></div>';
+      }).join('')+'</div></div>';
+  }).join('');
+}
+
+function initOfficeCCTVPage(){
+  var grid=document.getElementById('officeCctvGrid');
+  if(!grid) return;
+  grid.innerHTML=OFFICE_CAMS.map(function(cam,i){
+    var streamUrl=GO2RTC_BASE+'/stream.html?src='+cam.src+'&mode=mse';
+    var snapshotUrl=GO2RTC_BASE+'/api/frame.jpeg?src='+cam.src;
+    return '<div class="cctv-card" style="cursor:default" id="officePageCamCard'+i+'">'
+      +'<div class="cctv-header"><div class="cctv-icon" style="background:rgba(234,179,8,0.1);color:var(--yellow)"><i class="fas fa-video"></i></div>'
+      +'<div style="flex:1"><div class="cctv-name">'+cam.name+'</div><div class="cctv-site">'+cam.location+'</div></div>'
+      +'<a href="'+GO2RTC_BASE+'/links.html?src='+cam.src+'" target="_blank" style="font-size:.7rem;color:var(--accent);text-decoration:none;flex-shrink:0" title="เปิดลิงค์ทั้งหมด"><i class="fas fa-external-link-alt"></i></a>'
+      +'</div>'
+      +'<div class="cctv-body" style="height:280px;background:#000;position:relative" id="officePageCamBody'+i+'">'
+      +'<div id="officePageLoader'+i+'" class="no-signal" style="display:flex">'
+      +'<div style="width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--yellow);border-radius:50%;animation:spin 1s linear infinite"></div>'
+      +'<span>กำลังเชื่อมต่อ go2rtc...</span></div>'
+      +'<img id="officePageSnap'+i+'" src="'+snapshotUrl+'" alt="loading..." '
+      +'style="width:100%;height:100%;object-fit:contain;display:none" '
+      +'onload="this.style.display=\'block\';document.getElementById(\'officePageLoader'+i+'\').style.display=\'none\'" '
+      +'onerror="this.style.display=\'none\';document.getElementById(\'officePageLoader'+i+'\').style.display=\'flex\';document.getElementById(\'officePageLoader'+i+'\').innerHTML=\'<i class=\\\'fas fa-exclamation-triangle\\\'></i><span>ไม่สามารถเชื่อมต่อกล้องได้</span>\'"'
+      +'/></div></div>';
+  }).join('');
+  OFFICE_CAMS.forEach(function(cam,i){
+    setTimeout(function(){
+      var img=document.getElementById('officePageSnap'+i);
+      if(img) img.src=GO2RTC_BASE+'/api/frame.jpeg?src='+cam.src+'&_t='+Date.now();
+    },500+i*300);
+  });
+}
+
 async function init(){
   updateClock();
   setInterval(updateClock,1000);
   try{ await fetchAllStations(); }catch(e){ console.warn('fetchAllStations error:',e); }
   try{ initMap(); }catch(e){ console.warn('initMap error:',e); }
-  initCCTV();
-  initOfficeCCTV();
-  initCompareChips();
   try{ refreshMapMarkers(); }catch(e){ console.warn('refreshMapMarkers error:',e); }
   document.getElementById('loadingOverlay').classList.add('hidden');
   fetchInterval = setInterval(()=>{
@@ -2413,7 +2882,6 @@ async function init(){
   },60000);
   try{ cleanupFirebaseOld(); }catch(e){ console.warn('cleanupFirebaseOld error:',e); }
   setInterval(function(){ try{ cleanupFirebaseOld(); }catch(e){} }, 86400000);
-  setTimeout(function(){ renderComparisonChart(); }, 2000);
 }
 
 init();
