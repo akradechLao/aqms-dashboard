@@ -1611,7 +1611,29 @@ function openModal(id){
   }
   document.getElementById('modalOverlay').classList.add('active');
 }
-function switchTimeTab(type,stationId,hours,tabEl){
+
+async function loadFirebaseReadings(stationId, hours, field) {
+  var cutoff = Date.now() - hours*3600*1000;
+  var results = [];
+  try {
+    var snap = await fbDB.ref('readings').orderByKey().once('value');
+    snap.forEach(function(daySnap){
+      if(daySnap.hasChild(stationId)){
+        var stSnap = daySnap.child(stationId);
+        stSnap.forEach(function(rSnap){
+          var r = rSnap.val();
+          if(r && r.timestamp && r.timestamp >= cutoff && r[field]!=null){
+            results.push({ t: r.timestamp, v: r[field] });
+          }
+        });
+      }
+    });
+  } catch(e){ console.warn('Firebase read error:', e); }
+  results.sort(function(a,b){ return a.t - b.t; });
+  return results;
+}
+
+async function switchTimeTab(type,stationId,hours,tabEl){
   if(tabEl){
     const tabs=tabEl.parentElement.querySelectorAll('.time-tab');
     tabs.forEach(t=>t.classList.remove('active'));
@@ -1620,8 +1642,13 @@ function switchTimeTab(type,stationId,hours,tabEl){
   let data,label,unit,color,bgColor;
   const sd=stationData[stationId]||{};
   if(type==='rainfall'){
-    data=HistData.getRainfall(hours);
     label='ปริมาณน้ำฝน';unit='mm';color='#0ea5e9';bgColor='rgba(14,165,233,0.1)';
+    var fbData=await loadFirebaseReadings(stationId,hours,'rain');
+    if(fbData.length>0){
+      data=fbData.map(function(r){return {t:r.t,v:r.v};});
+    }else{
+      data=HistData.getRainfall(hours);
+    }
     const stats=calcStats(data);
     const insights=getInsights('rainfall',sd,stats);
     document.getElementById('rfStatsArea').innerHTML=`
@@ -1643,10 +1670,16 @@ function switchTimeTab(type,stationId,hours,tabEl){
   }else if(type==='waterLevel'){
     const s=STATIONS.find(x=>x.id===stationId);
     const wlIdx=s.id==='WL01'?0:1;
-    const wlData=HistData.getWaterLevel(wlIdx,hours);
-    const flData=HistData.getFlowRate(wlIdx,hours);
-    data=wlData;label='ระดับน้ำ';unit='m';color='#10b981';bgColor='rgba(16,185,129,0.1)';
-    const wlStats=calcStats(wlData);
+    label='ระดับน้ำ';unit='m';color='#10b981';bgColor='rgba(16,185,129,0.1)';
+    var fbWL=await loadFirebaseReadings(stationId,hours,'waterLevel');
+    var fbFL=await loadFirebaseReadings(stationId,hours,'flowRate');
+    if(fbWL.length>0){
+      data=fbWL.map(function(r){return {t:r.t,v:r.v};});
+    }else{
+      data=HistData.getWaterLevel(wlIdx,hours);
+    }
+    var flData=fbFL.length>0 ? fbFL.map(function(r){return {t:r.t,v:r.v};}) : HistData.getFlowRate(wlIdx,hours);
+    const wlStats=calcStats(data);
     const flStats=calcStats(flData);
     const insightsWL=getInsights('waterLevel',sd,wlStats);
     const insightsFL=getInsights('flowRate',sd,flStats);
@@ -1701,7 +1734,7 @@ function switchTimeTab(type,stationId,hours,tabEl){
   });
 }
 
-function switchAQTab(stationId,hours,tabEl){
+async function switchAQTab(stationId,hours,tabEl){
   if(tabEl){
     const tabs=tabEl.parentElement.querySelectorAll('.time-tab');
     tabs.forEach(t=>t.classList.remove('active'));
@@ -1709,7 +1742,25 @@ function switchAQTab(stationId,hours,tabEl){
   }
   const d=stationData[stationId]||{};
   const info=getAQILevel(d.aqi);
-  const hist=d.history&&d.history.length>0?d.history:[0];
+
+  var fbData=await loadFirebaseReadings(stationId,hours,'aqi');
+  var hist;
+  if(fbData.length>0){
+    hist=fbData.map(function(r){return r.v;});
+  }else{
+    hist=d.history&&d.history.length>0?d.history:[0];
+  }
+
+  var fbTemp=await loadFirebaseReadings(stationId,hours,'temp');
+  var fbHumid=await loadFirebaseReadings(stationId,hours,'humidity');
+  var fbPM25=await loadFirebaseReadings(stationId,hours,'pm25');
+  var fbPM10=await loadFirebaseReadings(stationId,hours,'pm10');
+
+  var avgTemp=fbTemp.length>0?(fbTemp.reduce(function(a,b){return a+b.v;},0)/fbTemp.length).toFixed(1):(d.temp!=null?d.temp:'--');
+  var avgHumid=fbHumid.length>0?(fbHumid.reduce(function(a,b){return a+b.v;},0)/fbHumid.length).toFixed(1):(d.humidity!=null?d.humidity:'--');
+  var avgPM25=fbPM25.length>0?(fbPM25.reduce(function(a,b){return a+b.v;},0)/fbPM25.length).toFixed(1):(d.pm25!=null?d.pm25:'--');
+  var avgPM10=fbPM10.length>0?(fbPM10.reduce(function(a,b){return a+b.v;},0)/fbPM10.length).toFixed(1):(d.pm10!=null?d.pm10:'--');
+
   const labels=hist.map((_,i)=>hours<=24?`${hist.length-i} ชม.`:`วันที่ ${hist.length-i}`);
   if(modalChartInstance)modalChartInstance.destroy();
   const ctx=document.getElementById('modalChart').getContext('2d');
@@ -1746,6 +1797,12 @@ function switchAQTab(stationId,hours,tabEl){
       <div class="modal-stat-box"><div class="ms-label">AQI ต่ำสุด</div><div class="ms-value" style="color:#059669">${stats.min}</div></div>
       <div class="modal-stat-box"><div class="ms-label">AQI สูงสุด</div><div class="ms-value" style="color:#dc2626">${stats.max}</div></div>
       <div class="modal-stat-box"><div class="ms-label">AQI เฉลี่ย</div><div class="ms-value" style="color:${info.color}">${stats.avg}</div></div>
+    </div>
+    <div class="modal-stats-grid" style="margin-top:8px">
+      <div class="modal-stat-box"><div class="ms-label">PM2.5 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM25}</div><div class="ms-unit">µg/m³</div></div>
+      <div class="modal-stat-box"><div class="ms-label">PM10 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM10}</div><div class="ms-unit">µg/m³</div></div>
+      <div class="modal-stat-box"><div class="ms-label">อุณหภูมิเฉลี่ย</div><div class="ms-value" style="color:#ea580c">${avgTemp}</div><div class="ms-unit">°C</div></div>
+      <div class="modal-stat-box"><div class="ms-label">ความชื้นเฉลี่ย</div><div class="ms-value" style="color:#06b6d4">${avgHumid}</div><div class="ms-unit">%</div></div>
     </div>
     ${aqiInsights.length?`<div class="modal-insights"><div class="modal-insights-title"><i class="fas fa-heart" style="color:#dc2626"></i> คำแนะนำด้านสุขภาพ</div>
     ${aqiInsights.map(i=>`<div class="insight-item ${i.level}"><span>${i.icon}</span><span style="color:${i.color}">${i.text}</span></div>`).join('')}</div>`:''}
