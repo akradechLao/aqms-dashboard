@@ -67,15 +67,24 @@ readings/
 
 ## ประวัติการแก้ไข
 
-### 2026-07-16 (Firebase)
+### 2026-07-21 (Phase 3: Cloud Function)
+- **Firebase Cloud Function** (`fetchAqData`):
+  - Region: asia-southeast1, Runtime: Node.js 20
+  - บันทึกข้อมูล **ทุก 1 นาที**: SO₂, NO₂, AQI, อุณหภูมิ, ความชื้น, ลม, ฝน, ความกดอากาศ
+  - บันทึกข้อมูล **ทุก 1 ชั่วโมง**: PM2.5, PM10, TSP (ตรวจสอบค่าก่อนเขียน, retry สูงสุด 3 ครั้ง)
+  - Auto-cleanup ข้อมูลเก่ากว่า 90 วัน
+  - ข้อมูลบันทึกอัตโนมัติแม้ปิดเว็บ
+
+### 2026-07-21
+- **Modal charts from Firebase**: กราฟใน Modal ดึงข้อมูลจริงจาก Firebase
+- **Comparison chart**: เปรียบเทียบข้อมูลสถานี (PM2.5, PM10, TSP, SO₂, NO₂, AQI)
+- **Smooth chart curves**: Cubic spline interpolation สำหรับกราฟเปรียบเทียบ
+
+### 2026-07-16 (Firebase Phase 1)
 - **Firebase Realtime Database integration**:
-  - เพิ่ม Firebase SDK (v10.12.0) via CDN
-  - ฟังก์ชัน `saveToFirebase()` บันทึกข้อมูลทุก fetch cycle
-  - ฟังก์ชัน `cleanupFirebaseOld()` ลบข้อมูลเก่ากว่า 90 วัน
-  - ฟังก์ชัน `exportCSV()` ดาวน์โหลดข้อมูลเป็น CSV
-  - ปุ่ม Export CSV ใน header
-  - โครงสร้าง: `readings/{date}/{stationId}/{timestamp}`
-  - ข้อมูล: pm25, pm10, tsp, so2, no2, aqi, temp, humidity, wind, windDir, rain, pressure, waterLevel, flowRate
+  - บันทึกข้อมูล 12 สถานี ทุก 60 วินาที
+  - Auto-cleanup 90 วัน
+  - Export CSV button
 
 ### 2026-07-16
 - **Simulated data fallback**: เพิ่มระบบ simulated data สำหรับสถานีที่ API ล่ม
