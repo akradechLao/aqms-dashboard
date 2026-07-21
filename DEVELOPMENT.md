@@ -40,6 +40,22 @@
 - Server: `http://172.18.35.176:1984`
 - Cameras: camera_01, camera_02
 
+### Firebase Realtime Database
+- Project: `aqms-dashboard-900ce`
+- Region: asia-southeast1
+- URL: `https://aqms-dashboard-900ce-default-rtdb.asia-southeast1.firebasedatabase.app`
+- ใช้เก็บข้อมูลย้อนหลัง (Phase 1)
+- Auto-cleanup: ลบข้อมูลเก่ากว่า 90 วัน
+- Free Tier: 1GB storage, 10GB/month bandwidth
+
+#### โครงสร้างข้อมูล
+```
+readings/
+  {YYYY-MM-DD}/
+    {stationId}/
+      {timestamp}: { pm25, pm10, tsp, so2, no2, aqi, temp, humidity, wind, windDir, rain, pressure, waterLevel, flowRate }
+```
+
 ## มาตรฐานคุณภาพอากาศ (มกราคม 2569)
 | มลพิษ | มาตรฐาน |
 |--------|---------|
@@ -50,6 +66,16 @@
 | NO2 | 120 ppb |
 
 ## ประวัติการแก้ไข
+
+### 2026-07-16 (Firebase)
+- **Firebase Realtime Database integration**:
+  - เพิ่ม Firebase SDK (v10.12.0) via CDN
+  - ฟังก์ชัน `saveToFirebase()` บันทึกข้อมูลทุก fetch cycle
+  - ฟังก์ชัน `cleanupFirebaseOld()` ลบข้อมูลเก่ากว่า 90 วัน
+  - ฟังก์ชัน `exportCSV()` ดาวน์โหลดข้อมูลเป็น CSV
+  - ปุ่ม Export CSV ใน header
+  - โครงสร้าง: `readings/{date}/{stationId}/{timestamp}`
+  - ข้อมูล: pm25, pm10, tsp, so2, no2, aqi, temp, humidity, wind, windDir, rain, pressure, waterLevel, flowRate
 
 ### 2026-07-16
 - **Simulated data fallback**: เพิ่มระบบ simulated data สำหรับสถานีที่ API ล่ม
