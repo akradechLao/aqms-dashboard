@@ -196,6 +196,9 @@ exports.fetchAqData = onSchedule(
         if (data && data.online) {
           data.aqi = calcOverallAQI(data);
           const record = {
+            so2: data.so2 != null ? +data.so2 : null,
+            no2: data.no2 != null ? +data.no2 : null,
+            aqi: data.aqi != null ? +data.aqi : null,
             temp: data.temp != null ? +data.temp : null,
             humidity: data.humidity != null ? +data.humidity : null,
             wind: data.wind != null ? +data.wind : null,
@@ -211,9 +214,6 @@ exports.fetchAqData = onSchedule(
             record.pm25 = data.pm25 != null ? +data.pm25 : null;
             record.pm10 = data.pm10 != null ? +data.pm10 : null;
             record.tsp = data.tsp != null ? +data.tsp : null;
-            record.so2 = data.so2 != null ? +data.so2 : null;
-            record.no2 = data.no2 != null ? +data.no2 : null;
-            record.aqi = data.aqi != null ? +data.aqi : null;
           }
           updates[`readings/${today}/${stationId}/${ts}`] = record;
         }
@@ -228,6 +228,9 @@ exports.fetchAqData = onSchedule(
       if (data && data.online) {
         data.aqi = calcOverallAQI(data);
         const record = {
+          so2: data.so2 != null ? +data.so2 : null,
+          no2: data.no2 != null ? +data.no2 : null,
+          aqi: data.aqi != null ? +data.aqi : null,
           temp: data.temp != null ? +data.temp : null,
           humidity: data.humidity != null ? +data.humidity : null,
           wind: data.wind != null ? +data.wind : null,
@@ -243,9 +246,6 @@ exports.fetchAqData = onSchedule(
           record.pm25 = data.pm25 != null ? +data.pm25 : null;
           record.pm10 = data.pm10 != null ? +data.pm10 : null;
           record.tsp = data.tsp != null ? +data.tsp : null;
-          record.so2 = data.so2 != null ? +data.so2 : null;
-          record.no2 = data.no2 != null ? +data.no2 : null;
-          record.aqi = data.aqi != null ? +data.aqi : null;
         }
         updates[`readings/${today}/PT5/${ts}`] = record;
       }
