@@ -196,6 +196,23 @@ body{
 .station-card[data-level="very-unhealthy"]::after{background:linear-gradient(90deg,var(--purple),var(--purple-light))}
 .station-card[data-level="hazardous"]::after{background:linear-gradient(90deg,var(--maroon),var(--red))}
 .station-card[data-level="offline"]::after{background:linear-gradient(90deg,#94a3b8,#cbd5e1)}
+.station-card-img{
+  width:100%;height:180px;overflow:hidden;position:relative;
+}
+.station-card-img::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:60px;
+  background:linear-gradient(to top,rgba(255,255,255,0.95),transparent);
+  pointer-events:none;
+}
+.station-card-img img{
+  width:100%;height:100%;object-fit:cover;
+  filter:brightness(1.02) contrast(1.05) saturate(1.1);
+  transition:transform .5s ease,filter .3s ease;
+}
+.station-card:hover .station-card-img img{
+  transform:scale(1.05);
+  filter:brightness(1.08) contrast(1.08) saturate(1.15);
+}
 .station-header{
   padding:18px 20px 14px;display:flex;align-items:flex-start;justify-content:space-between;
 }
@@ -336,7 +353,7 @@ body{
 .insight-item.warning{background:rgba(234,88,12,0.06);border:1px solid rgba(234,88,12,0.15)}
 .insight-item.info{background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.15)}
 .insight-item.neutral{background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.06)}
-.modal-station-image{width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:12px}
+.modal-station-image{width:100%;height:180px;object-fit:cover;border-radius:8px;margin-bottom:12px;filter:brightness(1.02) contrast(1.05) saturate(1.1)}
 
 .map-wrap{
   width:100%;height:400px;border-radius:var(--radius);overflow:hidden;
@@ -1002,14 +1019,14 @@ body{
 
 <script>
 const STATIONS = [
-  { id:'001', name:'วัดอู่ตะเภา', site:'นิคมอมตะซิตี้ ชลบุรี', source:'amata', lat:'13.410555', lng:'101.016295' },
-  { id:'002', name:'วัดมาบสามเกลียว', site:'นิคมอมตะซิตี้ ชลบุรี', source:'amata', lat:'13.440420', lng:'101.037875' },
-  { id:'003', name:'โรงเรียนพานทองสภาชนูปถัมภ์', site:'นิคมอมตะซิตี้ ชลบุรี', source:'amata', lat:'13.462643', lng:'101.090778' },
-  { id:'004', name:'วัดอ้อมแก้ว', site:'นิคมอมตะซิตี้ ชลบุรี', source:'amata', lat:'13.453404', lng:'101.114352' },
-  { id:'005', name:'วัดพนานิคม', site:'นิคมอมตะซิตี้ ระยอง', source:'amata', lat:'12.918358', lng:'101.107194' },
-  { id:'006', name:'รพ.สต.มาบยางพร', site:'นิคมอมตะซิตี้ ระยอง', source:'amata', lat:'12.990007', lng:'101.132882' },
-  { id:'PT5', name:'สถานี ปิ่นทอง โครงการ 5', site:'นิคมปิ่นทอง 5', source:'pt5', lat:'13.092803', lng:'101.157933' },
-  { id:'BYY', name:'โรงเรียนบ้านยายจั่น', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'lakchai', lat:'12.705699', lng:'101.469729' },
+  { id:'001', name:'วัดอู่ตะเภา', site:'นิคมอมตะซิตี้ ชลบุรี', source:'amata', lat:'13.410555', lng:'101.016295', image:'assets/s-001.jpg' },
+  { id:'002', name:'วัดมาบสามเกลียว', site:'นิคมอมตะซิตี้ ชลบุรี', source:'amata', lat:'13.440420', lng:'101.037875', image:'assets/s-002.jpg' },
+  { id:'003', name:'โรงเรียนพานทองสภาชนูปถัมภ์', site:'นิคมอมตะซิตี้ ชลบุรี', source:'amata', lat:'13.462643', lng:'101.090778', image:'assets/s-003.jpg' },
+  { id:'004', name:'วัดอ้อมแก้ว', site:'นิคมอมตะซิตี้ ชลบุรี', source:'amata', lat:'13.453404', lng:'101.114352', image:'assets/s-004.jpg' },
+  { id:'005', name:'วัดพนานิคม', site:'นิคมอมตะซิตี้ ระยอง', source:'amata', lat:'12.918358', lng:'101.107194', image:'assets/s-005.jpg' },
+  { id:'006', name:'รพ.สต.มาบยางพร', site:'นิคมอมตะซิตี้ ระยอง', source:'amata', lat:'12.990007', lng:'101.132882', image:'assets/s-006.jpg' },
+  { id:'PT5', name:'สถานี ปิ่นทอง โครงการ 5', site:'นิคมปิ่นทอง 5', source:'pt5', lat:'13.092803', lng:'101.157933', image:'assets/s-pt5.jpg' },
+  { id:'BYY', name:'โรงเรียนบ้านยายจั่น', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'lakchai', lat:'12.705699', lng:'101.469729', image:'assets/s-byy.jpg' },
   { id:'RF01', name:'สถานีวัดปริมาณน้ำฝน', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.727041', lng:'101.467966', image:'assets/rf1.jpg' },
   { id:'RF02', name:'สถานีวัดปริมาณน้ำฝน (แห่งที่ 2)', site:'นิคมหลักชัยเมืองยาง ระยอง', source:'rainfall', lat:'12.718200', lng:'101.463500', image:'assets/rf2.jpg' },
   { id:'WL01', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 1', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.710500', lng:'101.471200', image:'assets/wl1.jpg' },
@@ -1498,6 +1515,7 @@ function renderStationCardHTML(s){
 
     return`
     <div class="station-card" data-level="${info.level}" onclick="openModal('${s.id}')">
+      ${s.image?`<div class="station-card-img"><img src="${s.image}" alt="${s.name}" onerror="this.parentElement.style.display='none'"/></div>`:''}
       <div class="station-header">
         <div class="station-name-wrap">
           <span class="station-num">${s.id}</span>
@@ -1748,6 +1766,7 @@ function openModal(id){
     const info=getAQILevel(d.aqi);
     document.getElementById('modalTitle').innerHTML=`<span style="color:${info.color}">${s.id}</span> ${s.name}`;
     document.getElementById('modalGrid').innerHTML=`
+      ${s.image?`<img class="modal-station-image" src="${s.image}" onerror="this.style.display='none'" alt="${s.name}" style="grid-column:1/-1"/>`:''}
       <div class="modal-stat" style="grid-column:1/-1;background:${info.bg};border-color:${info.color}20">
         <div class="label" style="color:${info.color}">ดัชนีคุณภาพอากาศ (AQI)</div>
         <div class="value" style="color:${info.color};font-size:2.2rem">${d.aqi!=null?d.aqi:'--'}</div>
@@ -2056,6 +2075,7 @@ function initMap(){
       </div>`;
     }else{
       popupHtml=`<div style="font-family:Sarabun,sans-serif;min-width:220px;padding:4px">
+        ${s.image?`<img src="${s.image}" style="width:100%;height:130px;object-fit:cover;border-radius:6px;margin-bottom:8px;filter:brightness(1.02) contrast(1.05) saturate(1.1)" onerror="this.style.display='none'" alt="${s.name}"/>`:''}
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
           <b style="font-size:.9rem">${s.name}</b>
         </div>
