@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -579,6 +581,13 @@ body{
   border:1px solid rgba(2,132,199,0.15);margin-left:6px;vertical-align:middle;
   font-weight:600;
 }
+.export-btn{
+  padding:6px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg-card);color:var(--accent);font-size:.8rem;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;
+  font-family:'Sarabun',sans-serif;white-space:nowrap;
+}
+.export-btn:hover{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(14,165,233,0.3)}
 </style>
 </head>
 <body>
@@ -594,6 +603,7 @@ body{
     <div class="sys-status" id="sysStatus"><span class="dot"></span>กำลังเชื่อมต่อ...</div>
   </div>
   <div class="header-right">
+    <button class="export-btn" onclick="exportCSV()" title="ดาวน์โหลดข้อมูล CSV"><i class="fas fa-download"></i> Export CSV</button>
     <div class="refresh-info"><i class="fas fa-sync-alt"></i> อัปเดตทุก 60 วินาที</div>
     <div class="clock" id="clock">--:--:--</div>
   </div>
@@ -749,6 +759,18 @@ const AMATA_PM25_TOKEN = '1|f7MPVH175GVeXbdG7VrOW2OChWVFC172KJdPA3DH0d1266f7';
 const AMATA_PM25_STATIONS = ['002','004','005'];
 const PT5_TOKEN = '1|SnpQPAiDIE8BjMPfOMbF0TjtHxFeo2PqP5ztKpzm33be5594';
 
+const firebaseConfig = {
+  apiKey: "AIzaSyB-CqalCYqWOywV3xHjQ8mErhFN_E4ugTQ",
+  authDomain: "aqms-dashboard-900ce.firebaseapp.com",
+  databaseURL: "https://aqms-dashboard-900ce-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "aqms-dashboard-900ce",
+  storageBucket: "aqms-dashboard-900ce.firebasestorage.app",
+  messagingSenderId: "968151981277",
+  appId: "1:968151981277:web:e5100289664a7629b8cf34"
+};
+const fbApp = firebase.initializeApp(firebaseConfig);
+const fbDB = firebase.database();
+
 let stationData = {};
 let sparklineCharts = {};
 let modalChartInstance = null;
@@ -822,6 +844,49 @@ function calcOverallAQI(d){
     calcAQI_SO2(d.so2),
   ].filter(v=>v!=null);
   return vals.length>0 ? Math.max(...vals) : null;
+}
+
+function saveToFirebase(stationId, data) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const ts = Date.now();
+    const payload = {
+      pm25: data.pm25!=null ? +data.pm25 : null,
+      pm10: data.pm10!=null ? +data.pm10 : null,
+      tsp: data.tsp!=null ? +data.tsp : null,
+      so2: data.so2!=null ? +data.so2 : null,
+      no2: data.no2!=null ? +data.no2 : null,
+      aqi: data.aqi!=null ? +data.aqi : null,
+      temp: data.temp!=null ? +data.temp : null,
+      humidity: data.humidity!=null ? +data.humidity : null,
+      wind: data.wind!=null ? +data.wind : null,
+      windDir: data.windDir!=null ? +data.windDir : null,
+      rain: data.rain!=null ? +data.rain : null,
+      pressure: data.pressure!=null ? +data.pressure : null,
+      waterLevel: data.waterLevel!=null ? +data.waterLevel : null,
+      flowRate: data.flowRate!=null ? +data.flowRate : null,
+      timestamp: ts
+    };
+    fbDB.ref('readings/'+today+'/'+stationId+'/'+ts).set(payload)
+      .catch(function(e){ console.warn('Firebase write error:', e); });
+  } catch(e) { console.warn('saveToFirebase error:', e); }
+}
+
+function cleanupFirebaseOld() {
+  try {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    fbDB.ref('readings').orderByKey().endAt(cutoffStr).once('value', function(snapshot){
+      const updates = {};
+      snapshot.forEach(function(child){ updates[child.key] = null; });
+      if(Object.keys(updates).length > 0){
+        fbDB.ref('readings').update(updates)
+          .then(function(){ console.log('Firebase cleanup: removed '+Object.keys(updates).length+' days'); })
+          .catch(function(e){ console.warn('Firebase cleanup error:', e); });
+      }
+    });
+  } catch(e) { console.warn('cleanupFirebaseOld error:', e); }
 }
 
 async function fetchWithTimeout(url, token, timeout=8000){
@@ -1119,6 +1184,7 @@ async function fetchAllStations(){
       if(old.history.length>24) old.history.shift();
     }
     old.lastUpdate = new Date();
+    saveToFirebase(s.id, old);
   });
   let rfIdx = 0, wlIdx = 0;
   STATIONS.forEach(s=>{
@@ -1134,6 +1200,7 @@ async function fetchAllStations(){
       d.waterLevel = SIM.waterLevel(idx);
       d.flowRate = SIM.flowRate(idx);
     }
+    saveToFirebase(s.id, d);
   });
   renderStations();
   renderRainGauges();
@@ -1994,6 +2061,32 @@ function locateMe(){
   );
 }
 
+async function exportCSV() {
+  try {
+    const snapshot = await fbDB.ref('readings').once('value');
+    const data = snapshot.val();
+    if(!data) { alert('ยังไม่มีข้อมูลในระบบ'); return; }
+    let csv = 'Date,Station,Timestamp,PM2.5,PM10,TSP,SO2,NO2,AQI,Temp,Humidity,Wind,WindDir,Rain,Pressure,WaterLevel,FlowRate\n';
+    Object.keys(data).forEach(function(date){
+      Object.keys(data[date]).forEach(function(station){
+        Object.keys(data[date][station]).forEach(function(ts){
+          const r = data[date][station][ts];
+          csv += date+','+station+','+ts+','
+            +[r.pm25,r.pm10,r.tsp,r.so2,r.no2,r.aqi,r.temp,r.humidity,r.wind,r.windDir,r.rain,r.pressure,r.waterLevel,r.flowRate].join(',')
+            +'\n';
+        });
+      });
+    });
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aqms_export_'+new Date().toISOString().split('T')[0]+'.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { console.warn('exportCSV error:',e); alert('เกิดข้อผิดพลาดในการดาวน์โหลด'); }
+}
+
 async function init(){
   updateClock();
   setInterval(updateClock,1000);
@@ -2006,6 +2099,8 @@ async function init(){
   fetchInterval = setInterval(()=>{
     fetchAllStations().then(()=>{try{refreshMapMarkers();}catch(e){}});
   },60000);
+  try{ cleanupFirebaseOld(); }catch(e){ console.warn('cleanupFirebaseOld error:',e); }
+  setInterval(function(){ try{ cleanupFirebaseOld(); }catch(e){} }, 86400000);
 }
 
 init();
