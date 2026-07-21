@@ -2275,11 +2275,9 @@ async function renderComparisonChart(){
       if(sd && sd[param]!=null){
         var now = Date.now();
         var base = sd[param] || 10;
-        var pts = 60;
-        var step = (compareHours*3600000) / pts;
-        for(var p=0; p<pts; p++){
-          var t = now - (pts-1-p)*step;
-          var ratio = p / pts;
+        for(var h=0; h<compareHours; h++){
+          var t = now - (compareHours-1-h)*3600000;
+          var ratio = h / compareHours;
           var wave1 = Math.sin(ratio * Math.PI * 2.5) * base * 0.1;
           var wave2 = Math.sin(ratio * Math.PI * 5 + 0.8) * base * 0.04;
           var trend = (ratio - 0.5) * base * 0.06;
@@ -2290,59 +2288,40 @@ async function renderComparisonChart(){
 
     readings.sort(function(a,b){ return a.t - b.t; });
 
-    var displayData;
-    if(compareHours <= 24){
-      displayData = readings;
-    } else {
-      displayData = [];
-      var bucketSize = compareHours <= 168 ? 4 : 12;
-      for(var b=0; b<readings.length; b+=bucketSize){
-        var chunk = readings.slice(b, b+bucketSize);
-        var chunkVals = chunk.map(function(r){return r.v;}).sort(function(a,b){return a-b;});
-        var median = chunkVals[Math.floor(chunkVals.length/2)];
-        displayData.push({ t: chunk[Math.floor(chunk.length/2)].t, v: median });
-      }
-    }
+    var hourlyData = {};
+    readings.forEach(function(r){
+      var d = new Date(r.t);
+      var hourKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+      if(!hourlyData[hourKey]) hourlyData[hourKey] = [];
+      hourlyData[hourKey].push(r.v);
+    });
 
-    var smoothed = [];
-    if(displayData.length >= 2 && compareHours <= 24){
-      for(var k=0; k<displayData.length-1; k++){
-        var x0 = displayData[Math.max(k-1,0)].v;
-        var y0 = displayData[k].v;
-        var y1 = displayData[k+1].v;
-        var x1 = displayData[Math.min(k+2,displayData.length-1)].v;
-        var t0 = displayData[k].t;
-        var t1 = displayData[k+1].t;
-        var segPts = 8;
-        for(var s=0; s<segPts; s++){
-          var ratio = s / segPts;
-          var tt = t0 + (t1-t0)*ratio;
-          var c0 = y0;
-          var c1 = (-x0 + y1) / 6;
-          var c2 = (x1 - y0) / 6;
-          var c3 = y1;
-          var u = 1-ratio;
-          var vv = u*u*u*c0 + 3*u*u*ratio*c1 + 3*u*ratio*ratio*c2 + ratio*ratio*ratio*c3;
-          smoothed.push({ t: tt, v: +vv.toFixed(2) });
-        }
+    var displayData = [];
+    var hourKeys = Object.keys(hourlyData).sort();
+    hourKeys.forEach(function(key){
+      var vals = hourKeys.indexOf(key);
+      var ts = new Date(key).getTime();
+      var bucket = hourlyData[key];
+      if(compareHours <= 24){
+        displayData.push({ t: ts, v: bucket[bucket.length-1] });
+      } else {
+        var sorted = bucket.slice().sort(function(a,b){return a-b;});
+        displayData.push({ t: ts, v: sorted[Math.floor(sorted.length/2)] });
       }
-      smoothed.push(displayData[displayData.length-1]);
-    } else {
-      smoothed = displayData;
-    }
+    });
 
     var color = COMPARE_COLORS[idx % COMPARE_COLORS.length];
     datasets.push({
       label: stId+' '+s.name,
-      data: smoothed.map(function(r){ return { x: r.t, y: r.v }; }),
-      borderColor: color, borderWidth: 2.5, pointRadius: 0,
-      tension: 0, fill: true, backgroundColor: color+'12', spanGaps: true,
+      data: displayData.map(function(r){ return { x: r.t, y: r.v }; }),
+      borderColor: color, borderWidth: 2.5, pointRadius: compareHours<=24?2:0,
+      tension: 0.3, fill: true, backgroundColor: color+'12', spanGaps: true,
       hoverBorderWidth: 3, hoverPointRadius: 5, hoverPointBackgroundColor: color,
       hoverBorderColor: '#fff'
     });
 
-    if(readings.length>0){
-      var vals = readings.map(function(r){ return r.v; }).sort(function(a,b){return a-b;});
+    if(displayData.length>0){
+      var vals = displayData.map(function(r){ return r.v; }).sort(function(a,b){return a-b;});
       var min = vals[0];
       var max = vals[vals.length-1];
       var median = vals[Math.floor(vals.length/2)];
@@ -2376,8 +2355,8 @@ async function renderComparisonChart(){
           callbacks:{ label: function(ctx){ return '● '+ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+' '+paramUnits[param]; } } }
       },
       scales: {
-        x: { type:'linear', title:{ display:true, text:'เวลา', font:{ family:'Sarabun', size:12, weight:'600' }, color:'#475569' },
-          ticks: { color:'#94a3b8', font:{ size:10, family:'Sarabun' }, callback: function(v){ var d=new Date(v); return d.toLocaleDateString('th-TH',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false}); }, maxTicksLimit:8 },
+        x: { type:'linear', title:{ display:true, text:'เวลา (รายชั่วโมง)', font:{ family:'Sarabun', size:12, weight:'600' }, color:'#475569' },
+          ticks: { color:'#94a3b8', font:{ size:10, family:'Sarabun' }, callback: function(v){ var d=new Date(v); return d.toLocaleDateString('th-TH',{day:'2-digit',month:'short'})+' '+d.getHours().toString().padStart(2,'0')+':00'; }, maxTicksLimit:12 },
           grid:{ color:'rgba(14,165,233,0.06)', drawBorder:false }, border:{ display:false }
         },
         y: { title:{ display:true, text:paramLabels[param]+' ('+paramUnits[param]+')', font:{ family:'Sarabun', size:12, weight:'600' }, color:'#475569' },
