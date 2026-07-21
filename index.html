@@ -197,15 +197,10 @@ body{
 .station-card[data-level="hazardous"]::after{background:linear-gradient(90deg,var(--maroon),var(--red))}
 .station-card[data-level="offline"]::after{background:linear-gradient(90deg,#94a3b8,#cbd5e1)}
 .station-card-img{
-  width:100%;height:180px;overflow:hidden;position:relative;
-}
-.station-card-img::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:30px;
-  background:linear-gradient(to top,rgba(255,255,255,0.6),transparent);
-  pointer-events:none;
+  width:100%;height:200px;overflow:hidden;position:relative;
 }
 .station-card-img img{
-  width:100%;height:100%;object-fit:cover;
+  width:100%;height:100%;object-fit:cover;object-position:center top;
   filter:brightness(1.02) contrast(1.05) saturate(1.1);
   transition:transform .5s ease,filter .3s ease;
 }
