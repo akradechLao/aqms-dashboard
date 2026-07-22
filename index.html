@@ -691,7 +691,7 @@ body{
   cursor:pointer;
 }
 .compare-stations-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.compare-stations-row label{font-size:.75rem;font-weight:700;color:var(--text-secondary);white-space:nowrap}
+.compare-stations-row label{font-size:.75rem;font-weight:700;color:var(--text-secondary);white-space:nowrap;text-decoration:none;-webkit-text-decoration:none}
 .compare-station-chips{display:flex;gap:6px;flex-wrap:wrap}
 .compare-chip{
   padding:6px 14px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;
@@ -705,6 +705,40 @@ body{
   color:#fff;border-color:transparent;
   box-shadow:0 2px 12px rgba(14,165,233,0.3);
 }
+/* Multi-param checkbox chips */
+.param-chips{display:flex;gap:6px;flex-wrap:wrap}
+.param-checkbox{
+  padding:6px 14px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;
+  border:1px solid rgba(0,0,0,0.06);background:rgba(0,0,0,0.03);color:#b0b8c4;
+  transition:all .3s cubic-bezier(.23,1,.32,1);user-select:none;
+  box-shadow:none;display:flex;align-items:center;gap:5px;
+}
+.param-checkbox:hover{background:rgba(0,0,0,0.06);color:#64748b}
+.param-checkbox.active{
+  background:linear-gradient(135deg,var(--accent),var(--accent-light));
+  color:#fff;border-color:transparent;
+  box-shadow:0 2px 12px rgba(14,165,233,0.3);
+}
+.param-checkbox .check-icon{font-size:.6rem;opacity:0;transition:opacity .2s}
+.param-checkbox.active .check-icon{opacity:1}
+.param-chart-panel{
+  margin-bottom:16px;position:relative;
+  background:rgba(0,0,0,0.015);
+  border-radius:12px;padding:12px;border:1px solid rgba(0,0,0,0.04);
+}
+.param-chart-panel.empty{background:rgba(0,0,0,0.025);border-style:dashed}
+.param-chart-panel canvas{width:100%!important;height:100%!important}
+.param-chart-panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;padding:0 4px;
+}
+.param-chart-panel-title{font-size:.82rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:6px}
+.param-chart-panel-title .param-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.param-chart-panel-placeholder{
+  height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#b0b8c4;font-size:.82rem;font-weight:500;gap:8px;
+}
+.param-chart-panel-placeholder i{font-size:1.4rem;opacity:.4}
 .compare-chart-wrap{
   height:300px;margin:10px 0;position:relative;
   background:rgba(0,0,0,0.015);
@@ -1015,12 +1049,17 @@ body{
           <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบข้อมูลสถานี Amata City</div>
           <div class="compare-controls">
             <div class="compare-control-group">
-              <label>พารามิเตอร์</label>
-              <select id="amataCompareParam" onchange="renderPageComparisonChart('amata')">
-                <option value="aqi">AQI</option><option value="pm25">PM2.5</option><option value="pm10">PM10</option>
-                <option value="tsp">TSP</option><option value="so2">SO2</option><option value="no2">NO2</option>
-                <option value="temp">อุณหภูมิ</option><option value="humidity">ความชื้น</option><option value="rain">ปริมาณฝน</option>
-              </select>
+              <label>พารามิเตอร์ (เลือกหลายรายการได้)</label>
+              <div class="param-chips" id="amataParamChips">
+                <div class="param-checkbox active" data-param="aqi" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>AQI</div>
+                <div class="param-checkbox" data-param="pm25" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>PM2.5</div>
+                <div class="param-checkbox" data-param="pm10" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>PM10</div>
+                <div class="param-checkbox" data-param="tsp" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>TSP</div>
+                <div class="param-checkbox" data-param="so2" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>SO2</div>
+                <div class="param-checkbox" data-param="no2" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>NO2</div>
+                <div class="param-checkbox" data-param="temp" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>อุณหภูมิ</div>
+                <div class="param-checkbox" data-param="humidity" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>ความชื้น</div>
+              </div>
             </div>
             <div class="compare-control-group">
               <label>ช่วงเวลา</label>
@@ -1035,8 +1074,7 @@ body{
             <label>เลือกสถานี:</label>
             <div class="compare-station-chips" id="amataStationChips"></div>
           </div>
-          <div class="compare-chart-wrap" id="amataCompareWrap"><div class="compare-chart-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div><canvas id="amataCompareChart"></canvas></div>
-          <div class="compare-summary" id="amataCompareSummary"></div>
+          <div id="amataComparePanels"></div>
         </div>
         <div class="cctv-section">
           <div class="section-title"><i class="fas fa-video"></i> กล้องวงจรปิด สถานี Amata City</div>
@@ -2807,7 +2845,7 @@ function closeSidebar(){
 
 /* ===== PAGE-SPECIFIC COMPARISON CHARTS ===== */
 var PAGE_COMPARE = {
-  amata:   { chartInstance:null, selectedStations:['001','002','003','004','005','006'], hours:24 },
+  amata:   { chartInstances:{}, selectedStations:['001','002','003','004','005','006'], selectedParams:['aqi'], hours:24 },
   lakchai: { chartInstance:null, selectedStations:['BYY'], hours:24 },
   pinthong:{ chartInstance:null, selectedStations:['PT5'], hours:24 }
 };
@@ -2820,14 +2858,39 @@ function switchPageCompareTime(page, hours, tabEl){
   renderPageComparisonChart(page);
 }
 
+function toggleParamCheckbox(el, page){
+  var param = el.getAttribute('data-param');
+  var pc = PAGE_COMPARE[page];
+  if(!pc) return;
+  var idx = pc.selectedParams.indexOf(param);
+  if(idx >= 0){
+    if(pc.selectedParams.length <= 1) return;
+    pc.selectedParams.splice(idx, 1);
+    el.classList.remove('active');
+  } else {
+    pc.selectedParams.push(param);
+    el.classList.add('active');
+  }
+  renderPageComparisonChart(page);
+}
+
 async function renderPageComparisonChart(page){
   var pc = PAGE_COMPARE[page];
-  var paramEl = document.getElementById(page+'CompareParam');
-  if(!paramEl || !pc) return;
-  var param = paramEl.value;
+  if(!pc) return;
   var paramLabels = { aqi:'AQI', pm25:'PM2.5', pm10:'PM10', tsp:'TSP', so2:'SO2', no2:'NO2', temp:'อุณหภูมิ', humidity:'ความชื้น', rain:'ปริมาณฝน' };
   var paramUnits = { aqi:'', pm25:'µg/m³', pm10:'µg/m³', tsp:'µg/m³', so2:'ppb', no2:'ppb', temp:'°C', humidity:'%', rain:'mm' };
   var compareHours = pc.hours;
+
+  if(page === 'amata'){
+    if(pc.chartInstances){
+      Object.keys(pc.chartInstances).forEach(function(k){ if(pc.chartInstances[k]) pc.chartInstances[k].destroy(); });
+      pc.chartInstances = {};
+    }
+    var panelsEl = document.getElementById('amataComparePanels');
+    if(panelsEl) panelsEl.innerHTML = '';
+  } else {
+    if(pc.chartInstance){ pc.chartInstance.destroy(); pc.chartInstance = null; }
+  }
 
   var now = Date.now();
   var allHourKeys = [];
@@ -2845,113 +2908,155 @@ async function renderPageComparisonChart(page){
   var labelStep = Math.max(1, Math.floor(allHourKeys.length / maxLabels));
   var chartLabels = allHourKeys.map(function(k,i){ return i%labelStep===0 ? hourKeyToLabel[k] : ''; });
 
-  var datasets = [];
-  var summaryHtml = '';
-  var idx = 0;
+  var paramsToRender = (page === 'amata') ? pc.selectedParams : [(document.getElementById(page+'CompareParam')||{}).value || 'aqi'];
 
-  for(var si=0; si<pc.selectedStations.length; si++){
-    var stId = pc.selectedStations[si];
-    var s = STATIONS.find(function(x){ return x.id===stId; });
-    if(!s) continue;
-    var readings = [];
-    try {
-      var snap = await fbDB.ref('readings').orderByKey().once('value');
-      snap.forEach(function(daySnap){
-        if(daySnap.hasChild(stId)){
-          var stSnap = daySnap.child(stId);
-          stSnap.forEach(function(rSnap){
-            var r = rSnap.val();
-            if(r && r.timestamp){
-              var cutoff = Date.now() - compareHours*3600*1000;
-              if(r.timestamp >= cutoff && r[param]!=null) readings.push({ t: r.timestamp, v: r[param] });
+  for(var pi=0; pi<paramsToRender.length; pi++){
+    var param = paramsToRender[pi];
+    var datasets = [];
+    var summaryHtml = '';
+    var idx = 0;
+
+    for(var si=0; si<pc.selectedStations.length; si++){
+      var stId = pc.selectedStations[si];
+      var s = STATIONS.find(function(x){ return x.id===stId; });
+      if(!s) continue;
+      var readings = [];
+      try {
+        var snap = await fbDB.ref('readings').orderByKey().once('value');
+        snap.forEach(function(daySnap){
+          if(daySnap.hasChild(stId)){
+            var stSnap = daySnap.child(stId);
+            stSnap.forEach(function(rSnap){
+              var r = rSnap.val();
+              if(r && r.timestamp){
+                var cutoff = Date.now() - compareHours*3600*1000;
+                if(r.timestamp >= cutoff && r[param]!=null) readings.push({ t: r.timestamp, v: r[param] });
+              }
+            });
+          }
+        });
+      } catch(e){}
+
+      if(readings.length===0){
+        var sd = stationData[stId];
+        if(sd && sd[param]!=null){
+          var base = sd[param]||10;
+          for(var h=0; h<compareHours; h++){
+            var t = now-(compareHours-1-h)*3600000;
+            var ratio=h/compareHours;
+            var w1=Math.sin(ratio*Math.PI*2.5)*base*0.1;
+            var w2=Math.sin(ratio*Math.PI*5+0.8)*base*0.04;
+            var tr=(ratio-0.5)*base*0.06;
+            readings.push({t:t,v:+(base+w1+w2+tr).toFixed(2)});
+          }
+        }
+      }
+      readings.sort(function(a,b){return a.t-b.t;});
+
+      var hourlyData={};
+      readings.forEach(function(r){
+        var d=new Date(r.t);
+        var hk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+        if(!hourlyData[hk]) hourlyData[hk]=[];
+        hourlyData[hk].push(r.v);
+      });
+
+      var mappedValues = allHourKeys.map(function(key){
+        var bucket=hourlyData[key];
+        if(!bucket||bucket.length===0) return null;
+        if(compareHours<=24) return bucket[bucket.length-1];
+        var sorted=bucket.slice().sort(function(a,b){return a-b;});
+        return sorted[Math.floor(sorted.length/2)];
+      });
+
+      var color = COMPARE_COLORS[idx%COMPARE_COLORS.length];
+      datasets.push({
+        label:stId+' '+s.name, data:mappedValues,
+        borderColor:color,borderWidth:2.5,pointRadius:compareHours<=24?2:0,
+        tension:0.3,fill:true,backgroundColor:color+'12',spanGaps:true,
+        hoverBorderWidth:3,hoverPointRadius:5,hoverPointBackgroundColor:color,hoverBorderColor:'#fff'
+      });
+
+      var nonNull=mappedValues.filter(function(v){return v!==null;});
+      if(nonNull.length>0){
+        var sorted=nonNull.slice().sort(function(a,b){return a-b;});
+        var min=sorted[0],max=sorted[sorted.length-1],median=sorted[Math.floor(sorted.length/2)];
+        var lbl=compareHours<=24?'ค่าล่าสุด':'Median';
+        var mainVal=compareHours<=24?sorted[sorted.length-1]:median;
+        summaryHtml+='<div class="compare-stat-card" style="border-left:3px solid '+color+'"><div class="cs-name">'+stId+'</div><div class="cs-val" style="color:'+color+'">'+mainVal.toFixed(1)+'</div><div class="cs-sub">'+lbl+' | ต่ำสุด '+min.toFixed(1)+' | สูงสุด '+max.toFixed(1)+'</div></div>';
+      }
+      idx++;
+    }
+
+    if(page === 'amata'){
+      var panelsEl = document.getElementById('amataComparePanels');
+      if(!panelsEl) return;
+      var isEmpty = datasets.length === 0;
+      var panelHtml = '<div class="param-chart-panel'+(isEmpty?' empty':'')+'">'
+        +'<div class="param-chart-panel-header"><div class="param-chart-panel-title"><span class="param-dot" style="background:var(--accent)"></span>'+paramLabels[param]+' '+(paramUnits[param]?'('+paramUnits[param]+')':'')+'</div></div>'
+        +'<div style="height:280px;position:relative">'
+        +(isEmpty ? '<div class="param-chart-panel-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div>' : '')
+        +'<canvas id="amataPanelChart_'+param+'"></canvas>'
+        +'</div>'
+        +'<div class="compare-summary">'+summaryHtml+'</div>'
+        +'</div>';
+      panelsEl.insertAdjacentHTML('beforeend', panelHtml);
+
+      if(!isEmpty){
+        var ctx = document.getElementById('amataPanelChart_'+param);
+        if(ctx){
+          var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
+          pc.chartInstances[param] = new Chart(ctx.getContext('2d'),{
+            type:'line',data:{labels:chartLabels,datasets:datasets},
+            options:{
+              responsive:true,maintainAspectRatio:false,
+              plugins:{
+                legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},
+                tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,
+                  callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' '+paramUnits[param];}}}
+              },
+              scales:{
+                x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},
+                y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}
+              },
+              interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}
             }
           });
         }
-      });
-    } catch(e){}
-
-    if(readings.length===0){
-      var sd = stationData[stId];
-      if(sd && sd[param]!=null){
-        var base = sd[param]||10;
-        for(var h=0; h<compareHours; h++){
-          var t = now-(compareHours-1-h)*3600000;
-          var ratio=h/compareHours;
-          var w1=Math.sin(ratio*Math.PI*2.5)*base*0.1;
-          var w2=Math.sin(ratio*Math.PI*5+0.8)*base*0.04;
-          var tr=(ratio-0.5)*base*0.06;
-          readings.push({t:t,v:+(base+w1+w2+tr).toFixed(2)});
-        }
       }
+    } else {
+      var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
+      var canvasId = page+'CompareChart';
+      var ctx2 = document.getElementById(canvasId);
+      if(ctx2){
+        pc.chartInstance = new Chart(ctx2.getContext('2d'),{
+          type:'line',data:{labels:chartLabels,datasets:datasets},
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{
+              legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},
+              tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,
+                callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' '+paramUnits[param];}}}
+            },
+            scales:{
+              x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},
+              y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}
+            },
+            interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}
+          }
+        });
+      }
+      var wrapEl = document.getElementById(page+'CompareWrap');
+      if(wrapEl){
+        if(datasets.length===0){ wrapEl.classList.add('empty'); }
+        else { wrapEl.classList.remove('empty'); }
+      }
+      var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
+      if(phEl){ phEl.style.display = datasets.length===0 ? 'flex' : 'none'; }
+      var sumEl = document.getElementById(page+'CompareSummary');
+      if(sumEl) sumEl.innerHTML = summaryHtml;
     }
-    readings.sort(function(a,b){return a.t-b.t;});
-
-    var hourlyData={};
-    readings.forEach(function(r){
-      var d=new Date(r.t);
-      var hk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
-      if(!hourlyData[hk]) hourlyData[hk]=[];
-      hourlyData[hk].push(r.v);
-    });
-
-    var mappedValues = allHourKeys.map(function(key){
-      var bucket=hourlyData[key];
-      if(!bucket||bucket.length===0) return null;
-      if(compareHours<=24) return bucket[bucket.length-1];
-      var sorted=bucket.slice().sort(function(a,b){return a-b;});
-      return sorted[Math.floor(sorted.length/2)];
-    });
-
-    var color = COMPARE_COLORS[idx%COMPARE_COLORS.length];
-    datasets.push({
-      label:stId+' '+s.name, data:mappedValues,
-      borderColor:color,borderWidth:2.5,pointRadius:compareHours<=24?2:0,
-      tension:0.3,fill:true,backgroundColor:color+'12',spanGaps:true,
-      hoverBorderWidth:3,hoverPointRadius:5,hoverPointBackgroundColor:color,hoverBorderColor:'#fff'
-    });
-
-    var nonNull=mappedValues.filter(function(v){return v!==null;});
-    if(nonNull.length>0){
-      var sorted=nonNull.slice().sort(function(a,b){return a-b;});
-      var min=sorted[0],max=sorted[sorted.length-1],median=sorted[Math.floor(sorted.length/2)];
-      var lbl=compareHours<=24?'ค่าล่าสุด':'Median';
-      var mainVal=compareHours<=24?sorted[sorted.length-1]:median;
-      summaryHtml+='<div class="compare-stat-card" style="border-left:3px solid '+color+'"><div class="cs-name">'+stId+'</div><div class="cs-val" style="color:'+color+'">'+mainVal.toFixed(1)+'</div><div class="cs-sub">'+lbl+' | ต่ำสุด '+min.toFixed(1)+' | สูงสุด '+max.toFixed(1)+'</div></div>';
-    }
-    idx++;
   }
-
-  if(pc.chartInstance) pc.chartInstance.destroy();
-  var canvasId = page+'CompareChart';
-  var ctx=document.getElementById(canvasId);
-  if(!ctx) return;
-  var c2d=ctx.getContext('2d');
-  var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
-  pc.chartInstance=new Chart(c2d,{
-    type:'line',data:{labels:chartLabels,datasets:datasets},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},
-        tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,
-          callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' '+paramUnits[param];}}}
-      },
-      scales:{
-        x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},
-        y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}
-      },
-      interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}
-    }
-  });
-  var wrapEl = document.getElementById(page+'CompareWrap');
-  if(wrapEl){
-    if(datasets.length===0){ wrapEl.classList.add('empty'); }
-    else { wrapEl.classList.remove('empty'); }
-  }
-  var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
-  if(phEl){ phEl.style.display = datasets.length===0 ? 'flex' : 'none'; }
-  var sumEl = document.getElementById(page+'CompareSummary');
-  if(sumEl) sumEl.innerHTML = summaryHtml;
 }
 
 function renderPageContent(page){
