@@ -2874,6 +2874,8 @@ function toggleParamCheckbox(el, page){
   renderPageComparisonChart(page);
 }
 
+var _amataRenderToken = 0;
+
 async function renderPageComparisonChart(page){
   var pc = PAGE_COMPARE[page];
   if(!pc) return;
@@ -2882,6 +2884,8 @@ async function renderPageComparisonChart(page){
   var compareHours = pc.hours;
 
   if(page === 'amata'){
+    _amataRenderToken++;
+    var myToken = _amataRenderToken;
     if(pc.chartInstances){
       Object.keys(pc.chartInstances).forEach(function(k){ if(pc.chartInstances[k]) pc.chartInstances[k].destroy(); });
       pc.chartInstances = {};
@@ -2908,6 +2912,27 @@ async function renderPageComparisonChart(page){
   var labelStep = Math.max(1, Math.floor(allHourKeys.length / maxLabels));
   var chartLabels = allHourKeys.map(function(k,i){ return i%labelStep===0 ? hourKeyToLabel[k] : ''; });
 
+  var allStationReadings = {};
+  var cutoff = Date.now() - compareHours*3600*1000;
+  try {
+    var snap = await fbDB.ref('readings').orderByKey().once('value');
+    if(page === 'amata' && myToken !== _amataRenderToken) return;
+    snap.forEach(function(daySnap){
+      pc.selectedStations.forEach(function(stId){
+        if(daySnap.hasChild(stId)){
+          if(!allStationReadings[stId]) allStationReadings[stId] = [];
+          var stSnap = daySnap.child(stId);
+          stSnap.forEach(function(rSnap){
+            var r = rSnap.val();
+            if(r && r.timestamp && r.timestamp >= cutoff) allStationReadings[stId].push(r);
+          });
+        }
+      });
+    });
+  } catch(e){}
+
+  if(page === 'amata' && myToken !== _amataRenderToken) return;
+
   var paramsToRender = (page === 'amata') ? pc.selectedParams : [(document.getElementById(page+'CompareParam')||{}).value || 'aqi'];
 
   for(var pi=0; pi<paramsToRender.length; pi++){
@@ -2921,21 +2946,11 @@ async function renderPageComparisonChart(page){
       var s = STATIONS.find(function(x){ return x.id===stId; });
       if(!s) continue;
       var readings = [];
-      try {
-        var snap = await fbDB.ref('readings').orderByKey().once('value');
-        snap.forEach(function(daySnap){
-          if(daySnap.hasChild(stId)){
-            var stSnap = daySnap.child(stId);
-            stSnap.forEach(function(rSnap){
-              var r = rSnap.val();
-              if(r && r.timestamp){
-                var cutoff = Date.now() - compareHours*3600*1000;
-                if(r.timestamp >= cutoff && r[param]!=null) readings.push({ t: r.timestamp, v: r[param] });
-              }
-            });
-          }
-        });
-      } catch(e){}
+      var stationRaw = allStationReadings[stId] || [];
+      for(var ri=0; ri<stationRaw.length; ri++){
+        var r = stationRaw[ri];
+        if(r[param]!=null) readings.push({ t: r.timestamp, v: r[param] });
+      }
 
       if(readings.length===0){
         var sd = stationData[stId];
