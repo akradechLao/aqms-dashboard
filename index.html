@@ -695,11 +695,11 @@ body{
 .compare-station-chips{display:flex;gap:6px;flex-wrap:wrap}
 .compare-chip{
   padding:6px 14px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;
-  border:1px solid rgba(14,165,233,0.1);background:rgba(255,255,255,0.8);color:var(--text-muted);
+  border:1px solid rgba(0,0,0,0.06);background:rgba(0,0,0,0.03);color:#b0b8c4;
   transition:all .3s cubic-bezier(.23,1,.32,1);user-select:none;
-  box-shadow:0 1px 4px rgba(0,0,0,0.03);
+  box-shadow:none;
 }
-.compare-chip:hover{background:rgba(255,255,255,0.95);border-color:rgba(14,165,233,0.2);transform:translateY(-1px)}
+.compare-chip:hover{background:rgba(0,0,0,0.06);color:#64748b}
 .compare-chip.active{
   background:linear-gradient(135deg,var(--accent),var(--accent-light));
   color:#fff;border-color:transparent;
@@ -707,10 +707,17 @@ body{
 }
 .compare-chart-wrap{
   height:300px;margin:10px 0;position:relative;
-  background:linear-gradient(180deg,rgba(14,165,233,0.03) 0%,rgba(255,255,255,0) 100%);
-  border-radius:12px;padding:12px;border:1px solid rgba(14,165,233,0.08);
+  background:rgba(0,0,0,0.015);
+  border-radius:12px;padding:12px;border:1px solid rgba(0,0,0,0.04);
+  transition:background .3s;
 }
+.compare-chart-wrap.empty{background:rgba(0,0,0,0.025);border-style:dashed}
 .compare-chart-wrap canvas{width:100%!important;height:100%!important}
+.compare-chart-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#b0b8c4;font-size:.85rem;font-weight:500;gap:8px;pointer-events:none;
+}
+.compare-chart-placeholder i{font-size:1.6rem;opacity:.4}
 .compare-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:14px}
 .compare-stat-card{
   background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.06);border-radius:8px;
@@ -1028,7 +1035,7 @@ body{
             <label>เลือกสถานี:</label>
             <div class="compare-station-chips" id="amataStationChips"></div>
           </div>
-          <div class="compare-chart-wrap"><canvas id="amataCompareChart"></canvas></div>
+          <div class="compare-chart-wrap" id="amataCompareWrap"><div class="compare-chart-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div><canvas id="amataCompareChart"></canvas></div>
           <div class="compare-summary" id="amataCompareSummary"></div>
         </div>
         <div class="cctv-section">
@@ -1072,7 +1079,7 @@ body{
               </div>
             </div>
           </div>
-          <div class="compare-chart-wrap"><canvas id="lakchaiCompareChart"></canvas></div>
+          <div class="compare-chart-wrap" id="lakchaiCompareWrap"><div class="compare-chart-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div><canvas id="lakchaiCompareChart"></canvas></div>
           <div class="compare-summary" id="lakchaiCompareSummary"></div>
         </div>
         <div class="cctv-section">
@@ -1105,7 +1112,7 @@ body{
               </div>
             </div>
           </div>
-          <div class="compare-chart-wrap"><canvas id="pinthongCompareChart"></canvas></div>
+          <div class="compare-chart-wrap" id="pinthongCompareWrap"><div class="compare-chart-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div><canvas id="pinthongCompareChart"></canvas></div>
           <div class="compare-summary" id="pinthongCompareSummary"></div>
         </div>
         <div class="cctv-section">
@@ -2743,6 +2750,13 @@ async function renderComparisonChart(){
   });
 
   document.getElementById('compareSummary').innerHTML = summaryHtml;
+  var wrapEl = document.querySelector('.compare-section .compare-chart-wrap');
+  if(wrapEl){
+    if(datasets.length===0){ wrapEl.classList.add('empty'); }
+    else { wrapEl.classList.remove('empty'); }
+  }
+  var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
+  if(phEl){ phEl.style.display = datasets.length===0 ? 'flex' : 'none'; }
 }
 
 async function exportCSV() {
@@ -2933,6 +2947,13 @@ async function renderPageComparisonChart(page){
       interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}
     }
   });
+  var wrapEl = document.getElementById(page+'CompareWrap');
+  if(wrapEl){
+    if(datasets.length===0){ wrapEl.classList.add('empty'); }
+    else { wrapEl.classList.remove('empty'); }
+  }
+  var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
+  if(phEl){ phEl.style.display = datasets.length===0 ? 'flex' : 'none'; }
   var sumEl = document.getElementById(page+'CompareSummary');
   if(sumEl) sumEl.innerHTML = summaryHtml;
 }
