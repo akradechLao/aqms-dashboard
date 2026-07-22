@@ -126,48 +126,44 @@ function calcAQI_PM25(pm25) {
   if (pm25 == null) return null;
   const c = pm25;
   if (c <= 12.0) return Math.round((50 / 12.0) * c);
-  if (c <= 35.4) return Math.round(50 + (49 / 23.4) * (c - 12.0));
-  if (c <= 55.4) return Math.round(100 + (49 / 20.0) * (c - 35.4));
-  if (c <= 150.4) return Math.round(150 + (49 / 95.0) * (c - 55.4));
-  if (c <= 250.4) return Math.round(200 + (99 / 100.0) * (c - 150.4));
-  if (c <= 350.4) return Math.round(300 + (99 / 100.0) * (c - 250.4));
-  if (c <= 500.4) return Math.round(400 + (99 / 150.0) * (c - 350.4));
+  if (c <= 37.5) return Math.round(50 + (50 / 25.5) * (c - 12.0));
+  if (c <= 75.0) return Math.round(100 + (50 / 37.5) * (c - 37.5));
+  if (c <= 150.0) return Math.round(150 + (50 / 75.0) * (c - 75.0));
+  if (c <= 250.0) return Math.round(200 + (100 / 100.0) * (c - 150.0));
+  if (c <= 500.0) return Math.round(300 + (200 / 250.0) * (c - 250.0));
   return 500;
 }
 function calcAQI_PM10(pm10) {
   if (pm10 == null) return null;
   const c = pm10;
-  if (c <= 54) return Math.round((50 / 54) * c);
-  if (c <= 154) return Math.round(50 + (49 / 99) * (c - 54));
-  if (c <= 254) return Math.round(100 + (49 / 99) * (c - 154));
-  if (c <= 354) return Math.round(150 + (49 / 99) * (c - 254));
-  if (c <= 424) return Math.round(200 + (99 / 69) * (c - 354));
-  if (c <= 504) return Math.round(300 + (99 / 79) * (c - 424));
-  if (c <= 604) return Math.round(400 + (99 / 99) * (c - 504));
+  if (c <= 50) return Math.round((50 / 50) * c);
+  if (c <= 100) return Math.round(50 + (50 / 50) * (c - 50));
+  if (c <= 200) return Math.round(100 + (50 / 100) * (c - 100));
+  if (c <= 350) return Math.round(150 + (50 / 150) * (c - 200));
+  if (c <= 430) return Math.round(200 + (100 / 80) * (c - 350));
+  if (c <= 600) return Math.round(300 + (200 / 170) * (c - 430));
   return 500;
 }
 function calcAQI_NO2(no2) {
   if (no2 == null) return null;
   const c = no2;
-  if (c <= 53) return Math.round((50 / 53) * c);
-  if (c <= 100) return Math.round(50 + (49 / 46) * (c - 53));
-  if (c <= 360) return Math.round(100 + (49 / 259) * (c - 100));
-  if (c <= 649) return Math.round(150 + (49 / 288) * (c - 360));
-  if (c <= 1249) return Math.round(200 + (99 / 599) * (c - 649));
-  if (c <= 1649) return Math.round(300 + (99 / 399) * (c - 1249));
-  if (c <= 2049) return Math.round(400 + (99 / 399) * (c - 1649));
+  if (c <= 40) return Math.round((50 / 40) * c);
+  if (c <= 120) return Math.round(50 + (50 / 80) * (c - 40));
+  if (c <= 400) return Math.round(100 + (50 / 280) * (c - 120));
+  if (c <= 800) return Math.round(150 + (50 / 400) * (c - 400));
+  if (c <= 1200) return Math.round(200 + (100 / 400) * (c - 800));
+  if (c <= 2000) return Math.round(300 + (200 / 800) * (c - 1200));
   return 500;
 }
 function calcAQI_SO2(so2) {
   if (so2 == null) return null;
   const c = so2;
-  if (c <= 35) return Math.round((50 / 35) * c);
-  if (c <= 75) return Math.round(50 + (49 / 39) * (c - 35));
-  if (c <= 185) return Math.round(100 + (49 / 109) * (c - 75));
-  if (c <= 304) return Math.round(150 + (49 / 118) * (c - 185));
-  if (c <= 604) return Math.round(200 + (99 / 299) * (c - 304));
-  if (c <= 804) return Math.round(300 + (99 / 199) * (c - 604));
-  if (c <= 1004) return Math.round(400 + (99 / 199) * (c - 804));
+  if (c <= 20) return Math.round((50 / 20) * c);
+  if (c <= 50) return Math.round(50 + (50 / 30) * (c - 20));
+  if (c <= 150) return Math.round(100 + (50 / 100) * (c - 50));
+  if (c <= 300) return Math.round(150 + (50 / 150) * (c - 150));
+  if (c <= 600) return Math.round(200 + (100 / 300) * (c - 300));
+  if (c <= 1000) return Math.round(300 + (200 / 400) * (c - 600));
   return 500;
 }
 function calcOverallAQI(d) {
