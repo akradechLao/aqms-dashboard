@@ -1692,7 +1692,7 @@ async function fetchStationFromFirebase(stationId) {
     snap.forEach(function(child) {
       latest = child.val();
     });
-    if (latest && latest.source === 'cloud') {
+    if (latest) {
       return {
         pm25: latest.pm25 != null ? +latest.pm25 : null,
         pm10: latest.pm10 != null ? +latest.pm10 : null,
@@ -1744,7 +1744,11 @@ async function fetchAllStations(){
     }
     const old = stationData[s.id];
     const nw = results[s.id];
-    if(nw) Object.assign(old, nw);
+    if(nw) {
+      Object.assign(old, nw);
+    } else if(s.source === 'lakchai') {
+      old.online = false;
+    }
     if(!old.online && s.source!=='rainfall' && s.source!=='waterLevel' && s.source!=='lakchai'){
       old.online = true;
       old.pm25 = old.pm25!=null? old.pm25 : +(Math.random()*25+5).toFixed(1);
