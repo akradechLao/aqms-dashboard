@@ -165,9 +165,22 @@ async function fetchBYYStation() {
     const cards = $("[data-flux-card]");
     cards.each((i, card) => {
       const title = $(card).find("p[data-flux-text]").first().text().trim();
-      const valueEl = $(card).find("span.text-blue-500").first();
-      const valText = valueEl.text().trim();
-      if (!valText || valText === "Down" || valText === "Error" || valText === "---") return;
+      const cardText = $(card).text().replace(/\s+/g, " ").trim();
+
+      // Try span.text-blue-500 first (air quality cards)
+      let valText = $(card).find("span.text-blue-500").first().text().trim();
+
+      // For met cards: value is in first span inside the card
+      if (!valText || valText === "Down" || valText === "Error" || valText === "---") {
+        const firstSpan = $(card).find("span").first().text().trim();
+        if (firstSpan && !isNaN(parseFloat(firstSpan.replace(/,/g, "")))) {
+          valText = firstSpan;
+        }
+      }
+
+      // NO2 "Down" = sensor error, skip
+      if (valText === "Down" || valText === "Error" || valText === "---" || valText === "") return;
+
       const num = parseFloat(valText.replace(/,/g, ""));
       if (isNaN(num)) return;
 
@@ -181,20 +194,17 @@ async function fetchBYYStation() {
       else if (title.includes("น้ำฝน")) result.rain = num;
     });
 
-    const windSpeedText = $("p[data-flux-text]").filter(function () {
-      return $(this).text().includes("ความเร็วลม") && !$(this).text().includes("m/s");
-    }).text();
-    const wsMatch = windSpeedText.match(/([\d.]+)\s*m\/s/);
+    // Wind speed: find the text containing "ความเร็วลม" and extract number before m/s
+    const allText = $.text();
+    const wsMatch = allText.match(/ความเร็วลม\s*([\d.]+)\s*m\/s/);
     if (wsMatch) {
       result.wind = parseFloat(wsMatch[1]);
     }
 
-    const windDirText = $("p[data-flux-text]").filter(function () {
-      return $(this).text().includes("ลมพัดมาจากทิศ");
-    }).text();
-    const dirFromMatch = windDirText.match(/ทิศ([\w]+)\s*ไปทางทิศ([\w]+)/);
-    if (dirFromMatch) {
-      const fromDir = dirFromMatch[1].trim();
+    // Wind direction: "ลมพัดมาจากทิศX ไปทางทิศY"
+    const wdMatch = allText.match(/ลมพัดมาจากทิศ([\u0E00-\u0E7F]+)\s*ไปทางทิศ([\u0E00-\u0E7F]+)/);
+    if (wdMatch) {
+      const fromDir = wdMatch[1].trim();
       result.windDir = THAI_DIR_MAP[fromDir] ?? null;
     }
 
@@ -203,7 +213,7 @@ async function fetchBYYStation() {
       return null;
     }
 
-    console.log(`[BYY] Scraped: TSP=${result.tsp}, PM10=${result.pm10}, SO2=${result.so2}, NO2=${result.no2}, temp=${result.temp}`);
+    console.log(`[BYY] Scraped: TSP=${result.tsp}, PM10=${result.pm10}, SO2=${result.so2}, NO2=${result.no2}, temp=${result.temp}, humidity=${result.humidity}, pressure=${result.pressure}, rain=${result.rain}, wind=${result.wind}, windDir=${result.windDir}`);
     return result;
   } catch (e) {
     console.warn("Error fetching BYY:", e.message);
