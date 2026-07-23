@@ -1657,8 +1657,10 @@ async function fetchAllStations(){
       let data;
       if(s.source==='pt5'){
         data = await fetchPT5Station();
-      } else {
+      } else if(s.source==='amata'){
         data = await fetchAmataStation(s.id);
+      } else {
+        data = null;
       }
       results[s.id] = data;
     }catch(e){
