@@ -38,6 +38,10 @@ function extractVal(v) {
       : null;
 }
 
+function pv(v, s) {
+  return v != null && s == 1 ? extractVal(v) : null;
+}
+
 async function fetchAmataStation(stationId) {
   try {
     const minuteData = await fetchWithTimeout(
@@ -102,19 +106,19 @@ async function fetchPT5Station() {
       PT5_TOKEN
     );
     if (!data || !Array.isArray(data) || data.length === 0) return null;
-    const d = data[data.length - 1];
+    const d = data[0];
     return {
-      pm25: extractVal(d.Value10) || extractVal(d.Value3),
-      pm10: extractVal(d.Value9) || extractVal(d.Value2),
-      tsp: extractVal(d.Value12) || extractVal(d.Value5),
-      so2: extractVal(d.Value7),
-      no2: extractVal(d.Value8) || extractVal(d.Value4),
-      temp: extractVal(d.Value6),
-      humidity: extractVal(d.Value1),
-      wind: extractVal(d.Value11),
-      windDir: null,
-      rain: extractVal(d.Value12),
-      pressure: null,
+      pm25: null,
+      pm10: pv(d.Value2, d.Status2),
+      tsp: pv(d.Value1, d.Status1),
+      so2: pv(d.Value6, d.Status6),
+      no2: pv(d.Value4, d.Status4),
+      temp: pv(d.Value9, d.Status9),
+      humidity: pv(d.Value10, d.Status10),
+      wind: pv(d.Value7, d.Status7),
+      windDir: pv(d.Value8, d.Status8),
+      rain: pv(d.Value12, d.Status12),
+      pressure: pv(d.Value11, d.Status11),
       online: true,
     };
   } catch (e) {

@@ -1309,18 +1309,31 @@ function calcOverallAQI(d){
   return vals.length>0 ? Math.max(...vals) : null;
 }
 async function recalculateFirebaseAQI(){
-  if(localStorage.getItem('aqi_recalculated_v3')==='1') return;
+  if(localStorage.getItem('aqi_recalculated_v4')==='1') return;
   try{
     const snap=await fbDB.ref('readings').orderByKey().once('value');
     const updates={};let count=0;
     snap.forEach(function(daySnap){
       daySnap.forEach(function(stationSnap){
+        const stId=stationSnap.key;
         stationSnap.forEach(function(readingSnap){
           const r=readingSnap.val();
-          if(r&&(r.pm25!=null||r.pm10!=null||r.so2!=null||r.no2!=null)){
-            const newAQI=calcOverallAQI(r);
+          if(!r) return;
+          var path=daySnap.key+'/'+stId+'/'+readingSnap.key;
+          if(stId==='PT5'){
+            var needClean=r.pm25!=null||r.pm10!=null||r.tsp!=null;
+            if(needClean){
+              updates[path+'/pm25']=null;
+              updates[path+'/pm10']=null;
+              updates[path+'/tsp']=null;
+              count++;
+            }
+          }
+          if(r.pm25!=null||r.pm10!=null||r.so2!=null||r.no2!=null||r.tsp!=null){
+            var newAQI=calcOverallAQI(r);
+            if(stId==='PT5') newAQI=calcOverallAQI({pm25:null,pm10:null,so2:r.so2,no2:r.no2});
             if(newAQI!==r.aqi){
-              updates[daySnap.key+'/'+stationSnap.key+'/'+readingSnap.key+'/aqi']=newAQI;
+              updates[path+'/aqi']=newAQI;
               count++;
             }
           }
@@ -1329,9 +1342,9 @@ async function recalculateFirebaseAQI(){
     });
     if(count>0){
       await fbDB.ref().update(updates);
-      console.log('[AQI] Recalculated',count,'readings with corrected breakpoints');
+      console.log('[AQI] Recalculated/cleaned',count,'readings (v4 - fixed PT5 mapping)');
     }
-    localStorage.setItem('aqi_recalculated_v3','1');
+    localStorage.setItem('aqi_recalculated_v4','1');
   }catch(e){console.warn('[AQI] Recalculation error:',e)}
 }
 
