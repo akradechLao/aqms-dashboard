@@ -305,6 +305,14 @@ body{
 .wind-compass .compass-label{font-size:4.5px;font-weight:700;fill:var(--text-muted);text-anchor:middle;dominant-baseline:central}
 .wind-compass .compass-arrow{stroke:var(--accent);stroke-width:2;stroke-linecap:round}
 .wind-compass .compass-dot{fill:var(--accent)}
+.modal-wind-compass{width:80px;height:80px;flex-shrink:0;margin-left:auto}
+.modal-wind-compass svg{width:100%;height:100%}
+.modal-wind-compass .mc-ring{fill:none;stroke:rgba(0,0,0,0.08);stroke-width:1}
+.modal-wind-compass .mc-tick{stroke:rgba(0,0,0,0.12);stroke-width:0.8}
+.modal-wind-compass .mc-label{font-size:3.8px;font-weight:700;fill:#94a3b8;text-anchor:middle;dominant-baseline:central}
+.modal-wind-compass .mc-arrow{stroke:var(--accent);stroke-width:1.8;stroke-linecap:round}
+.modal-wind-compass .mc-center{fill:var(--accent)}
+.modal-wind-compass .mc-speed{font-size:4px;font-weight:600;fill:#334155;text-anchor:middle}
 .pollutants{padding:10px 20px 28px}
 .pollutants-title{font-size:.8rem;color:var(--text-muted);font-weight:600;letter-spacing:.3px;margin-bottom:8px}
 .pollutant-bars{display:flex;flex-direction:column;gap:14px}
@@ -2053,7 +2061,18 @@ function openModal(id){
       <div class="modal-stat"><div class="label">NO₂</div><div class="value">${fmt(d.no2)}</div><div class="unit">ppb (มาตรฐาน 120)</div></div>
       <div class="modal-stat"><div class="label">อุณหภูมิ</div><div class="value">${fmt(d.temp)}</div><div class="unit">°C</div></div>
       <div class="modal-stat"><div class="label">ความชื้น</div><div class="value">${fmt(d.humidity)}</div><div class="unit">%</div></div>
-      <div class="modal-stat"><div class="label">ลม</div><div class="value">${fmt(d.wind)}</div><div class="unit">m/s ${d.windDir!=null?'('+degToCompass(d.windDir)+')':''}</div></div>
+      <div class="modal-stat" style="grid-column:1/-1;display:flex;align-items:center;gap:12px">
+        <div style="flex:1"><div class="label">ลม</div><div class="value">${fmt(d.wind)} <span style="font-size:1rem;color:var(--text-muted)">m/s</span></div><div class="unit">${d.windDir!=null?degToCompass(d.windDir)+' ('+fmt(d.windDir)+'°)':'ไม่มีข้อมูล'}</div></div>
+        ${d.windDir!=null?`<div class="modal-wind-compass"><svg viewBox="0 0 80 80">
+          <circle class="mc-ring" cx="40" cy="40" r="34"/>
+          <circle class="mc-ring" cx="40" cy="40" r="24" style="stroke-dasharray:2 2"/>
+          ${[0,45,90,135,180,225,270,315].map(function(a){var r1=a%90===0?31:33;var r2=34;var x1=(40+r1*Math.sin(a*Math.PI/180)).toFixed(1);var y1=(40-r1*Math.cos(a*Math.PI/180)).toFixed(1);var x2=(40+r2*Math.sin(a*Math.PI/180)).toFixed(1);var y2=(40-r2*Math.cos(a*Math.PI/180)).toFixed(1);return '<line class="mc-tick" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"/>';}).join('')}
+          <text class="mc-label" x="40" y="6">N</text><text class="mc-label" x="40" y="76">S</text><text class="mc-label" x="74" y="41">E</text><text class="mc-label" x="6" y="41">W</text>
+          <line class="mc-arrow" x1="40" y1="40" x2="${(40+22*Math.sin(d.windDir*Math.PI/180)).toFixed(1)}" y2="${(40-22*Math.cos(d.windDir*Math.PI/180)).toFixed(1)}"/>
+          <circle class="mc-center" cx="40" cy="40" r="2.5"/>
+          <text class="mc-speed" x="40" y="55">${fmt(d.wind)}</text>
+        </svg></div>`:''}
+      </div>
       <div class="modal-stat"><div class="label">ปริมาณฝน</div><div class="value">${fmt(d.rain)}</div><div class="unit">mm</div></div>
       <div class="modal-stat"><div class="label">ความกดอากาศ</div><div class="value">${fmt(d.pressure)}</div><div class="unit">hPa</div></div>
       <div style="grid-column:1/-1">
@@ -2449,6 +2468,18 @@ function refreshMapMarkers(){
             <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">ลม</span><br><b>${fmt(d.wind)}</b> m/s ${d.windDir!=null?'('+degToCompass(d.windDir)+')':''}</div>
             <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">ฝน</span><br><b>${fmt(d.rain)}</b> mm</div>
           </div>
+          ${d.windDir!=null?`<div style="margin-top:8px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.02);border-radius:6px;padding:6px 8px">
+            <svg viewBox="0 0 60 60" width="48" height="48" style="flex-shrink:0">
+              <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+              <text x="30" y="6" font-size="5" font-weight="700" fill="#94a3b8" text-anchor="middle">N</text>
+              <text x="30" y="57" font-size="5" font-weight="700" fill="#94a3b8" text-anchor="middle">S</text>
+              <text x="56" y="31.5" font-size="5" font-weight="700" fill="#94a3b8" text-anchor="middle">E</text>
+              <text x="4" y="31.5" font-size="5" font-weight="700" fill="#94a3b8" text-anchor="middle">W</text>
+              <line x1="30" y1="30" x2="${(30+18*Math.sin(d.windDir*Math.PI/180)).toFixed(1)}" y2="${(30-18*Math.cos(d.windDir*Math.PI/180)).toFixed(1)}" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="30" cy="30" r="2" fill="#0ea5e9"/>
+            </svg>
+            <div style="font-size:.72rem;color:#666"><b>${degToCompass(d.windDir)}</b> ${fmt(d.windDir)}°<br>ความเร็วลม ${fmt(d.wind)} m/s</div>
+          </div>`:''}
         </div>`;
       }
       s._marker.setPopupContent(popupHtml);
