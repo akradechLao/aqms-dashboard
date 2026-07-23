@@ -1430,23 +1430,6 @@ function saveToFirebase(stationId, data) {
   } catch(e) { console.warn('saveToFirebase error:', e); }
 }
 
-function cleanupFirebaseOld() {
-  try {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 90);
-    const cutoffStr = cutoff.toISOString().split('T')[0];
-    fbDB.ref('readings').orderByKey().endAt(cutoffStr).once('value', function(snapshot){
-      const updates = {};
-      snapshot.forEach(function(child){ updates[child.key] = null; });
-      if(Object.keys(updates).length > 0){
-        fbDB.ref('readings').update(updates)
-          .then(function(){ console.log('Firebase cleanup: removed '+Object.keys(updates).length+' days'); })
-          .catch(function(e){ console.warn('Firebase cleanup error:', e); });
-      }
-    });
-  } catch(e) { console.warn('cleanupFirebaseOld error:', e); }
-}
-
 async function fetchWithTimeout(url, token, timeout=8000){
   const ctrl = new AbortController();
   const tid = setTimeout(()=>ctrl.abort(), timeout);
@@ -1698,6 +1681,41 @@ async function fetchPT5Station(){
   }
 }
 
+async function fetchStationFromFirebase(stationId) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const snap = await fbDB.ref('readings/' + today + '/' + stationId)
+      .orderByChild('timestamp')
+      .limitToLast(1)
+      .once('value');
+    let latest = null;
+    snap.forEach(function(child) {
+      latest = child.val();
+    });
+    if (latest && latest.source === 'cloud') {
+      return {
+        pm25: latest.pm25 != null ? +latest.pm25 : null,
+        pm10: latest.pm10 != null ? +latest.pm10 : null,
+        tsp: latest.tsp != null ? +latest.tsp : null,
+        so2: latest.so2 != null ? +latest.so2 : null,
+        no2: latest.no2 != null ? +latest.no2 : null,
+        temp: latest.temp != null ? +latest.temp : null,
+        humidity: latest.humidity != null ? +latest.humidity : null,
+        wind: latest.wind != null ? +latest.wind : null,
+        windDir: latest.windDir != null ? +latest.windDir : null,
+        rain: latest.rain != null ? +latest.rain : null,
+        pressure: latest.pressure != null ? +latest.pressure : null,
+        aqi: latest.aqi != null ? +latest.aqi : null,
+        online: true,
+      };
+    }
+    return null;
+  } catch(e) {
+    console.warn('fetchStationFromFirebase error for ' + stationId + ':', e);
+    return null;
+  }
+}
+
 async function fetchAllStations(){
   const pb = document.getElementById('progressBar');
   pb.style.width = '10%';
@@ -1709,6 +1727,8 @@ async function fetchAllStations(){
         data = await fetchPT5Station();
       } else if(s.source==='amata'){
         data = await fetchAmataStation(s.id);
+      } else if(s.source==='lakchai'){
+        data = await fetchStationFromFirebase(s.id);
       } else {
         data = null;
       }
@@ -1725,14 +1745,13 @@ async function fetchAllStations(){
     const old = stationData[s.id];
     const nw = results[s.id];
     if(nw) Object.assign(old, nw);
-    if(!old.online && s.source!=='rainfall' && s.source!=='waterLevel'){
+    if(!old.online && s.source!=='rainfall' && s.source!=='waterLevel' && s.source!=='lakchai'){
       old.online = true;
-      const m = s.source==='lakchai' ? 0.4 : 1;
-      old.pm25 = old.pm25!=null? old.pm25 : +(Math.random()*25*m+5*m).toFixed(1);
-      old.pm10 = old.pm10!=null? old.pm10 : +(Math.random()*60*m+20*m).toFixed(1);
-      old.tsp = old.tsp!=null? old.tsp : +(Math.random()*100*m+40*m).toFixed(1);
-      old.so2 = old.so2!=null? old.so2 : +(Math.random()*30*m+5*m).toFixed(1);
-      old.no2 = old.no2!=null? old.no2 : +(Math.random()*60*m+10*m).toFixed(1);
+      old.pm25 = old.pm25!=null? old.pm25 : +(Math.random()*25+5).toFixed(1);
+      old.pm10 = old.pm10!=null? old.pm10 : +(Math.random()*60+20).toFixed(1);
+      old.tsp = old.tsp!=null? old.tsp : +(Math.random()*100+40).toFixed(1);
+      old.so2 = old.so2!=null? old.so2 : +(Math.random()*30+5).toFixed(1);
+      old.no2 = old.no2!=null? old.no2 : +(Math.random()*60+10).toFixed(1);
       old.temp = old.temp!=null? old.temp : +(28+Math.random()*8).toFixed(1);
       old.humidity = old.humidity!=null? old.humidity : +(60+Math.random()*30).toFixed(1);
       old.wind = old.wind!=null? old.wind : +(1+Math.random()*5).toFixed(1);
@@ -1746,7 +1765,9 @@ async function fetchAllStations(){
       if(old.history.length>24) old.history.shift();
     }
     old.lastUpdate = new Date();
-    saveToFirebase(s.id, old);
+    if(s.source !== 'lakchai'){
+      saveToFirebase(s.id, old);
+    }
   });
   let rfIdx = 0, wlIdx = 0;
   STATIONS.forEach(s=>{
@@ -3625,8 +3646,6 @@ async function init(){
   fetchInterval = setInterval(()=>{
     fetchAllStations().then(()=>{try{refreshMapMarkers();}catch(e){}});
   },60000);
-  try{ cleanupFirebaseOld(); }catch(e){ console.warn('cleanupFirebaseOld error:',e); }
-  setInterval(function(){ try{ cleanupFirebaseOld(); }catch(e){} }, 86400000);
   try{ await recalculateFirebaseAQI(); }catch(e){ console.warn('recalculateFirebaseAQI error:',e); }
   try{ HistData.clear(); }catch(e){}
 }
