@@ -1309,10 +1309,10 @@ function calcOverallAQI(d){
   return vals.length>0 ? Math.max(...vals) : null;
 }
 async function recalculateFirebaseAQI(){
-  if(localStorage.getItem('aqi_recalculated_v4')==='1') return;
+  if(localStorage.getItem('aqi_recalculated_v5')==='1') return;
   try{
     const snap=await fbDB.ref('readings').orderByKey().once('value');
-    const updates={};let count=0;
+    const updates={};let cleanCount=0;let aqiCount=0;
     snap.forEach(function(daySnap){
       daySnap.forEach(function(stationSnap){
         const stId=stationSnap.key;
@@ -1321,31 +1321,37 @@ async function recalculateFirebaseAQI(){
           if(!r) return;
           var path=daySnap.key+'/'+stId+'/'+readingSnap.key;
           if(stId==='PT5'){
-            var needClean=r.pm25!=null||r.pm10!=null||r.tsp!=null;
-            if(needClean){
+            var hasWrongDust=r.pm25!=null||r.pm10!=null||r.tsp!=null;
+            if(hasWrongDust){
               updates[path+'/pm25']=null;
               updates[path+'/pm10']=null;
               updates[path+'/tsp']=null;
-              count++;
+              cleanCount++;
             }
-          }
-          if(r.pm25!=null||r.pm10!=null||r.so2!=null||r.no2!=null||r.tsp!=null){
-            var newAQI=calcOverallAQI(r);
-            if(stId==='PT5') newAQI=calcOverallAQI({pm25:null,pm10:null,so2:r.so2,no2:r.no2});
-            if(newAQI!==r.aqi){
-              updates[path+'/aqi']=newAQI;
-              count++;
+            var correctAQI=calcOverallAQI({pm25:null,pm10:null,so2:r.so2,no2:r.no2});
+            if(correctAQI!==r.aqi){
+              updates[path+'/aqi']=correctAQI;
+              aqiCount++;
+            }
+          } else {
+            if(r.pm25!=null||r.pm10!=null||r.so2!=null||r.no2!=null){
+              var newAQI=calcOverallAQI(r);
+              if(newAQI!==r.aqi){
+                updates[path+'/aqi']=newAQI;
+                aqiCount++;
+              }
             }
           }
         });
       });
     });
-    if(count>0){
+    console.log('[AQI v5] PT5 cleaned:',cleanCount,', AQI fixed:',aqiCount,', total updates:',Object.keys(updates).length);
+    if(Object.keys(updates).length>0){
       await fbDB.ref().update(updates);
-      console.log('[AQI] Recalculated/cleaned',count,'readings (v4 - fixed PT5 mapping)');
+      console.log('[AQI v5] Firebase updated successfully');
     }
-    localStorage.setItem('aqi_recalculated_v4','1');
-  }catch(e){console.warn('[AQI] Recalculation error:',e)}
+    localStorage.setItem('aqi_recalculated_v5','1');
+  }catch(e){console.warn('[AQI v5] Recalculation error:',e)}
 }
 
 function saveToFirebase(stationId, data) {
