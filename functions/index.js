@@ -1,6 +1,7 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
+const cheerio = require("cheerio");
 
 admin.initializeApp();
 const db = admin.database();
@@ -12,6 +13,7 @@ const PT5_TOKEN = "1|SnpQPAiDIE8BjMPfOMbF0TjtHxFeo2PqP5ztKpzm33be5594";
 const AQ_STATIONS = ["001", "002", "003", "004", "005", "006"];
 const MAX_DUST_RETRY = 3;
 const DUST_RETRY_DELAY_MS = 60000;
+const BYY_URL = "https://lakchai.northernthai.co.th/";
 
 async function fetchWithTimeout(url, token, timeout = 8000) {
   const ctrl = new AbortController();
@@ -122,6 +124,89 @@ async function fetchPT5Station() {
       online: true,
     };
   } catch (e) {
+    return null;
+  }
+}
+
+const THAI_DIR_MAP = {
+  "เหนือ": 0, "น": 0,
+  "ตะวันออกเฉียงเหนือ": 45, "ENE": 45,
+  "ตะวันออก": 90, "E": 90,
+  "ตะวันออกเฉียงใต้": 135, "ESE": 135,
+  "ใต้": 180, "S": 180,
+  "ตะวันตกเฉียงใต้": 225, "WSW": 225,
+  "ตะวันตก": 270, "W": 270,
+  "ตะวันตกเฉียงเหนือ": 315, "WNW": 315,
+};
+
+async function fetchBYYStation() {
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 15000);
+    const r = await fetch(BYY_URL, {
+      signal: ctrl.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; AQMS-Bot/1.0)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    });
+    clearTimeout(tid);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const html = await r.text();
+    const $ = cheerio.load(html);
+
+    const result = {
+      tsp: null, pm10: null, so2: null, no2: null,
+      temp: null, humidity: null, pressure: null,
+      rain: null, wind: null, windDir: null,
+      pm25: null, online: true,
+    };
+
+    const cards = $("[data-flux-card]");
+    cards.each((i, card) => {
+      const title = $(card).find("p[data-flux-text]").first().text().trim();
+      const valueEl = $(card).find("span.text-blue-500").first();
+      const valText = valueEl.text().trim();
+      if (!valText || valText === "Down" || valText === "Error" || valText === "---") return;
+      const num = parseFloat(valText.replace(/,/g, ""));
+      if (isNaN(num)) return;
+
+      if (title.includes("ฝุ่นรวม")) result.tsp = num;
+      else if (title.includes("ฝุ่นขนาดไม่เกิน 10")) result.pm10 = num;
+      else if (title.includes("ซัลเฟอร์ไดออกไซด์")) result.so2 = num;
+      else if (title.includes("ไนโตรเจนไดออกไซด์")) result.no2 = num;
+      else if (title.includes("อุณหภูมิ")) result.temp = num;
+      else if (title.includes("ความชื้นสัมพัทธ์")) result.humidity = num;
+      else if (title.includes("ความกดอากาศ")) result.pressure = num;
+      else if (title.includes("น้ำฝน")) result.rain = num;
+    });
+
+    const windSpeedText = $("p[data-flux-text]").filter(function () {
+      return $(this).text().includes("ความเร็วลม") && !$(this).text().includes("m/s");
+    }).text();
+    const wsMatch = windSpeedText.match(/([\d.]+)\s*m\/s/);
+    if (wsMatch) {
+      result.wind = parseFloat(wsMatch[1]);
+    }
+
+    const windDirText = $("p[data-flux-text]").filter(function () {
+      return $(this).text().includes("ลมพัดมาจากทิศ");
+    }).text();
+    const dirFromMatch = windDirText.match(/ทิศ([\w]+)\s*ไปทางทิศ([\w]+)/);
+    if (dirFromMatch) {
+      const fromDir = dirFromMatch[1].trim();
+      result.windDir = THAI_DIR_MAP[fromDir] ?? null;
+    }
+
+    if (result.tsp === null && result.pm10 === null && result.temp === null) {
+      console.warn("[BYY] No data parsed from HTML");
+      return null;
+    }
+
+    console.log(`[BYY] Scraped: TSP=${result.tsp}, PM10=${result.pm10}, SO2=${result.so2}, NO2=${result.no2}, temp=${result.temp}`);
+    return result;
+  } catch (e) {
+    console.warn("Error fetching BYY:", e.message);
     return null;
   }
 }
@@ -342,34 +427,39 @@ exports.fetchAqData = onSchedule(
       console.warn("Error fetching PT5:", e.message);
     }
 
+    try {
+      const byyData = await fetchBYYStation();
+      if (byyData && byyData.online) {
+        byyData.aqi = calcOverallAQI(byyData);
+        const record = {
+          pm25: byyData.pm25 != null ? +byyData.pm25 : null,
+          pm10: byyData.pm10 != null ? +byyData.pm10 : null,
+          tsp: byyData.tsp != null ? +byyData.tsp : null,
+          so2: byyData.so2 != null ? +byyData.so2 : null,
+          no2: byyData.no2 != null ? +byyData.no2 : null,
+          aqi: byyData.aqi != null ? +byyData.aqi : null,
+          temp: byyData.temp != null ? +byyData.temp : null,
+          humidity: byyData.humidity != null ? +byyData.humidity : null,
+          wind: byyData.wind != null ? +byyData.wind : null,
+          windDir: byyData.windDir != null ? +byyData.windDir : null,
+          rain: byyData.rain != null ? +byyData.rain : null,
+          pressure: byyData.pressure != null ? +byyData.pressure : null,
+          waterLevel: null,
+          flowRate: null,
+          timestamp: ts,
+          source: "cloud",
+        };
+        updates[`readings/${today}/BYY/${ts}`] = record;
+      }
+    } catch (e) {
+      console.warn("Error fetching BYY:", e.message);
+    }
+
     if (Object.keys(updates).length > 0) {
       await db.ref().update(updates);
       console.log(`Saved ${Object.keys(updates).length} records`);
     } else {
       console.warn("No data fetched, skipping write");
-    }
-
-    if (isNewHour) {
-      try {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - 90);
-        const cutoffStr = cutoff.toISOString().split("T")[0];
-        const oldSnap = await db
-          .ref("readings")
-          .orderByKey()
-          .endAt(cutoffStr)
-          .once("value");
-        const cleanupUpdates = {};
-        oldSnap.forEach((child) => {
-          cleanupUpdates[child.key] = null;
-        });
-        if (Object.keys(cleanupUpdates).length > 0) {
-          await db.ref("readings").update(cleanupUpdates);
-          console.log(`Cleanup: removed ${Object.keys(cleanupUpdates).length} old days`);
-        }
-      } catch (e) {
-        console.warn("Cleanup error:", e.message);
-      }
     }
 
     return null;
