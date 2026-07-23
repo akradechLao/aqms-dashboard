@@ -1484,7 +1484,7 @@ const SIM = {
   }
 };
 SIM.init();
-setInterval(()=>{ SIM.init(); }, 60000);
+setInterval(()=>{ SIM.init(); }, 30000);
 
 const HistData = {
   _store: {},
@@ -3649,7 +3649,7 @@ async function init(){
   document.getElementById('loadingOverlay').classList.add('hidden');
   fetchInterval = setInterval(()=>{
     fetchAllStations().then(()=>{try{refreshMapMarkers();}catch(e){}});
-  },60000);
+  },30000);
   try{ await recalculateFirebaseAQI(); }catch(e){ console.warn('recalculateFirebaseAQI error:',e); }
   try{ HistData.clear(); }catch(e){}
 }
