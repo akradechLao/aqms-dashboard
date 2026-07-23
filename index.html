@@ -1088,37 +1088,73 @@ body{
         <div class="page-section">
           <div class="page-section-title"><i class="fas fa-wind"></i> สถานีวัดคุณภาพอากาศ</div>
           <div class="page-stations-grid" id="lakchaiAqGrid"></div>
+          <div class="compare-section" id="lakchaiAqCompareSection">
+            <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบข้อมูลคุณภาพอากาศ</div>
+            <div class="compare-controls">
+              <div class="compare-control-group">
+                <label>พารามิเตอร์</label>
+                <select id="lakchaiAqCompareParam" onchange="renderLakchaiAqCompare()">
+                  <option value="aqi">AQI</option><option value="pm25">PM2.5</option><option value="pm10">PM10</option>
+                  <option value="tsp">TSP</option><option value="so2">SO2</option><option value="no2">NO2</option>
+                  <option value="temp">อุณหภูมิ</option><option value="humidity">ความชื้น</option>
+                </select>
+              </div>
+              <div class="compare-control-group">
+                <label>ช่วงเวลา</label>
+                <div class="time-tabs" id="lakchaiAqTimeTabs">
+                  <div class="time-tab active" onclick="switchLakchaiAqTime(24,this)">24 ชม.</div>
+                  <div class="time-tab" onclick="switchLakchaiAqTime(168,this)">7 วัน</div>
+                  <div class="time-tab" onclick="switchLakchaiAqTime(720,this)">30 วัน</div>
+                </div>
+              </div>
+            </div>
+            <div class="compare-chart-wrap" id="lakchaiAqCompareWrap"><div class="compare-chart-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div><canvas id="lakchaiAqCompareChart"></canvas></div>
+            <div class="compare-summary" id="lakchaiAqCompareSummary"></div>
+          </div>
         </div>
         <div class="page-section">
           <div class="page-section-title"><i class="fas fa-cloud-rain"></i> สถานีวัดปริมาณน้ำฝน</div>
           <div class="rain-grid" id="lakchaiRainGrid"></div>
+          <div class="compare-section" id="lakchaiRainCompareSection">
+            <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบปริมาณน้ำฝน</div>
+            <div class="compare-controls">
+              <div class="compare-control-group">
+                <label>ช่วงเวลา</label>
+                <div class="time-tabs" id="lakchaiRainTimeTabs">
+                  <div class="time-tab active" onclick="switchLakchaiRainTime(24,this)">24 ชม.</div>
+                  <div class="time-tab" onclick="switchLakchaiRainTime(168,this)">7 วัน</div>
+                  <div class="time-tab" onclick="switchLakchaiRainTime(720,this)">30 วัน</div>
+                </div>
+              </div>
+            </div>
+            <div class="compare-chart-wrap" id="lakchaiRainCompareWrap"><div class="compare-chart-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div><canvas id="lakchaiRainCompareChart"></canvas></div>
+            <div class="compare-summary" id="lakchaiRainCompareSummary"></div>
+          </div>
         </div>
         <div class="page-section">
           <div class="page-section-title"><i class="fas fa-water"></i> สถานีวัดระดับน้ำ / อัตราการไหล</div>
           <div class="water-grid" id="lakchaiWaterGrid"></div>
-        </div>
-        <div class="compare-section" id="lakchaiCompareSection">
-          <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบข้อมูลสถานี Lakchai</div>
-          <div class="compare-controls">
-            <div class="compare-control-group">
-              <label>พารามิเตอร์</label>
-              <select id="lakchaiCompareParam" onchange="renderPageComparisonChart('lakchai')">
-                <option value="aqi">AQI</option><option value="pm25">PM2.5</option><option value="pm10">PM10</option>
-                <option value="tsp">TSP</option><option value="so2">SO2</option><option value="no2">NO2</option>
-                <option value="temp">อุณหภูมิ</option><option value="humidity">ความชื้น</option><option value="rain">ปริมาณฝน</option>
-              </select>
-            </div>
-            <div class="compare-control-group">
-              <label>ช่วงเวลา</label>
-              <div class="time-tabs" id="lakchaiTimeTabs">
-                <div class="time-tab active" onclick="switchPageCompareTime('lakchai',24,this)">24 ชม.</div>
-                <div class="time-tab" onclick="switchPageCompareTime('lakchai',168,this)">7 วัน</div>
-                <div class="time-tab" onclick="switchPageCompareTime('lakchai',720,this)">30 วัน</div>
+          <div class="compare-section" id="lakchaiWaterCompareSection">
+            <div class="section-title"><i class="fas fa-chart-line"></i> เปรียบเทียบระดับน้ำ / อัตราการไหล</div>
+            <div class="compare-controls">
+              <div class="compare-control-group">
+                <label>พารามิเตอร์</label>
+                <select id="lakchaiWaterCompareParam" onchange="renderLakchaiWaterCompare()">
+                  <option value="waterLevel">ระดับน้ำ</option><option value="flowRate">อัตราการไหล</option>
+                </select>
+              </div>
+              <div class="compare-control-group">
+                <label>ช่วงเวลา</label>
+                <div class="time-tabs" id="lakchaiWaterTimeTabs">
+                  <div class="time-tab active" onclick="switchLakchaiWaterTime(24,this)">24 ชม.</div>
+                  <div class="time-tab" onclick="switchLakchaiWaterTime(168,this)">7 วัน</div>
+                  <div class="time-tab" onclick="switchLakchaiWaterTime(720,this)">30 วัน</div>
+                </div>
               </div>
             </div>
+            <div class="compare-chart-wrap" id="lakchaiWaterCompareWrap"><div class="compare-chart-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div><canvas id="lakchaiWaterCompareChart"></canvas></div>
+            <div class="compare-summary" id="lakchaiWaterCompareSummary"></div>
           </div>
-          <div class="compare-chart-wrap" id="lakchaiCompareWrap"><div class="compare-chart-placeholder"><i class="fas fa-chart-line"></i>เลือกสถานีเพื่อแสดงผล</div><canvas id="lakchaiCompareChart"></canvas></div>
-          <div class="compare-summary" id="lakchaiCompareSummary"></div>
         </div>
         <div class="cctv-section">
           <div class="section-title"><i class="fas fa-video"></i> กล้องวงจรปิด สถานี Lakchai</div>
@@ -2867,7 +2903,9 @@ function closeSidebar(){
 /* ===== PAGE-SPECIFIC COMPARISON CHARTS ===== */
 var PAGE_COMPARE = {
   amata:   { chartInstances:{}, selectedStations:['001','002','003','004','005','006'], selectedParams:['aqi'], hours:24 },
-  lakchai: { chartInstance:null, selectedStations:['BYY'], hours:24 },
+  lakchaiAq:   { chartInstance:null, selectedStations:['BYY'], hours:24 },
+  lakchaiRain: { chartInstance:null, selectedStations:['RF01','RF02'], hours:24 },
+  lakchaiWater:{ chartInstance:null, selectedStations:['WL01','WL02'], hours:24 },
   pinthong:{ chartInstance:null, selectedStations:['PT5'], hours:24 }
 };
 
@@ -2877,6 +2915,324 @@ function switchPageCompareTime(page, hours, tabEl){
   tabs.forEach(function(t){ t.classList.remove('active'); });
   tabEl.classList.add('active');
   renderPageComparisonChart(page);
+}
+
+function switchLakchaiAqTime(hours, tabEl){
+  PAGE_COMPARE.lakchaiAq.hours = hours;
+  tabEl.parentElement.querySelectorAll('.time-tab').forEach(function(t){ t.classList.remove('active'); });
+  tabEl.classList.add('active');
+  renderLakchaiAqCompare();
+}
+function switchLakchaiRainTime(hours, tabEl){
+  PAGE_COMPARE.lakchaiRain.hours = hours;
+  tabEl.parentElement.querySelectorAll('.time-tab').forEach(function(t){ t.classList.remove('active'); });
+  tabEl.classList.add('active');
+  renderLakchaiRainCompare();
+}
+function switchLakchaiWaterTime(hours, tabEl){
+  PAGE_COMPARE.lakchaiWater.hours = hours;
+  tabEl.parentElement.querySelectorAll('.time-tab').forEach(function(t){ t.classList.remove('active'); });
+  tabEl.classList.add('active');
+  renderLakchaiWaterCompare();
+}
+
+async function renderLakchaiAqCompare(){
+  var pc = PAGE_COMPARE.lakchaiAq;
+  var paramEl = document.getElementById('lakchaiAqCompareParam');
+  if(!paramEl) return;
+  var param = paramEl.value;
+  var paramLabels = { aqi:'AQI', pm25:'PM2.5', pm10:'PM10', tsp:'TSP', so2:'SO2', no2:'NO2', temp:'อุณหภูมิ', humidity:'ความชื้น' };
+  var paramUnits = { aqi:'', pm25:'µg/m³', pm10:'µg/m³', tsp:'µg/m³', so2:'ppb', no2:'ppb', temp:'°C', humidity:'%' };
+  var compareHours = pc.hours;
+  if(pc.chartInstance){ pc.chartInstance.destroy(); pc.chartInstance = null; }
+
+  var now = Date.now();
+  var allHourKeys = [];
+  var hourKeyToLabel = {};
+  for(var h=0; h<compareHours; h++){
+    var t = now - (compareHours-1-h)*3600000;
+    var d = new Date(t);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+    allHourKeys.push(key);
+    if(compareHours<=24) hourKeyToLabel[key] = String(d.getHours()).padStart(2,'0')+':00';
+    else if(compareHours<=168) hourKeyToLabel[key] = d.getDate()+'/'+(d.getMonth()+1)+' '+String(d.getHours()).padStart(2,'0')+':00';
+    else { var dn=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.']; hourKeyToLabel[key]=d.getDate()+'/'+(d.getMonth()+1)+' '+dn[d.getDay()]; }
+  }
+  var maxLabels = compareHours<=24?12:compareHours<=168?14:15;
+  var labelStep = Math.max(1, Math.floor(allHourKeys.length / maxLabels));
+  var chartLabels = allHourKeys.map(function(k,i){ return i%labelStep===0 ? hourKeyToLabel[k] : ''; });
+
+  var datasets = [];
+  var summaryHtml = '';
+  var idx = 0;
+  var cutoff = Date.now() - compareHours*3600*1000;
+  var allReadings = {};
+  try {
+    var snap = await fbDB.ref('readings').orderByKey().once('value');
+    snap.forEach(function(daySnap){
+      pc.selectedStations.forEach(function(stId){
+        if(daySnap.hasChild(stId)){
+          if(!allReadings[stId]) allReadings[stId] = [];
+          var stSnap = daySnap.child(stId);
+          stSnap.forEach(function(rSnap){
+            var r = rSnap.val();
+            if(r && r.timestamp && r.timestamp >= cutoff) allReadings[stId].push(r);
+          });
+        }
+      });
+    });
+  } catch(e){}
+
+  for(var si=0; si<pc.selectedStations.length; si++){
+    var stId = pc.selectedStations[si];
+    var s = STATIONS.find(function(x){ return x.id===stId; });
+    if(!s) continue;
+    var readings = [];
+    (allReadings[stId]||[]).forEach(function(r){ if(r[param]!=null) readings.push({t:r.timestamp,v:r[param]}); });
+    if(readings.length===0){
+      var sd = stationData[stId];
+      if(sd && sd[param]!=null){
+        var base = sd[param]||10;
+        for(var h=0; h<compareHours; h++){
+          var t = now-(compareHours-1-h)*3600000;
+          var ratio=h/compareHours;
+          readings.push({t:t,v:+(base+Math.sin(ratio*Math.PI*2.5)*base*0.1).toFixed(2)});
+        }
+      }
+    }
+    readings.sort(function(a,b){return a.t-b.t;});
+    var hourlyData={};
+    readings.forEach(function(r){
+      var d=new Date(r.t);
+      var hk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+      if(!hourlyData[hk]) hourlyData[hk]=[];
+      hourlyData[hk].push(r.v);
+    });
+    var mappedValues = allHourKeys.map(function(key){
+      var bucket=hourlyData[key];
+      if(!bucket||bucket.length===0) return null;
+      if(compareHours<=24) return bucket[bucket.length-1];
+      var sorted=bucket.slice().sort(function(a,b){return a-b;});
+      return sorted[Math.floor(sorted.length/2)];
+    });
+    var color = COMPARE_COLORS[idx%COMPARE_COLORS.length];
+    datasets.push({label:stId+' '+s.name,data:mappedValues,borderColor:color,borderWidth:2.5,pointRadius:compareHours<=24?2:0,tension:0.3,fill:true,backgroundColor:color+'12',spanGaps:true,hoverBorderWidth:3,hoverPointRadius:5,hoverPointBackgroundColor:color,hoverBorderColor:'#fff'});
+    var nonNull=mappedValues.filter(function(v){return v!==null;});
+    if(nonNull.length>0){
+      var sorted=nonNull.slice().sort(function(a,b){return a-b;});
+      var min=sorted[0],max=sorted[sorted.length-1],median=sorted[Math.floor(sorted.length/2)];
+      var lbl=compareHours<=24?'ค่าล่าสุด':'Median';
+      var mainVal=compareHours<=24?sorted[sorted.length-1]:median;
+      summaryHtml+='<div class="compare-stat-card" style="border-left:3px solid '+color+'"><div class="cs-name">'+stId+'</div><div class="cs-val" style="color:'+color+'">'+mainVal.toFixed(1)+'</div><div class="cs-sub">'+lbl+' | ต่ำสุด '+min.toFixed(1)+' | สูงสุด '+max.toFixed(1)+'</div></div>';
+    }
+    idx++;
+  }
+  var wrapEl = document.getElementById('lakchaiAqCompareWrap');
+  var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
+  if(phEl) phEl.style.display = datasets.length===0 ? 'flex' : 'none';
+  if(wrapEl){ if(datasets.length===0) wrapEl.classList.add('empty'); else wrapEl.classList.remove('empty'); }
+  if(datasets.length>0){
+    var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
+    pc.chartInstance = new Chart(document.getElementById('lakchaiAqCompareChart').getContext('2d'),{type:'line',data:{labels:chartLabels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' '+paramUnits[param];}}}},scales:{x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}},interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}}});
+  }
+  document.getElementById('lakchaiAqCompareSummary').innerHTML = summaryHtml;
+}
+
+async function renderLakchaiRainCompare(){
+  var pc = PAGE_COMPARE.lakchaiRain;
+  var compareHours = pc.hours;
+  if(pc.chartInstance){ pc.chartInstance.destroy(); pc.chartInstance = null; }
+
+  var now = Date.now();
+  var allHourKeys = [];
+  var hourKeyToLabel = {};
+  for(var h=0; h<compareHours; h++){
+    var t = now - (compareHours-1-h)*3600000;
+    var d = new Date(t);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+    allHourKeys.push(key);
+    if(compareHours<=24) hourKeyToLabel[key] = String(d.getHours()).padStart(2,'0')+':00';
+    else if(compareHours<=168) hourKeyToLabel[key] = d.getDate()+'/'+(d.getMonth()+1)+' '+String(d.getHours()).padStart(2,'0')+':00';
+    else { var dn=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.']; hourKeyToLabel[key]=d.getDate()+'/'+(d.getMonth()+1)+' '+dn[d.getDay()]; }
+  }
+  var maxLabels = compareHours<=24?12:compareHours<=168?14:15;
+  var labelStep = Math.max(1, Math.floor(allHourKeys.length / maxLabels));
+  var chartLabels = allHourKeys.map(function(k,i){ return i%labelStep===0 ? hourKeyToLabel[k] : ''; });
+
+  var datasets = [];
+  var summaryHtml = '';
+  var idx = 0;
+  var cutoff = Date.now() - compareHours*3600*1000;
+  var allReadings = {};
+  try {
+    var snap = await fbDB.ref('readings').orderByKey().once('value');
+    snap.forEach(function(daySnap){
+      pc.selectedStations.forEach(function(stId){
+        if(daySnap.hasChild(stId)){
+          if(!allReadings[stId]) allReadings[stId] = [];
+          var stSnap = daySnap.child(stId);
+          stSnap.forEach(function(rSnap){
+            var r = rSnap.val();
+            if(r && r.timestamp && r.timestamp >= cutoff) allReadings[stId].push(r);
+          });
+        }
+      });
+    });
+  } catch(e){}
+
+  for(var si=0; si<pc.selectedStations.length; si++){
+    var stId = pc.selectedStations[si];
+    var s = STATIONS.find(function(x){ return x.id===stId; });
+    if(!s) continue;
+    var readings = [];
+    (allReadings[stId]||[]).forEach(function(r){ if(r.rain!=null) readings.push({t:r.timestamp,v:r.rain}); });
+    if(readings.length===0){
+      var sd = stationData[stId];
+      if(sd && sd.rain!=null){
+        var base = sd.rain||1;
+        for(var h=0; h<compareHours; h++){
+          var t = now-(compareHours-1-h)*3600000;
+          readings.push({t:t,v:+(base+Math.sin(h/compareHours*Math.PI*2)*base*0.3).toFixed(1)});
+        }
+      }
+    }
+    readings.sort(function(a,b){return a.t-b.t;});
+    var hourlyData={};
+    readings.forEach(function(r){
+      var d=new Date(r.t);
+      var hk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+      if(!hourlyData[hk]) hourlyData[hk]=[];
+      hourlyData[hk].push(r.v);
+    });
+    var mappedValues = allHourKeys.map(function(key){
+      var bucket=hourlyData[key];
+      if(!bucket||bucket.length===0) return null;
+      if(compareHours<=24) return bucket[bucket.length-1];
+      var sorted=bucket.slice().sort(function(a,b){return a-b;});
+      return sorted[Math.floor(sorted.length/2)];
+    });
+    var color = COMPARE_COLORS[idx%COMPARE_COLORS.length];
+    datasets.push({label:stId+' '+s.name,data:mappedValues,borderColor:color,borderWidth:2.5,pointRadius:compareHours<=24?2:0,tension:0.3,fill:true,backgroundColor:color+'12',spanGaps:true,hoverBorderWidth:3,hoverPointRadius:5,hoverPointBackgroundColor:color,hoverBorderColor:'#fff'});
+    var nonNull=mappedValues.filter(function(v){return v!==null;});
+    if(nonNull.length>0){
+      var sorted=nonNull.slice().sort(function(a,b){return a-b;});
+      var min=sorted[0],max=sorted[sorted.length-1],median=sorted[Math.floor(sorted.length/2)];
+      var lbl=compareHours<=24?'ค่าล่าสุด':'Median';
+      var mainVal=compareHours<=24?sorted[sorted.length-1]:median;
+      summaryHtml+='<div class="compare-stat-card" style="border-left:3px solid '+color+'"><div class="cs-name">'+stId+'</div><div class="cs-val" style="color:'+color+'">'+mainVal.toFixed(1)+'</div><div class="cs-sub">'+lbl+' | ต่ำสุด '+min.toFixed(1)+' | สูงสุด '+max.toFixed(1)+' mm</div></div>';
+    }
+    idx++;
+  }
+  var wrapEl = document.getElementById('lakchaiRainCompareWrap');
+  var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
+  if(phEl) phEl.style.display = datasets.length===0 ? 'flex' : 'none';
+  if(wrapEl){ if(datasets.length===0) wrapEl.classList.add('empty'); else wrapEl.classList.remove('empty'); }
+  if(datasets.length>0){
+    var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
+    pc.chartInstance = new Chart(document.getElementById('lakchaiRainCompareChart').getContext('2d'),{type:'line',data:{labels:chartLabels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' mm';}}}},scales:{x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},y:{title:{display:true,text:'ปริมาณฝน (mm)',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}},interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}}});
+  }
+  document.getElementById('lakchaiRainCompareSummary').innerHTML = summaryHtml;
+}
+
+async function renderLakchaiWaterCompare(){
+  var pc = PAGE_COMPARE.lakchaiWater;
+  var paramEl = document.getElementById('lakchaiWaterCompareParam');
+  if(!paramEl) return;
+  var param = paramEl.value;
+  var paramLabels = { waterLevel:'ระดับน้ำ', flowRate:'อัตราการไหล' };
+  var paramUnits = { waterLevel:'m', flowRate:'m³/s' };
+  var compareHours = pc.hours;
+  if(pc.chartInstance){ pc.chartInstance.destroy(); pc.chartInstance = null; }
+
+  var now = Date.now();
+  var allHourKeys = [];
+  var hourKeyToLabel = {};
+  for(var h=0; h<compareHours; h++){
+    var t = now - (compareHours-1-h)*3600000;
+    var d = new Date(t);
+    var key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+    allHourKeys.push(key);
+    if(compareHours<=24) hourKeyToLabel[key] = String(d.getHours()).padStart(2,'0')+':00';
+    else if(compareHours<=168) hourKeyToLabel[key] = d.getDate()+'/'+(d.getMonth()+1)+' '+String(d.getHours()).padStart(2,'0')+':00';
+    else { var dn=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.']; hourKeyToLabel[key]=d.getDate()+'/'+(d.getMonth()+1)+' '+dn[d.getDay()]; }
+  }
+  var maxLabels = compareHours<=24?12:compareHours<=168?14:15;
+  var labelStep = Math.max(1, Math.floor(allHourKeys.length / maxLabels));
+  var chartLabels = allHourKeys.map(function(k,i){ return i%labelStep===0 ? hourKeyToLabel[k] : ''; });
+
+  var datasets = [];
+  var summaryHtml = '';
+  var idx = 0;
+  var cutoff = Date.now() - compareHours*3600*1000;
+  var allReadings = {};
+  try {
+    var snap = await fbDB.ref('readings').orderByKey().once('value');
+    snap.forEach(function(daySnap){
+      pc.selectedStations.forEach(function(stId){
+        if(daySnap.hasChild(stId)){
+          if(!allReadings[stId]) allReadings[stId] = [];
+          var stSnap = daySnap.child(stId);
+          stSnap.forEach(function(rSnap){
+            var r = rSnap.val();
+            if(r && r.timestamp && r.timestamp >= cutoff) allReadings[stId].push(r);
+          });
+        }
+      });
+    });
+  } catch(e){}
+
+  for(var si=0; si<pc.selectedStations.length; si++){
+    var stId = pc.selectedStations[si];
+    var s = STATIONS.find(function(x){ return x.id===stId; });
+    if(!s) continue;
+    var readings = [];
+    (allReadings[stId]||[]).forEach(function(r){ if(r[param]!=null) readings.push({t:r.timestamp,v:r[param]}); });
+    if(readings.length===0){
+      var sd = stationData[stId];
+      if(sd && sd[param]!=null){
+        var base = sd[param]||1;
+        for(var h=0; h<compareHours; h++){
+          var t = now-(compareHours-1-h)*3600000;
+          readings.push({t:t,v:+(base+Math.sin(h/compareHours*Math.PI*3)*base*0.05).toFixed(2)});
+        }
+      }
+    }
+    readings.sort(function(a,b){return a.t-b.t;});
+    var hourlyData={};
+    readings.forEach(function(r){
+      var d=new Date(r.t);
+      var hk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':00';
+      if(!hourlyData[hk]) hourlyData[hk]=[];
+      hourlyData[hk].push(r.v);
+    });
+    var mappedValues = allHourKeys.map(function(key){
+      var bucket=hourlyData[key];
+      if(!bucket||bucket.length===0) return null;
+      if(compareHours<=24) return bucket[bucket.length-1];
+      var sorted=bucket.slice().sort(function(a,b){return a-b;});
+      return sorted[Math.floor(sorted.length/2)];
+    });
+    var color = COMPARE_COLORS[idx%COMPARE_COLORS.length];
+    datasets.push({label:stId+' '+s.name,data:mappedValues,borderColor:color,borderWidth:2.5,pointRadius:compareHours<=24?2:0,tension:0.3,fill:true,backgroundColor:color+'12',spanGaps:true,hoverBorderWidth:3,hoverPointRadius:5,hoverPointBackgroundColor:color,hoverBorderColor:'#fff'});
+    var nonNull=mappedValues.filter(function(v){return v!==null;});
+    if(nonNull.length>0){
+      var sorted=nonNull.slice().sort(function(a,b){return a-b;});
+      var min=sorted[0],max=sorted[sorted.length-1],median=sorted[Math.floor(sorted.length/2)];
+      var lbl=compareHours<=24?'ค่าล่าสุด':'Median';
+      var mainVal=compareHours<=24?sorted[sorted.length-1]:median;
+      summaryHtml+='<div class="compare-stat-card" style="border-left:3px solid '+color+'"><div class="cs-name">'+stId+'</div><div class="cs-val" style="color:'+color+'">'+mainVal.toFixed(param==='waterLevel'?2:1)+'</div><div class="cs-sub">'+lbl+' | ต่ำสุด '+min.toFixed(param==='waterLevel'?2:1)+' | สูงสุด '+max.toFixed(param==='waterLevel'?2:1)+' '+paramUnits[param]+'</div></div>';
+    }
+    idx++;
+  }
+  var wrapEl = document.getElementById('lakchaiWaterCompareWrap');
+  var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
+  if(phEl) phEl.style.display = datasets.length===0 ? 'flex' : 'none';
+  if(wrapEl){ if(datasets.length===0) wrapEl.classList.add('empty'); else wrapEl.classList.remove('empty'); }
+  if(datasets.length>0){
+    var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
+    pc.chartInstance = new Chart(document.getElementById('lakchaiWaterCompareChart').getContext('2d'),{type:'line',data:{labels:chartLabels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(param==='waterLevel'?2:1):'--')+' '+paramUnits[param];}}}},scales:{x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}},interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}}});
+  }
+  document.getElementById('lakchaiWaterCompareSummary').innerHTML = summaryHtml;
 }
 
 function toggleParamCheckbox(el, page){
@@ -3152,8 +3508,10 @@ function renderPageLakchai(){
       +'</div>';
   }).join('');
 
-  initPageStationChips('lakchai',[byy].filter(Boolean));
-  renderPageComparisonChart('lakchai');
+  initPageStationChips('lakchaiAq',[byy].filter(Boolean));
+  renderLakchaiAqCompare();
+  renderLakchaiRainCompare();
+  renderLakchaiWaterCompare();
   renderPageCCTV('lakchai');
 }
 
