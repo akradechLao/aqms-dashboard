@@ -945,6 +945,7 @@ body{
 .alerts-table tbody tr:hover{background:rgba(14,165,233,0.04)}
 .alerts-table .val-zero{color:#dc2626;font-weight:700}
 .alerts-table .val-null{color:#94a3b8;font-style:italic;font-weight:400}
+.alerts-table .val-na{color:#94a3b8;font-style:italic;font-weight:400;background:rgba(0,0,0,0.02);border-radius:4px}
 .alerts-table .val-normal{color:var(--text-primary)}
 .alerts-table .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
 .alerts-table .status-dot.online{background:#059669}
@@ -1301,7 +1302,7 @@ const STATIONS = [
 
 const AMATA_TOKEN = '1|uDd7ptCf9hdOR3irFocfHbLgm2ePrSRXPugUCvz7d4283131';
 const AMATA_PM25_TOKEN = '1|f7MPVH175GVeXbdG7VrOW2OChWVFC172KJdPA3DH0d1266f7';
-const AMATA_PM25_STATIONS = ['002','004','005'];
+const AMATA_PM25_STATIONS = ['001','002','005'];
 const PT5_TOKEN = '1|SnpQPAiDIE8BjMPfOMbF0TjtHxFeo2PqP5ztKpzm33be5594';
 
 const firebaseConfig = {
@@ -3647,7 +3648,10 @@ function renderPageAlerts(){
       var v=d[k];
       var cellClass='val-normal';
       var display='--';
-      if(v===null||v===undefined){
+      if(k==='pm25'&&!AMATA_PM25_STATIONS.includes(s.id)){
+        cellClass='val-na';
+        display='<i class="fas fa-ban" style="margin-right:3px;opacity:.5"></i>ไม่ได้ติดตั้ง';
+      }else if(v===null||v===undefined){
         cellClass='val-null';
         display='<i class="fas fa-minus-circle" style="margin-right:3px"></i>--';
         rowAlerts++;
