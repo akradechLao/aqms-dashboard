@@ -3626,18 +3626,25 @@ function renderPagePinthong(){
 
 function renderPageAlerts(){
   var wrap=document.getElementById('alertsContent');
-  var params=['AQI','PM2.5','PM10','TSP','SO2','NO2','Temp','Humidity','Wind','WindDir','Rain','Pressure','WaterLevel','FlowRate'];
-  var paramKeys=['aqi','pm25','pm10','tsp','so2','no2','temp','humidity','wind','windDir','rain','pressure','waterLevel','flowRate'];
-  var paramUnits=['','µg/m³','µg/m³','µg/m³','ppb','ppb','°C','%','m/s','°','mm','hPa','m','m³/s'];
-  var standards=[null,37.5,100,200,50,120,null,null,null,null,null,null,null,null];
-  var alerts=[];
-  var rows='';
-  STATIONS.forEach(function(s){
+  var params=['AQI','PM2.5','PM10','TSP','SO2','NO2','Temp','Humidity','Wind','WindDir','Rain','Pressure'];
+  var paramKeys=['aqi','pm25','pm10','tsp','so2','no2','temp','humidity','wind','windDir','rain','pressure'];
+  var paramUnits=['','µg/m³','µg/m³','µg/m³','ppb','ppb','°C','%','m/s','°','mm','hPa'];
+  var standards=[null,37.5,100,200,50,120,null,null,null,null,null,null];
+  var aqStations=STATIONS.filter(function(s){return s.source==='amata'||s.source==='pt5'||s.source==='lakchai';});
+  var totalAlerts=0;
+  var headerRow='<tr><th>พารามิเตอร์</th>';
+  aqStations.forEach(function(s){
     var d=stationData[s.id]||{};
     var isOnline=d.online!==false;
-    var cells='<td><span class="status-dot '+(isOnline?'online':'offline')+'"></span>'+s.name+'<br><span style="font-size:.65rem;color:var(--text-muted);font-weight:400">'+s.id+'</span></td>';
+    headerRow+='<th class="station-header"><span class="status-dot '+(isOnline?'online':'offline')+'"></span>'+s.id+'<br><span style="font-size:.6rem;font-weight:400;opacity:.7">'+s.name+'</span></th>';
+  });
+  headerRow+='</tr>';
+  var bodyRows='';
+  paramKeys.forEach(function(k,i){
+    var cells='<td style="font-weight:700">'+params[i]+'<br><span style="font-size:.6rem;color:var(--text-muted);font-weight:400">'+paramUnits[i]+'</span></td>';
     var rowAlerts=0;
-    paramKeys.forEach(function(k,i){
+    aqStations.forEach(function(s){
+      var d=stationData[s.id]||{};
       var v=d[k];
       var cellClass='val-normal';
       var display='--';
@@ -3658,23 +3665,17 @@ function renderPageAlerts(){
       }
       cells+='<td class="'+cellClass+'">'+display+'</td>';
     });
-    alerts.push(rowAlerts);
-    rows+='<tr>'+cells+'</tr>';
+    totalAlerts+=rowAlerts;
+    bodyRows+='<tr>'+cells+'</tr>';
   });
-  var totalAlerts=alerts.reduce(function(a,b){return a+b;},0);
-  var offlineCount=STATIONS.filter(function(s){var d=stationData[s.id]||{};return d.online===false;}).length;
-  var headerRow='<tr><th>สถานี</th>';
-  params.forEach(function(p,i){
-    headerRow+='<th class="station-header">'+p+(paramUnits[i]?'<br><span style="font-size:.6rem;font-weight:400;opacity:.6">'+paramUnits[i]+'</span>':'')+'</th>';
-  });
-  headerRow+='</tr>';
+  var offlineCount=aqStations.filter(function(s){var d=stationData[s.id]||{};return d.online===false;}).length;
   var html='<div class="alerts-wrap">'
-    +'<div class="alerts-header"><div class="alerts-title"><i class="fas fa-table"></i> ตารางสรุปพารามิเตอร์ทั้งหมด</div>'
+    +'<div class="alerts-header"><div class="alerts-title"><i class="fas fa-table"></i> ตารางสรุปพารามิเตอร์สถานี AQMS</div>'
     +(totalAlerts>0?'<div class="alerts-count"><i class="fas fa-exclamation-triangle"></i> พบ '+totalAlerts+' รายการที่ต้องตรวจสอบ</div>':'<div style="font-size:.75rem;background:rgba(5,150,105,0.1);color:#059669;padding:3px 10px;border-radius:20px;font-weight:600"><i class="fas fa-check-circle"></i> สถานีทั้งหมดเชื่อมต่อปกติ</div>')+'</div>'
-    +'<div class="alerts-table-wrap"><table class="alerts-table"><thead>'+headerRow+'</thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div class="alerts-table-wrap"><table class="alerts-table"><thead>'+headerRow+'</thead><tbody>'+bodyRows+'</tbody></table></div>'
     +'<div class="alerts-summary">'
-    +'<div class="alerts-summary-item"><span>สถานีทั้งหมด:</span><span class="count">'+STATIONS.length+'</span> แห่ง</div>'
-    +'<div class="alerts-summary-item"><span>เชื่อมต่อ:</span><span class="count" style="color:#059669">'+(STATIONS.length-offlineCount)+'</span></div>'
+    +'<div class="alerts-summary-item"><span>สถานี AQMS:</span><span class="count">'+aqStations.length+'</span> แห่ง</div>'
+    +'<div class="alerts-summary-item"><span>เชื่อมต่อ:</span><span class="count" style="color:#059669">'+(aqStations.length-offlineCount)+'</span></div>'
     +'<div class="alerts-summary-item"><span>ออฟไลน์:</span><span class="count" style="color:#dc2626">'+offlineCount+'</span></div>'
     +'<div class="alerts-summary-item"><span>ค่าผิดปกติ/เป็น 0:</span><span class="count" style="color:#dc2626">'+totalAlerts+'</span></div>'
     +'</div></div>';
