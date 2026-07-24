@@ -303,15 +303,18 @@ body{
 .wind-compass svg{width:100%;height:100%}
 .wind-compass .compass-ring{fill:none;stroke:rgba(0,0,0,0.08);stroke-width:1.5}
 .wind-compass .compass-label{font-size:4.5px;font-weight:700;fill:var(--text-muted);text-anchor:middle;dominant-baseline:central}
-.wind-compass .compass-arrow{stroke:var(--accent);stroke-width:2;stroke-linecap:round}
+.wind-compass .compass-arrow{stroke:rgba(14,165,233,0.55);stroke-width:2;stroke-linecap:round;fill:none}
 .wind-compass .compass-dot{fill:var(--accent)}
 .modal-wind-compass{width:80px;height:80px;flex-shrink:0;margin-left:auto}
 .modal-wind-compass svg{width:100%;height:100%}
 .modal-wind-compass .mc-ring{fill:none;stroke:rgba(0,0,0,0.08);stroke-width:1}
 .modal-wind-compass .mc-tick{stroke:rgba(0,0,0,0.12);stroke-width:0.8}
 .modal-wind-compass .mc-label{font-size:3.8px;font-weight:700;fill:#94a3b8;text-anchor:middle;dominant-baseline:central}
-.modal-wind-compass .mc-arrow{stroke:var(--accent);stroke-width:1.8;stroke-linecap:round}
+.modal-wind-compass .mc-arrow{stroke:rgba(14,165,233,0.5);stroke-width:1.8;stroke-linecap:round}
 .modal-wind-compass .mc-center{fill:var(--accent)}
+.wind-compass .compass-arrowhead{fill:rgba(14,165,233,0.65)}
+.modal-wind-compass .mc-arrowhead{fill:rgba(14,165,233,0.65)}
+.map-popup .map-arrowhead{fill:rgba(14,165,233,0.65)}
 .modal-wind-compass .mc-speed{font-size:4px;font-weight:600;fill:#334155;text-anchor:middle}
 .pollutants{padding:10px 20px 28px}
 .pollutants-title{font-size:.8rem;color:var(--text-muted);font-weight:600;letter-spacing:.3px;margin-bottom:8px}
@@ -926,6 +929,29 @@ body{
   .page-content{padding:16px 12px}
   .page-stations-grid{grid-template-columns:1fr}
 }
+/* ===== ALERTS TABLE ===== */
+.alerts-wrap{background:var(--card-bg);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;margin-top:8px}
+.alerts-header{padding:16px 20px;border-bottom:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;gap:12px}
+.alerts-header .alerts-title{font-size:1rem;font-weight:700;color:var(--text-primary)}
+.alerts-header .alerts-count{font-size:.75rem;background:rgba(220,38,38,0.1);color:#dc2626;padding:3px 10px;border-radius:20px;font-weight:600}
+.alerts-table-wrap{overflow-x:auto}
+.alerts-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.alerts-table thead{background:rgba(0,0,0,0.025);position:sticky;top:0;z-index:2}
+.alerts-table th{padding:10px 12px;font-weight:700;color:var(--text-secondary);text-align:center;border-bottom:2px solid rgba(0,0,0,0.06);white-space:nowrap}
+.alerts-table th:first-child{text-align:left;min-width:100px}
+.alerts-table th.station-header{writing-mode:horizontal-tb;min-width:70px;max-width:90px}
+.alerts-table td{padding:8px 12px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.04);white-space:nowrap;font-family:'Orbitron',monospace;font-size:.78rem;color:var(--text-primary)}
+.alerts-table td:first-child{text-align:left;font-family:'Sarabun',sans-serif;font-weight:600;color:var(--text-secondary)}
+.alerts-table tbody tr:hover{background:rgba(14,165,233,0.04)}
+.alerts-table .val-zero{color:#dc2626;font-weight:700}
+.alerts-table .val-null{color:#94a3b8;font-style:italic;font-weight:400}
+.alerts-table .val-normal{color:var(--text-primary)}
+.alerts-table .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.alerts-table .status-dot.online{background:#059669}
+.alerts-table .status-dot.offline{background:#dc2626}
+.alerts-summary{padding:16px 20px;border-top:1px solid rgba(0,0,0,0.06);display:flex;gap:24px;flex-wrap:wrap}
+.alerts-summary-item{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text-muted)}
+.alerts-summary-item .count{font-weight:700;color:var(--text-primary)}
 </style>
 </head>
 <body>
@@ -959,6 +985,9 @@ body{
       <div class="sidebar-divider"></div>
       <a class="sidebar-item" data-page="cctv-office" onclick="navigateTo('cctv-office',this)">
         <i class="fas fa-video"></i><span>CCTV ออฟฟิศ</span>
+      </a>
+      <a class="sidebar-item" data-page="alerts" onclick="navigateTo('alerts',this)">
+        <i class="fas fa-bell"></i><span>แจ้งเตือนสถานี</span>
       </a>
     </div>
     <div class="sidebar-footer">
@@ -1213,6 +1242,12 @@ body{
       <div class="page" id="page-cctv-office">
         <div class="page-title"><i class="fas fa-video"></i> กล้องวงจรปิด ออฟฟิศ</div>
         <div class="cctv-grid cctv-office-grid" id="officeCctvGrid"></div>
+      </div>
+
+      <!-- ===== PAGE: ALERTS / SUMMARY TABLE ===== -->
+      <div class="page" id="page-alerts">
+        <div class="page-title"><i class="fas fa-bell"></i> สรุปข้อมูลสถานีทั้งหมด<div class="page-subtitle">แจ้งเตือนเมื่อไม่มีค่าเชื่อมต่อ หรือค่าเท่ากับ 0</div></div>
+        <div id="alertsContent" style="padding:0 24px 24px"></div>
       </div>
 
     </div>
@@ -1853,7 +1888,7 @@ function renderStationCardHTML(s){
             <div class="gauge-meta-item"><i class="fas fa-thermometer-half"></i><span class="val">${fmt(d.temp)}</span><span class="unit">°C</span></div>
             <div class="gauge-meta-item"><i class="fas fa-tint"></i><span class="val">${fmt(d.humidity)}</span><span class="unit">%</span></div>
             <div class="gauge-meta-item"><i class="fas fa-wind"></i><span class="val">${fmt(d.wind)}</span><span class="unit">m/s</span></div>
-            <div class="gauge-meta-item"><i class="fas fa-compass"></i><span class="val">${d.windDir!=null?degToCompass(d.windDir):'--'}</span><span class="unit">${fmt(d.windDir)}°</span>${d.windDir!=null?`<div class="wind-compass"><svg viewBox="0 0 32 32"><circle class="compass-ring" cx="16" cy="16" r="13"/><text class="compass-label" x="16" y="4.5">N</text><text class="compass-label" x="16" y="29">S</text><text class="compass-label" x="28" y="16.5">E</text><text class="compass-label" x="4" y="16.5">W</text><polygon class="compass-arrow" points="${(function(){var cx=16,cy=16,r=9,a=d.windDir*Math.PI/180;var bx=Math.cos(a)*3,by=Math.sin(a)*3;return (cx+bx-by).toFixed(1)+','+(cy+by+bx).toFixed(1)+' '+cx.toFixed(1)+','+cy.toFixed(1)+' '+((cx+bx+by).toFixed(1))+','+((cy+by-bx).toFixed(1));})()}"/><circle class="compass-dot" cx="16" cy="16" r="1.5"/></svg></div>`:''}</div>
+            <div class="gauge-meta-item"><i class="fas fa-compass"></i><span class="val">${d.windDir!=null?degToCompass(d.windDir):'--'}</span><span class="unit">${fmt(d.windDir)}°</span>${d.windDir!=null?`<div class="wind-compass"><svg viewBox="0 0 32 32"><circle class="compass-ring" cx="16" cy="16" r="13"/><text class="compass-label" x="16" y="4.5">N</text><text class="compass-label" x="16" y="29">S</text><text class="compass-label" x="28" y="16.5">E</text><text class="compass-label" x="4" y="16.5">W</text><line x1="16" y1="16" x2="${(16+8*Math.sin(d.windDir*Math.PI/180)).toFixed(1)}" y2="${(16-8*Math.cos(d.windDir*Math.PI/180)).toFixed(1)}" stroke="rgba(14,165,233,0.45)" stroke-width="1.8" stroke-linecap="round"/><polygon class="compass-arrowhead" points="${(function(){var cx=16,cy=16,a=d.windDir*Math.PI/180;var tx=9*Math.sin(a),ty=-9*Math.cos(a);var px=1.8*Math.cos(a),py=1.8*Math.sin(a);return (cx+tx-py).toFixed(1)+','+(cy+ty+px).toFixed(1)+' '+cx.toFixed(1)+','+cy.toFixed(1)+' '+((cx+tx+py).toFixed(1))+','+((cy+ty-px).toFixed(1));})()}"/><circle class="compass-dot" cx="16" cy="16" r="1.5"/></svg></div>`:''}</div>
             <div class="gauge-meta-item"><i class="fas fa-cloud-rain"></i><span class="val">${fmt(d.rain)}</span><span class="unit">mm</span></div>
             <div class="gauge-meta-item"><i class="fas fa-compress-arrows-alt"></i><span class="val">${fmt(d.pressure)}</span><span class="unit">hPa</span></div>
           </div>
@@ -2093,8 +2128,8 @@ function openModal(id){
           <circle class="mc-ring" cx="40" cy="40" r="24" style="stroke-dasharray:2 2"/>
           ${[0,45,90,135,180,225,270,315].map(function(a){var r1=a%90===0?31:33;var r2=34;var x1=(40+r1*Math.sin(a*Math.PI/180)).toFixed(1);var y1=(40-r1*Math.cos(a*Math.PI/180)).toFixed(1);var x2=(40+r2*Math.sin(a*Math.PI/180)).toFixed(1);var y2=(40-r2*Math.cos(a*Math.PI/180)).toFixed(1);return '<line class="mc-tick" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"/>';}).join('')}
           <text class="mc-label" x="40" y="6">N</text><text class="mc-label" x="40" y="76">S</text><text class="mc-label" x="74" y="41">E</text><text class="mc-label" x="6" y="41">W</text>
-          <line class="mc-arrow" x1="40" y1="40" x2="${(40+22*Math.sin(d.windDir*Math.PI/180)).toFixed(1)}" y2="${(40-22*Math.cos(d.windDir*Math.PI/180)).toFixed(1)}"/>
-          <polygon fill="#0ea5e9" points="${(function(){var cx=40,cy=40,r=22,a=d.windDir*Math.PI/180;var bx=Math.cos(a)*5,by=Math.sin(a)*5;return (cx+bx-by).toFixed(1)+','+(cy+by+bx).toFixed(1)+' '+cx.toFixed(1)+','+cy.toFixed(1)+' '+((cx+bx+by).toFixed(1))+','+((cy+by-bx).toFixed(1));})()}"/>
+          <line class="mc-arrow" x1="40" y1="40" x2="${(40+20*Math.sin(d.windDir*Math.PI/180)).toFixed(1)}" y2="${(40-20*Math.cos(d.windDir*Math.PI/180)).toFixed(1)}"/>
+          <polygon class="mc-arrowhead" points="${(function(){var cx=40,cy=40,a=d.windDir*Math.PI/180;var tx=24*Math.sin(a),ty=-24*Math.cos(a);var px=3.2*Math.cos(a),py=3.2*Math.sin(a);return (cx+tx-py).toFixed(1)+','+(cy+ty+px).toFixed(1)+' '+cx.toFixed(1)+','+cy.toFixed(1)+' '+((cx+tx+py).toFixed(1))+','+((cy+ty-px).toFixed(1));})()}"/>
           <circle class="mc-center" cx="40" cy="40" r="2.5"/>
           <text class="mc-speed" x="40" y="55">${fmt(d.wind)}</text>
         </svg></div>`:''}
@@ -2501,8 +2536,8 @@ function refreshMapMarkers(){
               <text x="30" y="57" font-size="5" font-weight="700" fill="#94a3b8" text-anchor="middle">S</text>
               <text x="56" y="31.5" font-size="5" font-weight="700" fill="#94a3b8" text-anchor="middle">E</text>
               <text x="4" y="31.5" font-size="5" font-weight="700" fill="#94a3b8" text-anchor="middle">W</text>
-              <line x1="30" y1="30" x2="${(30+18*Math.sin(d.windDir*Math.PI/180)).toFixed(1)}" y2="${(30-18*Math.cos(d.windDir*Math.PI/180)).toFixed(1)}" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>
-              <polygon fill="#0ea5e9" points="${(function(){var cx=30,cy=30,r=18,a=d.windDir*Math.PI/180;var bx=Math.cos(a)*4,by=Math.sin(a)*4;return (cx+bx-by).toFixed(1)+','+(cy+by+bx).toFixed(1)+' '+cx.toFixed(1)+','+cy.toFixed(1)+' '+((cx+bx+by).toFixed(1))+','+((cy+by-bx).toFixed(1));})()}"/>
+              <line x1="30" y1="30" x2="${(30+16*Math.sin(d.windDir*Math.PI/180)).toFixed(1)}" y2="${(30-16*Math.cos(d.windDir*Math.PI/180)).toFixed(1)}" stroke="rgba(14,165,233,0.45)" stroke-width="2" stroke-linecap="round"/>
+              <polygon class="map-arrowhead" points="${(function(){var cx=30,cy=30,a=d.windDir*Math.PI/180;var tx=20*Math.sin(a),ty=-20*Math.cos(a);var px=2.5*Math.cos(a),py=2.5*Math.sin(a);return (cx+tx-py).toFixed(1)+','+(cy+ty+px).toFixed(1)+' '+cx.toFixed(1)+','+cy.toFixed(1)+' '+((cx+tx+py).toFixed(1))+','+((cy+ty-px).toFixed(1));})()}"/>
               <circle cx="30" cy="30" r="2" fill="#0ea5e9"/>
             </svg>
             <div style="font-size:.72rem;color:#666"><b>${degToCompass(d.windDir)}</b> ${fmt(d.windDir)}°<br>ความเร็วลม ${fmt(d.wind)} m/s</div>
@@ -3520,6 +3555,7 @@ function renderPageContent(page){
   else if(page==='lakchai') renderPageLakchai();
   else if(page==='pinthong') renderPagePinthong();
   else if(page==='cctv-office') initOfficeCCTVPage();
+  else if(page==='alerts') renderPageAlerts();
   else if(page==='overview'){ /* map already renders */ }
 }
 
@@ -3586,6 +3622,63 @@ function renderPagePinthong(){
   initPageStationChips('pinthong',[pt5].filter(Boolean));
   renderPageComparisonChart('pinthong');
   renderPageCCTV('pinthong');
+}
+
+function renderPageAlerts(){
+  var wrap=document.getElementById('alertsContent');
+  var params=['AQI','PM2.5','PM10','TSP','SO2','NO2','Temp','Humidity','Wind','WindDir','Rain','Pressure','WaterLevel','FlowRate'];
+  var paramKeys=['aqi','pm25','pm10','tsp','so2','no2','temp','humidity','wind','windDir','rain','pressure','waterLevel','flowRate'];
+  var paramUnits=['','µg/m³','µg/m³','µg/m³','ppb','ppb','°C','%','m/s','°','mm','hPa','m','m³/s'];
+  var standards=[null,37.5,100,200,50,120,null,null,null,null,null,null,null,null];
+  var alerts=[];
+  var rows='';
+  STATIONS.forEach(function(s){
+    var d=stationData[s.id]||{};
+    var isOnline=d.online!==false;
+    var cells='<td><span class="status-dot '+(isOnline?'online':'offline')+'"></span>'+s.name+'<br><span style="font-size:.65rem;color:var(--text-muted);font-weight:400">'+s.id+'</span></td>';
+    var rowAlerts=0;
+    paramKeys.forEach(function(k,i){
+      var v=d[k];
+      var cellClass='val-normal';
+      var display='--';
+      if(v===null||v===undefined){
+        cellClass='val-null';
+        display='<i class="fas fa-minus-circle" style="margin-right:3px"></i>--';
+        rowAlerts++;
+      }else if(v===0&&k!=='rain'){
+        cellClass='val-zero';
+        display='<i class="fas fa-exclamation-triangle" style="margin-right:3px"></i>0.0';
+        rowAlerts++;
+      }else if(standards[i]!==null&&v>standards[i]){
+        cellClass='val-zero';
+        display='<i class="fas fa-exclamation-triangle" style="margin-right:3px"></i>'+v.toFixed(1);
+        rowAlerts++;
+      }else{
+        display=typeof v==='number'?v.toFixed(1):v;
+      }
+      cells+='<td class="'+cellClass+'">'+display+'</td>';
+    });
+    alerts.push(rowAlerts);
+    rows+='<tr>'+cells+'</tr>';
+  });
+  var totalAlerts=alerts.reduce(function(a,b){return a+b;},0);
+  var offlineCount=STATIONS.filter(function(s){var d=stationData[s.id]||{};return d.online===false;}).length;
+  var headerRow='<tr><th>สถานี</th>';
+  params.forEach(function(p,i){
+    headerRow+='<th class="station-header">'+p+(paramUnits[i]?'<br><span style="font-size:.6rem;font-weight:400;opacity:.6">'+paramUnits[i]+'</span>':'')+'</th>';
+  });
+  headerRow+='</tr>';
+  var html='<div class="alerts-wrap">'
+    +'<div class="alerts-header"><div class="alerts-title"><i class="fas fa-table"></i> ตารางสรุปพารามิเตอร์ทั้งหมด</div>'
+    +(totalAlerts>0?'<div class="alerts-count"><i class="fas fa-exclamation-triangle"></i> พบ '+totalAlerts+' รายการที่ต้องตรวจสอบ</div>':'<div style="font-size:.75rem;background:rgba(5,150,105,0.1);color:#059669;padding:3px 10px;border-radius:20px;font-weight:600"><i class="fas fa-check-circle"></i> สถานีทั้งหมดเชื่อมต่อปกติ</div>')+'</div>'
+    +'<div class="alerts-table-wrap"><table class="alerts-table"><thead>'+headerRow+'</thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div class="alerts-summary">'
+    +'<div class="alerts-summary-item"><span>สถานีทั้งหมด:</span><span class="count">'+STATIONS.length+'</span> แห่ง</div>'
+    +'<div class="alerts-summary-item"><span>เชื่อมต่อ:</span><span class="count" style="color:#059669">'+(STATIONS.length-offlineCount)+'</span></div>'
+    +'<div class="alerts-summary-item"><span>ออฟไลน์:</span><span class="count" style="color:#dc2626">'+offlineCount+'</span></div>'
+    +'<div class="alerts-summary-item"><span>ค่าผิดปกติ/เป็น 0:</span><span class="count" style="color:#dc2626">'+totalAlerts+'</span></div>'
+    +'</div></div>';
+  wrap.innerHTML=html;
 }
 
 function initPageStationChips(page, stations){
