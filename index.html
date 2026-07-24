@@ -1889,7 +1889,7 @@ function renderStationCardHTML(s){
       <div class="pollutants">
         <div class="pollutants-title">สารมลพิษหลัก</div>
         <div class="pollutant-bars">
-          ${d.pm25!=null?`<div class="pollutant-row"><span class="pollutant-name">PM2.5</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${pm25Pct}%;background:${getPM25Color(d.pm25)}"></div><div class="pollutant-standard" style="left:${pm25StdPct}%" data-label="37.5"></div></div><span class="pollutant-val">${fmt(d.pm25)} µg/m³</span></div>`:''}
+          ${d.pm25!=null&&AMATA_PM25_STATIONS.includes(s.id)?`<div class="pollutant-row"><span class="pollutant-name">PM2.5</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${pm25Pct}%;background:${getPM25Color(d.pm25)}"></div><div class="pollutant-standard" style="left:${pm25StdPct}%" data-label="37.5"></div></div><span class="pollutant-val">${fmt(d.pm25)} µg/m³</span></div>`:''}
           <div class="pollutant-row"><span class="pollutant-name">PM10</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${pm10Pct}%;background:var(--accent)"></div><div class="pollutant-standard" style="left:${pm10StdPct}%" data-label="100"></div></div><span class="pollutant-val">${fmt(d.pm10)} µg/m³</span></div>
           <div class="pollutant-row"><span class="pollutant-name">TSP</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${tspPct}%;background:var(--purple)"></div><div class="pollutant-standard" style="left:${tspStdPct}%" data-label="200"></div></div><span class="pollutant-val">${fmt(d.tsp)} µg/m³</span></div>
           <div class="pollutant-row"><span class="pollutant-name">SO₂</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${so2Pct}%;background:var(--yellow)"></div><div class="pollutant-standard" style="left:${so2StdPct}%" data-label="50"></div></div><span class="pollutant-val">${fmt(d.so2)} ppb</span></div>
@@ -2106,7 +2106,7 @@ function openModal(id){
         <div class="value" style="color:${info.color};font-size:2.2rem">${d.aqi!=null?d.aqi:'--'}</div>
         <div class="unit">${info.label}</div>
       </div>
-      ${d.pm25!=null?`<div class="modal-stat"><div class="label">PM2.5</div><div class="value">${fmt(d.pm25)}</div><div class="unit">µg/m³ (มาตรฐาน 37.5)</div></div>`:''}
+      ${d.pm25!=null&&AMATA_PM25_STATIONS.includes(id)?`<div class="modal-stat"><div class="label">PM2.5</div><div class="value">${fmt(d.pm25)}</div><div class="unit">µg/m³ (มาตรฐาน 37.5)</div></div>`:''}
       <div class="modal-stat"><div class="label">PM10</div><div class="value">${fmt(d.pm10)}</div><div class="unit">µg/m³ (มาตรฐาน 100)</div></div>
       <div class="modal-stat"><div class="label">TSP</div><div class="value">${fmt(d.tsp)}</div><div class="unit">µg/m³ (มาตรฐาน 200)</div></div>
       <div class="modal-stat"><div class="label">SO₂</div><div class="value">${fmt(d.so2)}</div><div class="unit">ppb (มาตรฐาน 50)</div></div>
@@ -2329,7 +2329,7 @@ async function switchAQTab(stationId,hours,tabEl){
       <div class="modal-stat-box"><div class="ms-label">AQI เฉลี่ย</div><div class="ms-value" style="color:${info.color}">${stats.avg}</div></div>
     </div>
     <div class="modal-stats-grid" style="margin-top:8px">
-      <div class="modal-stat-box"><div class="ms-label">PM2.5 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM25}</div><div class="ms-unit">µg/m³</div></div>
+      ${AMATA_PM25_STATIONS.includes(id)?`<div class="modal-stat-box"><div class="ms-label">PM2.5 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM25}</div><div class="ms-unit">µg/m³</div></div>`:''}
       <div class="modal-stat-box"><div class="ms-label">PM10 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM10}</div><div class="ms-unit">µg/m³</div></div>
       <div class="modal-stat-box"><div class="ms-label">อุณหภูมิเฉลี่ย</div><div class="ms-value" style="color:#ea580c">${avgTemp}</div><div class="ms-unit">°C</div></div>
       <div class="modal-stat-box"><div class="ms-label">ความชื้นเฉลี่ย</div><div class="ms-value" style="color:#06b6d4">${avgHumid}</div><div class="ms-unit">%</div></div>
@@ -2431,7 +2431,7 @@ function initMap(){
           <span style="font-size:.75rem;color:#666;margin-left:4px">${lv.label}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.75rem">
-          ${d.pm25!=null?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
+          ${d.pm25!=null&&AMATA_PM25_STATIONS.includes(s.id)?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
           <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM10</span><br><b>${fmt(d.pm10)}</b> µg/m³</div>
           <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">TSP</span><br><b>${fmt(d.tsp)}</b> µg/m³</div>
           <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">SO₂</span><br><b>${fmt(d.so2)}</b> ppb</div>
@@ -2511,7 +2511,7 @@ function refreshMapMarkers(){
             <span style="font-size:.75rem;color:#666;margin-left:4px">${lv.label}</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.75rem">
-            ${d.pm25!=null?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
+            ${d.pm25!=null&&AMATA_PM25_STATIONS.includes(s.id)?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
             <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM10</span><br><b>${fmt(d.pm10)}</b> µg/m³</div>
             <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">TSP</span><br><b>${fmt(d.tsp)}</b> µg/m³</div>
             <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">SO₂</span><br><b>${fmt(d.so2)}</b> ppb</div>
