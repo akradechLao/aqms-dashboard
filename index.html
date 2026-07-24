@@ -3632,19 +3632,18 @@ function renderPageAlerts(){
   var standards=[null,37.5,100,200,50,120,null,null,null,null,null,null];
   var aqStations=STATIONS.filter(function(s){return s.source==='amata'||s.source==='pt5'||s.source==='lakchai';});
   var totalAlerts=0;
-  var headerRow='<tr><th>พารามิเตอร์</th>';
-  aqStations.forEach(function(s){
-    var d=stationData[s.id]||{};
-    var isOnline=d.online!==false;
-    headerRow+='<th class="station-header"><span class="status-dot '+(isOnline?'online':'offline')+'"></span>'+s.id+'<br><span style="font-size:.6rem;font-weight:400;opacity:.7">'+s.name+'</span></th>';
+  var headerRow='<tr><th>สถานี</th>';
+  params.forEach(function(p,i){
+    headerRow+='<th>'+p+(paramUnits[i]?'<br><span style="font-size:.6rem;font-weight:400;opacity:.6">'+paramUnits[i]+'</span>':'')+'</th>';
   });
   headerRow+='</tr>';
   var bodyRows='';
-  paramKeys.forEach(function(k,i){
-    var cells='<td style="font-weight:700">'+params[i]+'<br><span style="font-size:.6rem;color:var(--text-muted);font-weight:400">'+paramUnits[i]+'</span></td>';
+  aqStations.forEach(function(s){
+    var d=stationData[s.id]||{};
+    var isOnline=d.online!==false;
+    var cells='<td><span class="status-dot '+(isOnline?'online':'offline')+'"></span>'+s.name+'<br><span style="font-size:.65rem;color:var(--text-muted);font-weight:400">'+s.id+'</span></td>';
     var rowAlerts=0;
-    aqStations.forEach(function(s){
-      var d=stationData[s.id]||{};
+    paramKeys.forEach(function(k,i){
       var v=d[k];
       var cellClass='val-normal';
       var display='--';
