@@ -953,6 +953,18 @@ body{
 .alerts-summary{padding:16px 20px;border-top:1px solid rgba(0,0,0,0.06);display:flex;gap:24px;flex-wrap:wrap}
 .alerts-summary-item{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text-muted)}
 .alerts-summary-item .count{font-weight:700;color:var(--text-primary)}
+/* alerts detail list */
+.alerts-detail{margin-top:16px;background:var(--card-bg);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.alerts-detail-title{padding:12px 16px;font-size:.85rem;font-weight:700;color:var(--text-primary);border-bottom:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;gap:8px}
+.alerts-detail-list{padding:8px 16px;max-height:240px;overflow-y:auto}
+.alerts-detail-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.03);font-size:.8rem}
+.alerts-detail-item:last-child{border-bottom:none}
+.alerts-detail-station{font-weight:700;color:var(--text-primary);min-width:40px}
+.alerts-detail-param{font-weight:600;color:var(--accent);min-width:60px}
+.alerts-detail-reason{color:var(--text-muted)}
+.alerts-detail-reason.reason-over{color:#dc2626;font-weight:600}
+.alerts-detail-reason.reason-zero{color:#ea580c;font-weight:600}
+.alerts-detail-reason.reason-null{color:#94a3b8}
 </style>
 </head>
 <body>
@@ -3633,6 +3645,7 @@ function renderPageAlerts(){
   var standards=[null,37.5,100,200,50,120,null,null,null,null,null,null];
   var aqStations=STATIONS.filter(function(s){return s.source==='amata'||s.source==='pt5'||s.source==='lakchai';});
   var totalAlerts=0;
+  var alertDetails=[];
   var headerRow='<tr><th>สถานี</th>';
   params.forEach(function(p,i){
     headerRow+='<th>'+p+(paramUnits[i]?'<br><span style="font-size:.6rem;font-weight:400;opacity:.6">'+paramUnits[i]+'</span>':'')+'</th>';
@@ -3655,14 +3668,17 @@ function renderPageAlerts(){
         cellClass='val-null';
         display='<i class="fas fa-minus-circle" style="margin-right:3px"></i>--';
         rowAlerts++;
+        alertDetails.push({station:s.id,name:s.name,param:params[i],reason:'ไม่มีค่าเชื่อมต่อ'});
       }else if(v===0&&k!=='rain'){
         cellClass='val-zero';
         display='<i class="fas fa-exclamation-triangle" style="margin-right:3px"></i>0.0';
         rowAlerts++;
+        alertDetails.push({station:s.id,name:s.name,param:params[i],reason:'ค่าเท่ากับ 0'});
       }else if(standards[i]!==null&&v>standards[i]){
         cellClass='val-zero';
         display='<i class="fas fa-exclamation-triangle" style="margin-right:3px"></i>'+v.toFixed(1);
         rowAlerts++;
+        alertDetails.push({station:s.id,name:s.name,param:params[i],reason:'เกินมาตรฐาน ('+v.toFixed(1)+' > '+standards[i]+')'});
       }else{
         display=typeof v==='number'?v.toFixed(1):v;
       }
@@ -3672,6 +3688,15 @@ function renderPageAlerts(){
     bodyRows+='<tr>'+cells+'</tr>';
   });
   var offlineCount=aqStations.filter(function(s){var d=stationData[s.id]||{};return d.online===false;}).length;
+  var detailList='';
+  if(alertDetails.length>0){
+    detailList='<div class="alerts-detail"><div class="alerts-detail-title"><i class="fas fa-list-ul"></i> รายการที่ตรวจพบ</div><div class="alerts-detail-list">';
+    alertDetails.forEach(function(a){
+      var reasonClass=a.reason.indexOf('เกินมาตรฐาน')>-1?'reason-over':a.reason.indexOf('0')>-1?'reason-zero':'reason-null';
+      detailList+='<div class="alerts-detail-item"><span class="alerts-detail-station">'+a.station+'</span><span class="alerts-detail-param">'+a.param+'</span><span class="alerts-detail-reason '+reasonClass+'">'+a.reason+'</span></div>';
+    });
+    detailList+='</div></div>';
+  }
   var html='<div class="alerts-wrap">'
     +'<div class="alerts-header"><div class="alerts-title"><i class="fas fa-table"></i> ตารางสรุปพารามิเตอร์สถานี AQMS</div>'
     +(totalAlerts>0?'<div class="alerts-count"><i class="fas fa-exclamation-triangle"></i> พบ '+totalAlerts+' รายการที่ต้องตรวจสอบ</div>':'<div style="font-size:.75rem;background:rgba(5,150,105,0.1);color:#059669;padding:3px 10px;border-radius:20px;font-weight:600"><i class="fas fa-check-circle"></i> สถานีทั้งหมดเชื่อมต่อปกติ</div>')+'</div>'
@@ -3681,7 +3706,7 @@ function renderPageAlerts(){
     +'<div class="alerts-summary-item"><span>เชื่อมต่อ:</span><span class="count" style="color:#059669">'+(aqStations.length-offlineCount)+'</span></div>'
     +'<div class="alerts-summary-item"><span>ออฟไลน์:</span><span class="count" style="color:#dc2626">'+offlineCount+'</span></div>'
     +'<div class="alerts-summary-item"><span>ค่าผิดปกติ/เป็น 0:</span><span class="count" style="color:#dc2626">'+totalAlerts+'</span></div>'
-    +'</div></div>';
+    +'</div>'+detailList+'</div>';
   wrap.innerHTML=html;
 }
 
