@@ -1,10 +1,16 @@
+require('dotenv').config();
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const admin = require("firebase-admin");
+const { createClient } = require("@supabase/supabase-js");
 const fetch = require("node-fetch");
 const cheerio = require("cheerio");
 
-admin.initializeApp();
-const db = admin.database();
+let _supabase;
+function getSupabase() {
+  if (!_supabase) {
+    _supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+  }
+  return _supabase;
+}
 
 const AMATA_TOKEN = 'REMOVED';
 const AMATA_PM25_TOKEN = 'REMOVED';
@@ -277,17 +283,14 @@ function calcOverallAQI(d) {
 
 async function getLastDustValues(stationId) {
   try {
-    const today = new Date().toISOString().split("T")[0];
-    const snap = await db
-      .ref(`readings/${today}/${stationId}`)
-      .orderByChild("pm25")
-      .limitToLast(1)
-      .once("value");
-    let last = null;
-    snap.forEach((child) => {
-      last = child.val();
-    });
-    return last;
+    const { data } = await getSupabase()
+      .from("readings")
+      .select("pm25, pm10, tsp")
+      .eq("station_id", stationId)
+      .order("timestamp", { ascending: false })
+      .limit(1)
+      .single();
+    return data;
   } catch (e) {
     return null;
   }
@@ -305,7 +308,7 @@ function hasNewDustValues(current, lastRecord) {
 
 function hasSignificantChange(current, lastRecord) {
   if (!lastRecord) return true;
-  const keys = ['pm10','tsp','so2','no2','aqi','temp','humidity','wind','windDir','rain','pressure'];
+  const keys = ['pm10','tsp','so2','no2','aqi','temp','humidity','wind','wind_dir','rain','pressure'];
   for (const k of keys) {
     const c = current[k], l = lastRecord[k];
     if (c == null && l == null) continue;
@@ -319,13 +322,18 @@ function hasSignificantChange(current, lastRecord) {
 }
 
 async function getLastRecord(stationId) {
-  const today = new Date().toISOString().split('T')[0];
   try {
-    const snap = await db.ref(`readings/${today}/${stationId}`).orderByChild('timestamp').limitToLast(1).once('value');
-    let last = null;
-    snap.forEach(child => { last = child.val(); });
-    return last;
-  } catch (e) { return null; }
+    const { data } = await getSupabase()
+      .from("readings")
+      .select("*")
+      .eq("station_id", stationId)
+      .order("timestamp", { ascending: false })
+      .limit(1)
+      .single();
+    return data;
+  } catch (e) {
+    return null;
+  }
 }
 
 function sleep(ms) {
@@ -341,11 +349,10 @@ exports.fetchAqData = onSchedule(
   },
   async (event) => {
     const now = new Date();
-    const today = now.toISOString().split("T")[0];
     const ts = Date.now();
     const minute = now.getMinutes();
     const isNewHour = minute === 0;
-    const updates = {};
+    const records = [];
 
     console.log(`Running at ${now.toISOString()} | isNewHour: ${isNewHour}`);
 
@@ -356,17 +363,18 @@ exports.fetchAqData = onSchedule(
           data.aqi = calcOverallAQI(data);
 
           const record = {
+            station_id: stationId,
             so2: data.so2 != null ? +data.so2 : null,
             no2: data.no2 != null ? +data.no2 : null,
             aqi: data.aqi != null ? +data.aqi : null,
             temp: data.temp != null ? +data.temp : null,
             humidity: data.humidity != null ? +data.humidity : null,
             wind: data.wind != null ? +data.wind : null,
-            windDir: data.windDir != null ? +data.windDir : null,
+            wind_dir: data.windDir != null ? +data.windDir : null,
             rain: data.rain != null ? +data.rain : null,
             pressure: data.pressure != null ? +data.pressure : null,
-            waterLevel: null,
-            flowRate: null,
+            water_level: null,
+            flow_rate: null,
             timestamp: ts,
             source: "cloud",
           };
@@ -402,7 +410,7 @@ exports.fetchAqData = onSchedule(
 
           const lastRec = await getLastRecord(stationId);
           if (hasSignificantChange(record, lastRec)) {
-            updates[`readings/${today}/${stationId}/${ts}`] = record;
+            records.push(record);
             console.log(`[${stationId}] Saved (values changed)`);
           } else {
             console.log(`[${stationId}] Skipped (no significant change)`);
@@ -418,17 +426,18 @@ exports.fetchAqData = onSchedule(
       if (data && data.online) {
         data.aqi = calcOverallAQI(data);
         const record = {
+          station_id: "PT5",
           so2: data.so2 != null ? +data.so2 : null,
           no2: data.no2 != null ? +data.no2 : null,
           aqi: data.aqi != null ? +data.aqi : null,
           temp: data.temp != null ? +data.temp : null,
           humidity: data.humidity != null ? +data.humidity : null,
           wind: data.wind != null ? +data.wind : null,
-          windDir: data.windDir != null ? +data.windDir : null,
+          wind_dir: data.windDir != null ? +data.windDir : null,
           rain: data.rain != null ? +data.rain : null,
           pressure: data.pressure != null ? +data.pressure : null,
-          waterLevel: null,
-          flowRate: null,
+          water_level: null,
+          flow_rate: null,
           timestamp: ts,
           source: "cloud",
         };
@@ -464,7 +473,7 @@ exports.fetchAqData = onSchedule(
 
         const lastRec = await getLastRecord('PT5');
         if (hasSignificantChange(record, lastRec)) {
-          updates[`readings/${today}/PT5/${ts}`] = record;
+          records.push(record);
           console.log('[PT5] Saved (values changed)');
         } else {
           console.log('[PT5] Skipped (no significant change)');
@@ -479,6 +488,7 @@ exports.fetchAqData = onSchedule(
       if (byyData && byyData.online) {
         byyData.aqi = calcOverallAQI(byyData);
         const record = {
+          station_id: "BYY",
           pm25: byyData.pm25 != null ? +byyData.pm25 : null,
           pm10: byyData.pm10 != null ? +byyData.pm10 : null,
           tsp: byyData.tsp != null ? +byyData.tsp : null,
@@ -488,18 +498,18 @@ exports.fetchAqData = onSchedule(
           temp: byyData.temp != null ? +byyData.temp : null,
           humidity: byyData.humidity != null ? +byyData.humidity : null,
           wind: byyData.wind != null ? +byyData.wind : null,
-          windDir: byyData.windDir != null ? +byyData.windDir : null,
+          wind_dir: byyData.windDir != null ? +byyData.windDir : null,
           rain: byyData.rain != null ? +byyData.rain : null,
           pressure: byyData.pressure != null ? +byyData.pressure : null,
-          waterLevel: null,
-          flowRate: null,
+          water_level: null,
+          flow_rate: null,
           timestamp: ts,
           source: "cloud",
         };
 
         const lastRec = await getLastRecord('BYY');
         if (hasSignificantChange(record, lastRec)) {
-          updates[`readings/${today}/BYY/${ts}`] = record;
+          records.push(record);
           console.log('[BYY] Saved (values changed)');
         } else {
           console.log('[BYY] Skipped (no significant change)');
@@ -509,9 +519,13 @@ exports.fetchAqData = onSchedule(
       console.warn("Error fetching BYY:", e.message);
     }
 
-    if (Object.keys(updates).length > 0) {
-      await db.ref().update(updates);
-      console.log(`Saved ${Object.keys(updates).length} records`);
+    if (records.length > 0) {
+      const { error } = await getSupabase().from("readings").insert(records);
+      if (error) {
+        console.error("Supabase insert error:", error.message);
+      } else {
+        console.log(`Saved ${records.length} records to Supabase`);
+      }
     } else {
       console.warn("No data fetched, skipping write");
     }
