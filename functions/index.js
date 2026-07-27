@@ -11,7 +11,7 @@ const AMATA_PM25_TOKEN = 'REMOVED';
 const AMATA_PM25_STATIONS = ["002", "004", "005"];
 const PT5_TOKEN = 'REMOVED';
 const AQ_STATIONS = ["001", "002", "003", "004", "005", "006"];
-const MAX_DUST_RETRY = 3;
+const MAX_DUST_RETRY = 1;
 const DUST_RETRY_DELAY_MS = 60000;
 const BYY_URL = "https://lakchai.northernthai.co.th/";
 
@@ -303,13 +303,38 @@ function hasNewDustValues(current, lastRecord) {
   return true;
 }
 
+function hasSignificantChange(current, lastRecord) {
+  if (!lastRecord) return true;
+  const keys = ['pm10','tsp','so2','no2','aqi','temp','humidity','wind','windDir','rain','pressure'];
+  for (const k of keys) {
+    const c = current[k], l = lastRecord[k];
+    if (c == null && l == null) continue;
+    if (c == null || l == null) return true;
+    if (typeof c === 'number' && typeof l === 'number') {
+      if (k === 'rain') { if (c !== l) return true; }
+      else if (Math.abs(c - l) >= 0.5) return true;
+    } else if (c !== l) return true;
+  }
+  return false;
+}
+
+async function getLastRecord(stationId) {
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const snap = await db.ref(`readings/${today}/${stationId}`).orderByChild('timestamp').limitToLast(1).once('value');
+    let last = null;
+    snap.forEach(child => { last = child.val(); });
+    return last;
+  } catch (e) { return null; }
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 exports.fetchAqData = onSchedule(
   {
-    schedule: "every 1 minutes",
+    schedule: "every 5 minutes",
     region: "asia-southeast1",
     memory: "256MB",
     timeoutSeconds: 120,
@@ -375,7 +400,13 @@ exports.fetchAqData = onSchedule(
             }
           }
 
-          updates[`readings/${today}/${stationId}/${ts}`] = record;
+          const lastRec = await getLastRecord(stationId);
+          if (hasSignificantChange(record, lastRec)) {
+            updates[`readings/${today}/${stationId}/${ts}`] = record;
+            console.log(`[${stationId}] Saved (values changed)`);
+          } else {
+            console.log(`[${stationId}] Skipped (no significant change)`);
+          }
         }
       } catch (e) {
         console.warn(`Error fetching station ${stationId}:`, e.message);
@@ -431,7 +462,13 @@ exports.fetchAqData = onSchedule(
           }
         }
 
-        updates[`readings/${today}/PT5/${ts}`] = record;
+        const lastRec = await getLastRecord('PT5');
+        if (hasSignificantChange(record, lastRec)) {
+          updates[`readings/${today}/PT5/${ts}`] = record;
+          console.log('[PT5] Saved (values changed)');
+        } else {
+          console.log('[PT5] Skipped (no significant change)');
+        }
       }
     } catch (e) {
       console.warn("Error fetching PT5:", e.message);
@@ -459,7 +496,14 @@ exports.fetchAqData = onSchedule(
           timestamp: ts,
           source: "cloud",
         };
-        updates[`readings/${today}/BYY/${ts}`] = record;
+
+        const lastRec = await getLastRecord('BYY');
+        if (hasSignificantChange(record, lastRec)) {
+          updates[`readings/${today}/BYY/${ts}`] = record;
+          console.log('[BYY] Saved (values changed)');
+        } else {
+          console.log('[BYY] Skipped (no significant change)');
+        }
       }
     } catch (e) {
       console.warn("Error fetching BYY:", e.message);
