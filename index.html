@@ -3419,6 +3419,11 @@ async function renderPageComparisonChart(page){
     if(panelsEl) panelsEl.innerHTML = '';
   } else {
     if(pc.chartInstance){ pc.chartInstance.destroy(); pc.chartInstance = null; }
+    var existingCanvas = document.getElementById(page+'CompareChart');
+    if(existingCanvas && existingCanvas.__chartjs) {
+      var existingChart = Chart.getChart(existingCanvas);
+      if(existingChart) existingChart.destroy();
+    }
   }
 
   var now = Date.now();
@@ -3808,7 +3813,9 @@ async function init(){
   fetchInterval = setInterval(()=>{
     fetchAllStations().then(()=>{try{refreshMapMarkers();}catch(e){}});
   },120000);
-  try{ await recalculateFirebaseAQI(); }catch(e){ console.warn('recalculateFirebaseAQI error:',e); }
+  // AQI v5 recalculation disabled — PERMISSION_DENIED from client-side
+  // AQI is now calculated correctly by Cloud Function before saving
+  // try{ await recalculateFirebaseAQI(); }catch(e){ console.warn('recalculateFirebaseAQI error:',e); }
   try{ HistData.clear(); }catch(e){}
 }
 
