@@ -3082,16 +3082,25 @@ async function renderLakchaiAqCompare(){
     var s = STATIONS.find(function(x){ return x.id===stId; });
     if(!s) continue;
     var readings = [];
-    (allReadings[stId]||[]).forEach(function(r){ if(r[param]!=null) readings.push({t:r.timestamp,v:r[param]}); });
+    var rawReadings = allReadings[stId]||[];
+    if(rawReadings.length>0){
+      var sample = rawReadings[0];
+      console.log('[BYY Compare] param='+param+' rawCount='+rawReadings.length+' sample keys='+Object.keys(sample).join(',')+' pm10='+sample.pm10+' tsp='+sample.tsp+' so2='+sample.so2+' no2='+sample.no2+' temp='+sample.temp);
+    }
+    rawReadings.forEach(function(r){ if(r[param]!=null) readings.push({t:r.timestamp,v:r[param]}); });
+    console.log('[BYY Compare] param='+param+' filteredReadings='+readings.length);
     if(readings.length===0){
       var sd = stationData[stId];
       if(sd && sd[param]!=null){
         var base = sd[param]||10;
+        console.log('[BYY Compare] Using simulation base='+base+' for param='+param);
         for(var h=0; h<compareHours; h++){
           var t = now-(compareHours-1-h)*3600000;
           var ratio=h/compareHours;
           readings.push({t:t,v:+(base+Math.sin(ratio*Math.PI*2.5)*base*0.1).toFixed(2)});
         }
+      } else {
+        console.log('[BYY Compare] No data for param='+param+' stationData[stId]['+param+']='+ (sd ? sd[param] : 'stationData null'));
       }
     }
     readings.sort(function(a,b){return a.t-b.t;});
