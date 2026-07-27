@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AQMS Dashboard - ระบบเฝ้าระวังคุณภาพอากาศ</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -1450,7 +1453,8 @@ function saveToFirebase(stationId, data) {
       pressure: data.pressure!=null ? +data.pressure : null,
       waterLevel: data.waterLevel!=null ? +data.waterLevel : null,
       flowRate: data.flowRate!=null ? +data.flowRate : null,
-      timestamp: ts
+      timestamp: ts,
+      source: 'client'
     };
     fbDB.ref('readings/'+today+'/'+stationId+'/'+ts).set(payload)
       .catch(function(e){ console.warn('Firebase write error:', e); });
