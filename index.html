@@ -3027,11 +3027,13 @@ function switchLakchaiWaterTime(hours, tabEl){
   renderLakchaiWaterCompare();
 }
 
+var lakchaiAqToken = 0;
 async function renderLakchaiAqCompare(){
   var pc = PAGE_COMPARE.lakchaiAq;
   var paramEl = document.getElementById('lakchaiAqCompareParam');
   if(!paramEl) return;
   var param = paramEl.value;
+  var myToken = ++lakchaiAqToken;
   var paramLabels = { aqi:'AQI', pm25:'PM2.5', pm10:'PM10', tsp:'TSP', so2:'SO2', no2:'NO2', temp:'อุณหภูมิ', humidity:'ความชื้น' };
   var paramUnits = { aqi:'', pm25:'µg/m³', pm10:'µg/m³', tsp:'µg/m³', so2:'ppb', no2:'ppb', temp:'°C', humidity:'%' };
   var compareHours = pc.hours;
@@ -3060,6 +3062,7 @@ async function renderLakchaiAqCompare(){
   var allReadings = {};
   try {
     var snap = await fbDB.ref('readings').orderByKey().once('value');
+    if(myToken !== lakchaiAqToken) return;
     snap.forEach(function(daySnap){
       pc.selectedStations.forEach(function(stId){
         if(daySnap.hasChild(stId)){
@@ -3072,7 +3075,7 @@ async function renderLakchaiAqCompare(){
         }
       });
     });
-  } catch(e){}
+  } catch(e){ console.warn('lakchaiAqCompare Firebase error:', e.message || e); }
 
   for(var si=0; si<pc.selectedStations.length; si++){
     var stId = pc.selectedStations[si];
@@ -3120,6 +3123,7 @@ async function renderLakchaiAqCompare(){
   }
   var wrapEl = document.getElementById('lakchaiAqCompareWrap');
   var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
+  if(myToken !== lakchaiAqToken) return;
   if(phEl) phEl.style.display = datasets.length===0 ? 'flex' : 'none';
   if(wrapEl){ if(datasets.length===0) wrapEl.classList.add('empty'); else wrapEl.classList.remove('empty'); }
   if(datasets.length>0){
@@ -3129,8 +3133,10 @@ async function renderLakchaiAqCompare(){
   document.getElementById('lakchaiAqCompareSummary').innerHTML = summaryHtml;
 }
 
+var lakchaiRainToken = 0;
 async function renderLakchaiRainCompare(){
   var pc = PAGE_COMPARE.lakchaiRain;
+  var myToken = ++lakchaiRainToken;
   var compareHours = pc.hours;
   if(pc.chartInstance){ pc.chartInstance.destroy(); pc.chartInstance = null; }
 
@@ -3157,6 +3163,7 @@ async function renderLakchaiRainCompare(){
   var allReadings = {};
   try {
     var snap = await fbDB.ref('readings').orderByKey().once('value');
+    if(myToken !== lakchaiRainToken) return;
     snap.forEach(function(daySnap){
       pc.selectedStations.forEach(function(stId){
         if(daySnap.hasChild(stId)){
@@ -3169,7 +3176,7 @@ async function renderLakchaiRainCompare(){
         }
       });
     });
-  } catch(e){}
+  } catch(e){ console.warn('lakchaiRainCompare Firebase error:', e.message || e); }
 
   for(var si=0; si<pc.selectedStations.length; si++){
     var stId = pc.selectedStations[si];
@@ -3214,6 +3221,7 @@ async function renderLakchaiRainCompare(){
     }
     idx++;
   }
+  if(myToken !== lakchaiRainToken) return;
   var wrapEl = document.getElementById('lakchaiRainCompareWrap');
   var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
   if(phEl) phEl.style.display = datasets.length===0 ? 'flex' : 'none';
@@ -3225,8 +3233,10 @@ async function renderLakchaiRainCompare(){
   document.getElementById('lakchaiRainCompareSummary').innerHTML = summaryHtml;
 }
 
+var lakchaiWaterToken = 0;
 async function renderLakchaiWaterCompare(){
   var pc = PAGE_COMPARE.lakchaiWater;
+  var myToken = ++lakchaiWaterToken;
   var paramEl = document.getElementById('lakchaiWaterCompareParam');
   if(!paramEl) return;
   var param = paramEl.value;
@@ -3258,6 +3268,7 @@ async function renderLakchaiWaterCompare(){
   var allReadings = {};
   try {
     var snap = await fbDB.ref('readings').orderByKey().once('value');
+    if(myToken !== lakchaiWaterToken) return;
     snap.forEach(function(daySnap){
       pc.selectedStations.forEach(function(stId){
         if(daySnap.hasChild(stId)){
@@ -3270,7 +3281,7 @@ async function renderLakchaiWaterCompare(){
         }
       });
     });
-  } catch(e){}
+  } catch(e){ console.warn('lakchaiWaterCompare Firebase error:', e.message || e); }
 
   for(var si=0; si<pc.selectedStations.length; si++){
     var stId = pc.selectedStations[si];
@@ -3315,6 +3326,7 @@ async function renderLakchaiWaterCompare(){
     }
     idx++;
   }
+  if(myToken !== lakchaiWaterToken) return;
   var wrapEl = document.getElementById('lakchaiWaterCompareWrap');
   var phEl = wrapEl ? wrapEl.querySelector('.compare-chart-placeholder') : null;
   if(phEl) phEl.style.display = datasets.length===0 ? 'flex' : 'none';
@@ -3397,7 +3409,7 @@ async function renderPageComparisonChart(page){
         }
       });
     });
-  } catch(e){}
+  } catch(e){ console.warn('amataCompare Firebase error:', e.message || e); }
 
   if(page === 'amata' && myToken !== _amataRenderToken) return;
 
