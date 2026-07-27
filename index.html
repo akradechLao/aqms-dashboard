@@ -3060,21 +3060,32 @@ async function renderLakchaiAqCompare(){
   var idx = 0;
   var cutoff = Date.now() - compareHours*3600*1000;
   var allReadings = {};
+  var dateKeys = [];
+  for(var d=0; d<=Math.ceil(compareHours/24); d++){
+    var dt = new Date(now - d*86400000);
+    dateKeys.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'));
+  }
   try {
-    var snap = await fbDB.ref('readings').orderByKey().once('value');
-    if(myToken !== lakchaiAqToken) return;
-    snap.forEach(function(daySnap){
-      pc.selectedStations.forEach(function(stId){
-        if(daySnap.hasChild(stId)){
-          if(!allReadings[stId]) allReadings[stId] = [];
-          var stSnap = daySnap.child(stId);
+    var dayPromises = dateKeys.map(function(dk){
+      var dayReadings = {};
+      var stPromises = pc.selectedStations.map(function(stId){
+        return fbDB.ref('readings/'+dk+'/'+stId).once('value').then(function(stSnap){
+          dayReadings[stId] = [];
           stSnap.forEach(function(rSnap){
             var r = rSnap.val();
-            if(r && r.timestamp && r.timestamp >= cutoff) allReadings[stId].push(r);
+            if(r && r.timestamp && r.timestamp >= cutoff) dayReadings[stId].push(r);
           });
-        }
+        }).catch(function(){ dayReadings[stId] = []; });
+      });
+      return Promise.all(stPromises).then(function(){
+        pc.selectedStations.forEach(function(stId){
+          if(!allReadings[stId]) allReadings[stId] = [];
+          allReadings[stId] = allReadings[stId].concat(dayReadings[stId]||[]);
+        });
       });
     });
+    await Promise.all(dayPromises);
+    if(myToken !== lakchaiAqToken) return;
   } catch(e){ console.warn('lakchaiAqCompare Firebase error:', e.message || e); }
 
   for(var si=0; si<pc.selectedStations.length; si++){
@@ -3170,21 +3181,32 @@ async function renderLakchaiRainCompare(){
   var idx = 0;
   var cutoff = Date.now() - compareHours*3600*1000;
   var allReadings = {};
+  var dateKeys = [];
+  for(var d=0; d<=Math.ceil(compareHours/24); d++){
+    var dt = new Date(now - d*86400000);
+    dateKeys.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'));
+  }
   try {
-    var snap = await fbDB.ref('readings').orderByKey().once('value');
-    if(myToken !== lakchaiRainToken) return;
-    snap.forEach(function(daySnap){
-      pc.selectedStations.forEach(function(stId){
-        if(daySnap.hasChild(stId)){
-          if(!allReadings[stId]) allReadings[stId] = [];
-          var stSnap = daySnap.child(stId);
+    var dayPromises = dateKeys.map(function(dk){
+      var dayReadings = {};
+      var stPromises = pc.selectedStations.map(function(stId){
+        return fbDB.ref('readings/'+dk+'/'+stId).once('value').then(function(stSnap){
+          dayReadings[stId] = [];
           stSnap.forEach(function(rSnap){
             var r = rSnap.val();
-            if(r && r.timestamp && r.timestamp >= cutoff) allReadings[stId].push(r);
+            if(r && r.timestamp && r.timestamp >= cutoff) dayReadings[stId].push(r);
           });
-        }
+        }).catch(function(){ dayReadings[stId] = []; });
+      });
+      return Promise.all(stPromises).then(function(){
+        pc.selectedStations.forEach(function(stId){
+          if(!allReadings[stId]) allReadings[stId] = [];
+          allReadings[stId] = allReadings[stId].concat(dayReadings[stId]||[]);
+        });
       });
     });
+    await Promise.all(dayPromises);
+    if(myToken !== lakchaiRainToken) return;
   } catch(e){ console.warn('lakchaiRainCompare Firebase error:', e.message || e); }
 
   for(var si=0; si<pc.selectedStations.length; si++){
@@ -3275,21 +3297,32 @@ async function renderLakchaiWaterCompare(){
   var idx = 0;
   var cutoff = Date.now() - compareHours*3600*1000;
   var allReadings = {};
+  var dateKeys = [];
+  for(var d=0; d<=Math.ceil(compareHours/24); d++){
+    var dt = new Date(now - d*86400000);
+    dateKeys.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'));
+  }
   try {
-    var snap = await fbDB.ref('readings').orderByKey().once('value');
-    if(myToken !== lakchaiWaterToken) return;
-    snap.forEach(function(daySnap){
-      pc.selectedStations.forEach(function(stId){
-        if(daySnap.hasChild(stId)){
-          if(!allReadings[stId]) allReadings[stId] = [];
-          var stSnap = daySnap.child(stId);
+    var dayPromises = dateKeys.map(function(dk){
+      var dayReadings = {};
+      var stPromises = pc.selectedStations.map(function(stId){
+        return fbDB.ref('readings/'+dk+'/'+stId).once('value').then(function(stSnap){
+          dayReadings[stId] = [];
           stSnap.forEach(function(rSnap){
             var r = rSnap.val();
-            if(r && r.timestamp && r.timestamp >= cutoff) allReadings[stId].push(r);
+            if(r && r.timestamp && r.timestamp >= cutoff) dayReadings[stId].push(r);
           });
-        }
+        }).catch(function(){ dayReadings[stId] = []; });
+      });
+      return Promise.all(stPromises).then(function(){
+        pc.selectedStations.forEach(function(stId){
+          if(!allReadings[stId]) allReadings[stId] = [];
+          allReadings[stId] = allReadings[stId].concat(dayReadings[stId]||[]);
+        });
       });
     });
+    await Promise.all(dayPromises);
+    if(myToken !== lakchaiWaterToken) return;
   } catch(e){ console.warn('lakchaiWaterCompare Firebase error:', e.message || e); }
 
   for(var si=0; si<pc.selectedStations.length; si++){
