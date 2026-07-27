@@ -334,7 +334,7 @@ function sleep(ms) {
 
 exports.fetchAqData = onSchedule(
   {
-    schedule: "every 2 minutes",
+    schedule: "every 5 minutes",
     region: "asia-southeast1",
     memory: "256MB",
     timeoutSeconds: 120,
