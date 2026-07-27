@@ -1814,7 +1814,9 @@ async function fetchAllStations(){
       d.waterLevel = SIM.waterLevel(idx);
       d.flowRate = SIM.flowRate(idx);
     }
-    saveToFirebase(s.id, d);
+    if(s.source==='rainfall'||s.source==='waterLevel'){
+      saveToFirebase(s.id, d);
+    }
   });
   renderPageContent(currentPage);
   updateSummary();
