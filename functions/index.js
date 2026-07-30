@@ -408,10 +408,10 @@ exports.fetchAqData = onSchedule(
                 data.tsp = freshData.tsp;
               }
             }
-            record.pm25 = data.pm25 != null ? +data.pm25 : null;
-            record.pm10 = data.pm10 != null ? +data.pm10 : null;
-            record.tsp = data.tsp != null ? +data.tsp : null;
           }
+          record.pm25 = data.pm25 != null ? +data.pm25 : null;
+          record.pm10 = data.pm10 != null ? +data.pm10 : null;
+          record.tsp = data.tsp != null ? +data.tsp : null;
 
           const lastRec = await getLastRecord(stationId);
           if (hasSignificantChange(record, lastRec)) {
@@ -466,10 +466,10 @@ exports.fetchAqData = onSchedule(
               data.tsp = freshData.tsp;
             }
           }
-          record.pm25 = data.pm25 != null ? +data.pm25 : null;
-          record.pm10 = data.pm10 != null ? +data.pm10 : null;
-          record.tsp = data.tsp != null ? +data.tsp : null;
         }
+        record.pm25 = data.pm25 != null ? +data.pm25 : null;
+        record.pm10 = data.pm10 != null ? +data.pm10 : null;
+        record.tsp = data.tsp != null ? +data.tsp : null;
 
         const lastRec = await getLastRecord('PT5');
         if (hasSignificantChange(record, lastRec)) {
