@@ -3263,7 +3263,6 @@ async function renderPageComparisonChart(page){
         allStationReadings[res.stId] = res.data;
       }
     });
-    }
   } catch(e){ console.warn('amataCompare Supabase error:', e.message || e); }
 
   if(page === 'amata' && myToken !== _amataRenderToken) return;
