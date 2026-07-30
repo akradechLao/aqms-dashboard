@@ -1096,6 +1096,7 @@ body{
                 <div class="param-checkbox" data-param="no2" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>NO2</div>
                 <div class="param-checkbox" data-param="temp" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>อุณหภูมิ</div>
                 <div class="param-checkbox" data-param="humidity" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>ความชื้น</div>
+                <div class="param-checkbox" data-param="rain" onclick="toggleParamCheckbox(this,'amata')"><span class="check-icon"><i class="fas fa-check"></i></span>ปริมาณฝน</div>
               </div>
             </div>
             <div class="compare-control-group">
@@ -1134,6 +1135,7 @@ body{
                   <option value="aqi">AQI</option><option value="pm10">PM10</option>
                   <option value="tsp">TSP</option><option value="so2">SO2</option><option value="no2">NO2</option>
                   <option value="temp">อุณหภูมิ</option><option value="humidity">ความชื้น</option>
+                  <option value="rain">ปริมาณฝน</option>
                 </select>
               </div>
               <div class="compare-control-group">
@@ -1257,6 +1259,7 @@ body{
     <div class="modal-body">
       <div class="modal-grid" id="modalGrid"></div>
       <div class="modal-chart-wrap" style="display:none"><canvas id="modalChart"></canvas></div>
+      <div class="modal-chart-wrap" id="modalRainChartWrap" style="display:none;height:200px;margin-top:12px"><canvas id="modalRainChart"></canvas></div>
     </div>
   </div>
 </div>
@@ -1301,6 +1304,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let stationData = {};
 let modalChartInstance = null;
+let modalRainChartInstance = null;
 let fetchInterval = null;
 
 function getAQILevel(aqi){
@@ -2077,6 +2081,7 @@ async function switchAQTab(stationId,hours,tabEl){
   var fbHumid=await loadFirebaseReadings(stationId,hours,'humidity');
   var fbPM25=await loadFirebaseReadings(stationId,hours,'pm25');
   var fbPM10=await loadFirebaseReadings(stationId,hours,'pm10');
+  var fbRain=await loadFirebaseReadings(stationId,hours,'rain');
 
   var avgTemp=fbTemp.length>0?(fbTemp.reduce(function(a,b){return a+b.v;},0)/fbTemp.length).toFixed(1):(d.temp!=null?d.temp:'--');
   var avgHumid=fbHumid.length>0?(fbHumid.reduce(function(a,b){return a+b.v;},0)/fbHumid.length).toFixed(1):(d.humidity!=null?d.humidity:'--');
@@ -2106,7 +2111,38 @@ async function switchAQTab(stationId,hours,tabEl){
       animation:{duration:800}
     }
   });
+
+  if(modalRainChartInstance)modalRainChartInstance.destroy();
+  const rainWrap=document.getElementById('modalRainChartWrap');
+  if(fbRain.length>0){
+    const rainLabels=fbRain.map((_,i)=>hours<=24?`${fbRain.length-i} ชม.`:`วันที่ ${fbRain.length-i}`);
+    rainWrap.style.display='';
+    const rctx=document.getElementById('modalRainChart').getContext('2d');
+    modalRainChartInstance=new Chart(rctx,{
+      type:'bar',
+      data:{
+        labels:rainLabels,
+        datasets:[{
+          label:'ปริมาณฝน',data:fbRain.map(r=>r.v),backgroundColor:'rgba(14,165,233,0.6)',
+          borderColor:'#0ea5e9',borderWidth:1,borderRadius:3,
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#475569',font:{size:11,family:'Sarabun'},usePointStyle:true}}},
+        scales:{
+          x:{ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxTicksLimit:8},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'}},
+          y:{ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'}},grid:{color:'rgba(0,0,0,0.04)'},border:{color:'rgba(0,0,0,0.08)'},beginAtZero:true}
+        },
+        animation:{duration:800}
+      }
+    });
+  }else{
+    rainWrap.style.display='none';
+  }
+
   const stats=calcStats(hist.map((v,i)=>({t:i,v:v})));
+  const rainStats=fbRain.length>0?calcStats(fbRain):null;
   const aqiInsights=[];
   if(d.aqi!=null){
     if(d.aqi<=50) aqiInsights.push({icon:'🌿',color:'#059669',text:'อากาศดี เหมาะกับกิจกรรมกลางแจ้ง',level:'info'});
@@ -2114,6 +2150,7 @@ async function switchAQTab(stationId,hours,tabEl){
     else if(d.aqi<=150) aqiInsights.push({icon:'⚠️',color:'#ea580c',text:'เริ่มมีผลต่อสุขภาพ กลุ่มเสี่ยงควรงดกิจกรรมกลางแจ้ง',level:'warning'});
     else aqiInsights.push({icon:'🚨',color:'#dc2626',text:'มีผลต่อสุขภาพทุกกลุ่ม ควรหลีกเลี่ยงกิจกรรมกลางแจ้ง',level:'danger'});
   }
+  const rainTotal=rainStats?rainStats.sum:'--';
   document.getElementById('aqStatsArea').innerHTML=`
     <div class="modal-stats-grid" style="margin-top:12px">
       <div class="modal-stat-box"><div class="ms-label">AQI ต่ำสุด</div><div class="ms-value" style="color:#059669">${stats.min}</div></div>
@@ -2121,17 +2158,18 @@ async function switchAQTab(stationId,hours,tabEl){
       <div class="modal-stat-box"><div class="ms-label">AQI เฉลี่ย</div><div class="ms-value" style="color:${info.color}">${stats.avg}</div></div>
     </div>
     <div class="modal-stats-grid" style="margin-top:8px">
-      ${stationData[id]&&stationData[id].pm25!=null?`<div class="modal-stat-box"><div class="ms-label">PM2.5 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM25}</div><div class="ms-unit">µg/m³</div></div>`:''}
+      ${stationData[stationId]&&stationData[stationId].pm25!=null?`<div class="modal-stat-box"><div class="ms-label">PM2.5 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM25}</div><div class="ms-unit">µg/m³</div></div>`:''}
       <div class="modal-stat-box"><div class="ms-label">PM10 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM10}</div><div class="ms-unit">µg/m³</div></div>
       <div class="modal-stat-box"><div class="ms-label">อุณหภูมิเฉลี่ย</div><div class="ms-value" style="color:#ea580c">${avgTemp}</div><div class="ms-unit">°C</div></div>
       <div class="modal-stat-box"><div class="ms-label">ความชื้นเฉลี่ย</div><div class="ms-value" style="color:#06b6d4">${avgHumid}</div><div class="ms-unit">%</div></div>
+      ${rainStats?`<div class="modal-stat-box"><div class="ms-label">ฝนรวม</div><div class="ms-value" style="color:#0ea5e9">${rainTotal}</div><div class="ms-unit">mm</div></div>`:''}
     </div>
     ${aqiInsights.length?`<div class="modal-insights"><div class="modal-insights-title"><i class="fas fa-heart" style="color:#dc2626"></i> คำแนะนำด้านสุขภาพ</div>
     ${aqiInsights.map(i=>`<div class="insight-item ${i.level}"><span>${i.icon}</span><span style="color:${i.color}">${i.text}</span></div>`).join('')}</div>`:''}
   `;
 }
 
-function closeModal(){document.querySelector('.modal-chart-wrap').style.display='none';document.getElementById('modalOverlay').classList.remove('active')}
+function closeModal(){document.querySelectorAll('.modal-chart-wrap').forEach(function(el){el.style.display='none'});document.getElementById('modalOverlay').classList.remove('active')}
 document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 
@@ -2820,8 +2858,8 @@ async function renderLakchaiAqCompare(){
   if(!paramEl) return;
   var param = paramEl.value;
   var myToken = ++lakchaiAqToken;
-  var paramLabels = { aqi:'AQI', pm25:'PM2.5', pm10:'PM10', tsp:'TSP', so2:'SO2', no2:'NO2', temp:'อุณหภูมิ', humidity:'ความชื้น' };
-  var paramUnits = { aqi:'', pm25:'µg/m³', pm10:'µg/m³', tsp:'µg/m³', so2:'ppb', no2:'ppb', temp:'°C', humidity:'%' };
+  var paramLabels = { aqi:'AQI', pm25:'PM2.5', pm10:'PM10', tsp:'TSP', so2:'SO2', no2:'NO2', temp:'อุณหภูมิ', humidity:'ความชื้น', rain:'ปริมาณฝน' };
+  var paramUnits = { aqi:'', pm25:'µg/m³', pm10:'µg/m³', tsp:'µg/m³', so2:'ppb', no2:'ppb', temp:'°C', humidity:'%', rain:'mm' };
   var compareHours = pc.hours;
   if(pc.chartInstance){ pc.chartInstance.destroy(); pc.chartInstance = null; }
 
@@ -2922,7 +2960,7 @@ async function renderLakchaiAqCompare(){
   if(wrapEl){ if(datasets.length===0) wrapEl.classList.add('empty'); else wrapEl.classList.remove('empty'); }
   if(datasets.length>0){
     var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
-    pc.chartInstance = new Chart(document.getElementById('lakchaiAqCompareChart').getContext('2d'),{type:'line',data:{labels:chartLabels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' '+paramUnits[param];}}}},scales:{x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}},interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}}});
+    pc.chartInstance = new Chart(document.getElementById('lakchaiAqCompareChart').getContext('2d'),{type:'line',data:{labels:chartLabels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' '+paramUnits[param];}}}},scales:{x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false},beginAtZero:param==='rain'}}},interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}}});
   }
   document.getElementById('lakchaiAqCompareSummary').innerHTML = summaryHtml;
 }
@@ -3020,7 +3058,7 @@ async function renderLakchaiRainCompare(){
   if(wrapEl){ if(datasets.length===0) wrapEl.classList.add('empty'); else wrapEl.classList.remove('empty'); }
   if(datasets.length>0){
     var xTitle=compareHours<=24?'เวลา (รายชั่วโมง)':compareHours<=168?'เวลา (7 วัน)':'เวลา (30 วัน)';
-    pc.chartInstance = new Chart(document.getElementById('lakchaiRainCompareChart').getContext('2d'),{type:'line',data:{labels:chartLabels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' mm';}}}},scales:{x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},y:{title:{display:true,text:'ปริมาณฝน (mm)',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}},interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}}});
+    pc.chartInstance = new Chart(document.getElementById('lakchaiRainCompareChart').getContext('2d'),{type:'line',data:{labels:chartLabels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#334155',font:{size:11,family:'Sarabun',weight:'600'},usePointStyle:true,pointStyle:'circle',padding:14}},tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(15,23,42,0.9)',titleFont:{family:'Sarabun',size:12},bodyFont:{family:'Sarabun',size:11},padding:10,cornerRadius:8,callbacks:{label:function(ctx){return '● '+ctx.dataset.label+': '+(ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'--')+' mm';}}}},scales:{x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},y:{title:{display:true,text:'ปริมาณฝน (mm)',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false},beginAtZero:true}}},interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}}});
   }
   document.getElementById('lakchaiRainCompareSummary').innerHTML = summaryHtml;
 }
@@ -3305,7 +3343,7 @@ async function renderPageComparisonChart(page){
               },
               scales:{
                 x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},
-                y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}
+                y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false},beginAtZero:param==='rain'}
               },
               interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}
             }
@@ -3328,7 +3366,7 @@ async function renderPageComparisonChart(page){
             },
             scales:{
               x:{title:{display:true,text:xTitle,font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},maxRotation:45,autoSkip:false},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}},
-              y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false}}
+              y:{title:{display:true,text:paramLabels[param]+' ('+paramUnits[param]+')',font:{family:'Sarabun',size:12,weight:'600'},color:'#475569'},ticks:{color:'#94a3b8',font:{size:10,family:'Sarabun'},padding:8},grid:{color:'rgba(14,165,233,0.06)',drawBorder:false},border:{display:false},beginAtZero:true}
             },
             interaction:{intersect:false,mode:'index'},animation:{duration:800,easing:'easeOutQuart'}
           }

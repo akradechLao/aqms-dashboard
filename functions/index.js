@@ -118,7 +118,7 @@ async function fetchPT5Station() {
       PT5_TOKEN
     );
     if (!data || !Array.isArray(data) || data.length === 0) return null;
-    const d = data[0];
+    const d = data[data.length - 1];
     return {
       pm25: null,
       pm10: pv(d.Value2, d.Status2),
