@@ -1293,11 +1293,6 @@ const STATIONS = [
   { id:'WL02', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 2', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.715800', lng:'101.475100', image:'assets/wl2.jpg' },
 ];
 
-const AMATA_TOKEN = 'REMOVED';
-const AMATA_PM25_TOKEN = 'REMOVED';
-const AMATA_PM25_STATIONS = ['002','004','005'];
-const PT5_TOKEN = 'REMOVED';
-
 const SUPABASE_URL = 'https://grnbfoskwypfresvnyjj.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdybmJmb3Nrd3lwZnJlc3ZueWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzczNTIsImV4cCI6MjEwMDcxMzM1Mn0.jcuKwalyutbVhtBDiu6b6GwdZirFp16hqagFtrfznI8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1381,21 +1376,6 @@ function calcOverallAQI(d){
 }
 
 
-async function fetchWithTimeout(url, token, timeout=8000){
-  const ctrl = new AbortController();
-  const tid = setTimeout(()=>ctrl.abort(), timeout);
-  try {
-    const r = await fetch(url, {
-      signal: ctrl.signal,
-      headers: { 'Authorization':'Bearer '+token, 'Accept':'application/json' }
-    });
-    clearTimeout(tid);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return await r.json();
-  } catch(e){ clearTimeout(tid); throw e; }
-}
-
-function extractVal(v){ return (v!=null && typeof v==='object' && 'value' in v) ? +v.value : (v!=null ? +v : null); }
 function fmt(v){ return v!=null ? (+v).toFixed(1) : '--'; }
 function degToCompass(deg){
   if(deg==null) return '--';
@@ -1544,146 +1524,42 @@ const THAI_STANDARDS = {
   no2: { limit:120, unit:'ppb', label:'มาตรฐาน' },
 };
 
-async function fetchAmataStation(stationId){
-  try {
-    const minuteData = await fetchWithTimeout(
-      `https://amata.northernthai.co.th/api/v1/M1S${stationId}`, AMATA_TOKEN
-    );
-    let d = {};
-    if(minuteData && minuteData.data){
-      const keys = Object.keys(minuteData.data);
-      if(keys.length>0){
-        d = minuteData.data[keys[keys.length-1]];
-      }
-    }
-    const result = {
-      pm10: extractVal(d.PM10),
-      tsp: extractVal(d.TSP),
-      so2: extractVal(d.SO2),
-      no2: extractVal(d.NO2),
-      temp: extractVal(d.Temperature),
-      humidity: extractVal(d.RH),
-      wind: extractVal(d.WS),
-      windDir: extractVal(d.WD),
-      rain: extractVal(d.Rain),
-      pressure: extractVal(d.Pressure),
-      pm25: null,
-      online: true,
-      timestamp: null,
-      stationName: minuteData.station_th_name || null,
-    };
-    if(AMATA_PM25_STATIONS.includes(stationId)){
-      try {
-        const pm25Data = await fetchWithTimeout(
-          `https://aqms.northernthai.co.th/api/v2/aqms/M1S${stationId}`, AMATA_PM25_TOKEN
-        );
-        let pdArr = pm25Data;
-        if(pm25Data && pm25Data.data && Array.isArray(pm25Data.data)) pdArr = pm25Data.data;
-        if(Array.isArray(pdArr) && pdArr.length>0){
-          const pd = pdArr[0];
-          const pm25v = extractVal(pd.PM25);
-          if(pm25v!=null) result.pm25 = pm25v;
-          const pm10v = extractVal(pd.PM10);
-          if(pm10v!=null) result.pm10 = pm10v;
-          const no2v = extractVal(pd.NO2);
-          if(no2v!=null) result.no2 = no2v;
-          const tspv = extractVal(pd.TSP);
-          if(tspv!=null) result.tsp = tspv;
-          const so2v = extractVal(pd.SO2);
-          if(so2v!=null) result.so2 = so2v;
-        }
-      } catch(e){}
-    }
-    return result;
-  } catch(e){
-    return { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, windDir:null, rain:null, pressure:null, online:false };
-  }
-}
-
-async function fetchPT5Station(){
-  try {
-    const raw = await fetchWithTimeout(
-      'https://pt5.northernthai.co.th/api/v1/s002data/h', PT5_TOKEN
-    );
-    let d = {};
-    if(Array.isArray(raw) && raw.length>0){
-      d = raw[0];
-    } else if(raw && raw.data && Array.isArray(raw.data) && raw.data.length>0){
-      d = raw.data[0];
-    }
-    const pv = (v,s) => (v!=null && s==1) ? +v : null;
-    return {
-      pm25: null,
-      pm10: pv(d.Value2, d.Status2),
-      tsp: pv(d.Value1, d.Status1),
-      so2: pv(d.Value6, d.Status6),
-      no2: pv(d.Value4, d.Status4),
-      temp: pv(d.Value9, d.Status9),
-      humidity: pv(d.Value10, d.Status10),
-      wind: pv(d.Value7, d.Status7),
-      windDir: pv(d.Value8, d.Status8),
-      rain: pv(d.Value12, d.Status12),
-      pressure: pv(d.Value11, d.Status11),
-      online: true,
-      timestamp: d.Date_Time || null,
-    };
-  } catch(e){
-    return { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, windDir:null, rain:null, pressure:null, online:false };
-  }
-}
-
-async function fetchStationFromFirebase(stationId) {
-  try {
-    const { data, error } = await sb.from('readings')
-      .select('*')
-      .eq('station_id', stationId)
-      .order('timestamp', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error || !data) return null;
-    return {
-      pm25: data.pm25 != null ? +data.pm25 : null,
-      pm10: data.pm10 != null ? +data.pm10 : null,
-      tsp: data.tsp != null ? +data.tsp : null,
-      so2: data.so2 != null ? +data.so2 : null,
-      no2: data.no2 != null ? +data.no2 : null,
-      temp: data.temp != null ? +data.temp : null,
-      humidity: data.humidity != null ? +data.humidity : null,
-      wind: data.wind != null ? +data.wind : null,
-      windDir: data.wind_dir != null ? +data.wind_dir : null,
-      rain: data.rain != null ? +data.rain : null,
-      pressure: data.pressure != null ? +data.pressure : null,
-      aqi: data.aqi != null ? +data.aqi : null,
-      online: true,
-    };
-  } catch(e) {
-    console.warn('fetchStationFromFirebase error for ' + stationId + ':', e);
-    return null;
-  }
-}
-
 async function fetchAllStations(){
   const pb = document.getElementById('progressBar');
   pb.style.width = '10%';
   const results = {};
-  const promises = STATIONS.filter(s=>s.source!=='rainfall'&&s.source!=='waterLevel').map(async s => {
-    try{
-      let data;
-      if(s.source==='pt5'){
-        data = await fetchPT5Station();
-      } else if(s.source==='amata'){
-        data = await fetchAmataStation(s.id);
-      } else if(s.source==='lakchai'){
-        data = await fetchStationFromFirebase(s.id);
-      } else {
-        data = null;
-      }
-      results[s.id] = data;
-    }catch(e){
-      results[s.id] = { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, windDir:null, rain:null, pressure:null, online:false };
+
+  const allStationIds = STATIONS.filter(s=>s.source!=='rainfall'&&s.source!=='waterLevel').map(s=>s.id);
+  try {
+    const { data, error } = await sb.from('readings')
+      .select('*')
+      .in('station_id', allStationIds)
+      .order('timestamp', { ascending: false })
+      .limit(allStationIds.length);
+    if(!error && data){
+      data.forEach(function(r){
+        results[r.station_id] = {
+          pm25: r.pm25 != null ? +r.pm25 : null,
+          pm10: r.pm10 != null ? +r.pm10 : null,
+          tsp: r.tsp != null ? +r.tsp : null,
+          so2: r.so2 != null ? +r.so2 : null,
+          no2: r.no2 != null ? +r.no2 : null,
+          temp: r.temp != null ? +r.temp : null,
+          humidity: r.humidity != null ? +r.humidity : null,
+          wind: r.wind != null ? +r.wind : null,
+          windDir: r.wind_dir != null ? +r.wind_dir : null,
+          rain: r.rain != null ? +r.rain : null,
+          pressure: r.pressure != null ? +r.pressure : null,
+          aqi: r.aqi != null ? +r.aqi : null,
+          online: true,
+        };
+      });
     }
+  } catch(e){ console.warn('Supabase fetchAll error:', e); }
+
+  STATIONS.forEach(s => {
+    if(!results[s.id]) results[s.id] = { pm25:null, pm10:null, tsp:null, so2:null, no2:null, temp:null, humidity:null, wind:null, windDir:null, rain:null, pressure:null, online:false };
   });
-  await Promise.all(promises);
   STATIONS.forEach(s => {
     if(!stationData[s.id]){
       stationData[s.id] = { history:[], ...s };
@@ -1804,7 +1680,7 @@ function renderStationCardHTML(s){
       <div class="pollutants">
         <div class="pollutants-title">สารมลพิษหลัก</div>
         <div class="pollutant-bars">
-          ${d.pm25!=null&&AMATA_PM25_STATIONS.includes(s.id)?`<div class="pollutant-row"><span class="pollutant-name">PM2.5</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${pm25Pct}%;background:${getPM25Color(d.pm25)}"></div><div class="pollutant-standard" style="left:${pm25StdPct}%" data-label="37.5"></div></div><span class="pollutant-val">${fmt(d.pm25)} µg/m³</span></div>`:''}
+          ${d.pm25!=null?`<div class="pollutant-row"><span class="pollutant-name">PM2.5</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${pm25Pct}%;background:${getPM25Color(d.pm25)}"></div><div class="pollutant-standard" style="left:${pm25StdPct}%" data-label="37.5"></div></div><span class="pollutant-val">${fmt(d.pm25)} µg/m³</span></div>`:''}
           <div class="pollutant-row"><span class="pollutant-name">PM10</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${pm10Pct}%;background:var(--accent)"></div><div class="pollutant-standard" style="left:${pm10StdPct}%" data-label="100"></div></div><span class="pollutant-val">${fmt(d.pm10)} µg/m³</span></div>
           <div class="pollutant-row"><span class="pollutant-name">TSP</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${tspPct}%;background:var(--purple)"></div><div class="pollutant-standard" style="left:${tspStdPct}%" data-label="200"></div></div><span class="pollutant-val">${fmt(d.tsp)} µg/m³</span></div>
           <div class="pollutant-row"><span class="pollutant-name">SO₂</span><div class="pollutant-bar-wrap"><div class="pollutant-bar" style="width:${so2Pct}%;background:var(--yellow)"></div><div class="pollutant-standard" style="left:${so2StdPct}%" data-label="50"></div></div><span class="pollutant-val">${fmt(d.so2)} ppb</span></div>
@@ -2021,7 +1897,7 @@ function openModal(id){
         <div class="value" style="color:${info.color};font-size:2.2rem">${d.aqi!=null?d.aqi:'--'}</div>
         <div class="unit">${info.label}</div>
       </div>
-      ${d.pm25!=null&&AMATA_PM25_STATIONS.includes(id)?`<div class="modal-stat"><div class="label">PM2.5</div><div class="value">${fmt(d.pm25)}</div><div class="unit">µg/m³ (มาตรฐาน 37.5)</div></div>`:''}
+      ${d.pm25!=null?`<div class="modal-stat"><div class="label">PM2.5</div><div class="value">${fmt(d.pm25)}</div><div class="unit">µg/m³ (มาตรฐาน 37.5)</div></div>`:''}
       <div class="modal-stat"><div class="label">PM10</div><div class="value">${fmt(d.pm10)}</div><div class="unit">µg/m³ (มาตรฐาน 100)</div></div>
       <div class="modal-stat"><div class="label">TSP</div><div class="value">${fmt(d.tsp)}</div><div class="unit">µg/m³ (มาตรฐาน 200)</div></div>
       <div class="modal-stat"><div class="label">SO₂</div><div class="value">${fmt(d.so2)}</div><div class="unit">ppb (มาตรฐาน 50)</div></div>
@@ -2243,7 +2119,7 @@ async function switchAQTab(stationId,hours,tabEl){
       <div class="modal-stat-box"><div class="ms-label">AQI เฉลี่ย</div><div class="ms-value" style="color:${info.color}">${stats.avg}</div></div>
     </div>
     <div class="modal-stats-grid" style="margin-top:8px">
-      ${AMATA_PM25_STATIONS.includes(id)?`<div class="modal-stat-box"><div class="ms-label">PM2.5 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM25}</div><div class="ms-unit">µg/m³</div></div>`:''}
+      ${stationData[id]&&stationData[id].pm25!=null?`<div class="modal-stat-box"><div class="ms-label">PM2.5 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM25}</div><div class="ms-unit">µg/m³</div></div>`:''}
       <div class="modal-stat-box"><div class="ms-label">PM10 เฉลี่ย</div><div class="ms-value" style="color:#0ea5e9">${avgPM10}</div><div class="ms-unit">µg/m³</div></div>
       <div class="modal-stat-box"><div class="ms-label">อุณหภูมิเฉลี่ย</div><div class="ms-value" style="color:#ea580c">${avgTemp}</div><div class="ms-unit">°C</div></div>
       <div class="modal-stat-box"><div class="ms-label">ความชื้นเฉลี่ย</div><div class="ms-value" style="color:#06b6d4">${avgHumid}</div><div class="ms-unit">%</div></div>
@@ -2345,7 +2221,7 @@ function initMap(){
           <span style="font-size:.75rem;color:#666;margin-left:4px">${lv.label}</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.75rem">
-          ${d.pm25!=null&&AMATA_PM25_STATIONS.includes(s.id)?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
+          ${d.pm25!=null?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
           <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM10</span><br><b>${fmt(d.pm10)}</b> µg/m³</div>
           <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">TSP</span><br><b>${fmt(d.tsp)}</b> µg/m³</div>
           <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">SO₂</span><br><b>${fmt(d.so2)}</b> ppb</div>
@@ -2425,7 +2301,7 @@ function refreshMapMarkers(){
             <span style="font-size:.75rem;color:#666;margin-left:4px">${lv.label}</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.75rem">
-            ${d.pm25!=null&&AMATA_PM25_STATIONS.includes(s.id)?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
+          ${d.pm25!=null?`<div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM2.5</span><br><b>${fmt(d.pm25)}</b> µg/m³</div>`:''}
             <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">PM10</span><br><b>${fmt(d.pm10)}</b> µg/m³</div>
             <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">TSP</span><br><b>${fmt(d.tsp)}</b> µg/m³</div>
             <div style="background:rgba(0,0,0,0.03);padding:4px 6px;border-radius:4px"><span style="color:#888">SO₂</span><br><b>${fmt(d.so2)}</b> ppb</div>
@@ -3567,7 +3443,7 @@ function renderPageAlerts(){
       var v=d[k];
       var cellClass='val-normal';
       var display='--';
-      if(k==='pm25'&&!AMATA_PM25_STATIONS.includes(s.id)){
+      if(k==='pm25'&&s.pm25==null){
         cellClass='val-na';
         display='<i class="fas fa-ban" style="margin-right:3px;opacity:.5"></i>ไม่ได้ติดตั้ง';
       }else if(v===null||v===undefined){
