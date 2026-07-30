@@ -1949,7 +1949,8 @@ async function loadFirebaseReadings(stationId, hours, field) {
       .eq('station_id', stationId)
       .gte('timestamp', cutoff)
       .not(dbField, 'is', null)
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: true })
+      .limit(hours * 15);
     if (!error && data) {
       data.forEach(function(r) {
         results.push({ t: r.timestamp, v: r[dbField] });
@@ -2657,7 +2658,8 @@ async function renderComparisonChart(){
         .eq('station_id', stId)
         .gte('timestamp', cutoff)
         .not(dbParam, 'is', null)
-        .order('timestamp', { ascending: true });
+        .order('timestamp', { ascending: true })
+        .limit(compareHours * 15);
       if (!error && data) {
         data.forEach(function(r) {
           readings.push({ t: r.timestamp, v: r[dbParam] });
@@ -2773,7 +2775,8 @@ async function exportCSV() {
   try {
     const { data, error } = await sb.from('readings')
       .select('*')
-      .order('timestamp', { ascending: true });
+      .order('timestamp', { ascending: true })
+      .limit(100000);
     if(error || !data || data.length===0) { alert('ยังไม่มีข้อมูลในระบบ'); return; }
     let csv = 'Station,Timestamp,PM2.5,PM10,TSP,SO2,NO2,AQI,Temp,Humidity,Wind,WindDir,Rain,Pressure,WaterLevel,FlowRate,Source\n';
     data.forEach(function(r){
@@ -2885,17 +2888,22 @@ async function renderLakchaiAqCompare(){
   var cutoff = Date.now() - compareHours*3600*1000;
   var allReadings = {};
   try {
-    var { data: allData, error: allErr } = await sb.from('readings')
-      .select('*')
-      .in('station_id', pc.selectedStations)
-      .gte('timestamp', cutoff)
-      .order('timestamp', { ascending: true });
-    if(!allErr && allData){
-      allData.forEach(function(r){
-        if(!allReadings[r.station_id]) allReadings[r.station_id] = [];
-        allReadings[r.station_id].push(r);
-      });
-    }
+    var perStationLimit = Math.min(compareHours * 15, 1000);
+    var stationPromises = pc.selectedStations.map(function(stId){
+      return sb.from('readings')
+        .select('*')
+        .eq('station_id', stId)
+        .gte('timestamp', cutoff)
+        .order('timestamp', { ascending: true })
+        .limit(perStationLimit)
+        .then(function(res){ return { stId: stId, data: res.data || [], error: res.error }; });
+    });
+    var stationResults = await Promise.all(stationPromises);
+    stationResults.forEach(function(res){
+      if(!res.error && res.data){
+        allReadings[res.stId] = res.data;
+      }
+    });
     if(myToken !== lakchaiAqToken) return;
   } catch(e){ console.warn('lakchaiAqCompare Supabase error:', e.message || e); }
 
@@ -2994,17 +3002,22 @@ async function renderLakchaiRainCompare(){
   var cutoff = Date.now() - compareHours*3600*1000;
   var allReadings = {};
   try {
-    var { data: allData, error: allErr } = await sb.from('readings')
-      .select('*')
-      .in('station_id', pc.selectedStations)
-      .gte('timestamp', cutoff)
-      .order('timestamp', { ascending: true });
-    if(!allErr && allData){
-      allData.forEach(function(r){
-        if(!allReadings[r.station_id]) allReadings[r.station_id] = [];
-        allReadings[r.station_id].push(r);
-      });
-    }
+    var perStationLimit = Math.min(compareHours * 15, 1000);
+    var stationPromises = pc.selectedStations.map(function(stId){
+      return sb.from('readings')
+        .select('*')
+        .eq('station_id', stId)
+        .gte('timestamp', cutoff)
+        .order('timestamp', { ascending: true })
+        .limit(perStationLimit)
+        .then(function(res){ return { stId: stId, data: res.data || [], error: res.error }; });
+    });
+    var stationResults = await Promise.all(stationPromises);
+    stationResults.forEach(function(res){
+      if(!res.error && res.data){
+        allReadings[res.stId] = res.data;
+      }
+    });
     if(myToken !== lakchaiRainToken) return;
   } catch(e){ console.warn('lakchaiRainCompare Supabase error:', e.message || e); }
 
@@ -3097,17 +3110,22 @@ async function renderLakchaiWaterCompare(){
   var cutoff = Date.now() - compareHours*3600*1000;
   var allReadings = {};
   try {
-    var { data: allData, error: allErr } = await sb.from('readings')
-      .select('*')
-      .in('station_id', pc.selectedStations)
-      .gte('timestamp', cutoff)
-      .order('timestamp', { ascending: true });
-    if(!allErr && allData){
-      allData.forEach(function(r){
-        if(!allReadings[r.station_id]) allReadings[r.station_id] = [];
-        allReadings[r.station_id].push(r);
-      });
-    }
+    var perStationLimit = Math.min(compareHours * 15, 1000);
+    var stationPromises = pc.selectedStations.map(function(stId){
+      return sb.from('readings')
+        .select('*')
+        .eq('station_id', stId)
+        .gte('timestamp', cutoff)
+        .order('timestamp', { ascending: true })
+        .limit(perStationLimit)
+        .then(function(res){ return { stId: stId, data: res.data || [], error: res.error }; });
+    });
+    var stationResults = await Promise.all(stationPromises);
+    stationResults.forEach(function(res){
+      if(!res.error && res.data){
+        allReadings[res.stId] = res.data;
+      }
+    });
     if(myToken !== lakchaiWaterToken) return;
   } catch(e){ console.warn('lakchaiWaterCompare Supabase error:', e.message || e); }
 
@@ -3228,17 +3246,23 @@ async function renderPageComparisonChart(page){
   var allStationReadings = {};
   var cutoff = Date.now() - compareHours*3600*1000;
   try {
-    var { data: allData, error: allErr } = await sb.from('readings')
-      .select('*')
-      .in('station_id', pc.selectedStations)
-      .gte('timestamp', cutoff)
-      .order('timestamp', { ascending: true });
+    var perStationLimit = Math.min(compareHours * 15, 1000);
+    var stationPromises = pc.selectedStations.map(function(stId){
+      return sb.from('readings')
+        .select('*')
+        .eq('station_id', stId)
+        .gte('timestamp', cutoff)
+        .order('timestamp', { ascending: true })
+        .limit(perStationLimit)
+        .then(function(res){ return { stId: stId, data: res.data || [], error: res.error }; });
+    });
+    var stationResults = await Promise.all(stationPromises);
     if(page === 'amata' && myToken !== _amataRenderToken) return;
-    if(!allErr && allData){
-      allData.forEach(function(r){
-        if(!allStationReadings[r.station_id]) allStationReadings[r.station_id] = [];
-        allStationReadings[r.station_id].push(r);
-      });
+    stationResults.forEach(function(res){
+      if(!res.error && res.data){
+        allStationReadings[res.stId] = res.data;
+      }
+    });
     }
   } catch(e){ console.warn('amataCompare Supabase error:', e.message || e); }
 

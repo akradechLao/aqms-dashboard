@@ -211,11 +211,17 @@ async function fetchBYYStation() {
       result.wind = parseFloat(wsMatch[1]);
     }
 
-    // Wind direction: "ลมพัดมาจากทิศX ไปทางทิศY"
-    const wdMatch = allText.match(/ลมพัดมาจากทิศ([\u0E00-\u0E7F]+)\s*ไปทางทิศ([\u0E00-\u0E7F]+)/);
-    if (wdMatch) {
-      const fromDir = wdMatch[1].trim();
-      result.windDir = THAI_DIR_MAP[fromDir] ?? null;
+    // Wind direction: try new format "ทิศทางลม X องศา" first, then old format "ลมพัดมาจากทิศX ไปทางทิศY"
+    const wdDegMatch = allText.match(/ทิศทางลม\s*([\d.]+)\s*องศา/);
+    if (wdDegMatch) {
+      const deg = parseFloat(wdDegMatch[1]);
+      result.windDir = isNaN(deg) ? null : Math.round(deg * 100) / 100;
+    } else {
+      const wdMatch = allText.match(/ลมพัดมาจากทิศ([\u0E00-\u0E7F]+)\s*ไปทางทิศ([\u0E00-\u0E7F]+)/);
+      if (wdMatch) {
+        const fromDir = wdMatch[1].trim();
+        result.windDir = THAI_DIR_MAP[fromDir] ?? null;
+      }
     }
 
     if (result.tsp === null && result.pm10 === null && result.temp === null) {
