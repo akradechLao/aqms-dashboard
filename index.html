@@ -1293,6 +1293,8 @@ const STATIONS = [
   { id:'WL02', name:'สถานีวัดระดับน้ำ/อัตราการไหล จุดที่ 2', site:'บ่อน้ำเข้า นิคมหลักชัยเมืองยาง ระยอง', source:'waterLevel', lat:'12.715800', lng:'101.475100', image:'assets/wl2.jpg' },
 ];
 
+const PM25_STATIONS = ['002', '004', '005'];
+
 const SUPABASE_URL = 'https://grnbfoskwypfresvnyjj.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdybmJmb3Nrd3lwZnJlc3ZueWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMzczNTIsImV4cCI6MjEwMDcxMzM1Mn0.jcuKwalyutbVhtBDiu6b6GwdZirFp16hqagFtrfznI8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -3443,7 +3445,7 @@ function renderPageAlerts(){
       var v=d[k];
       var cellClass='val-normal';
       var display='--';
-      if(k==='pm25'&&s.pm25==null){
+      if(k==='pm25'&&!PM25_STATIONS.includes(s.id)){
         cellClass='val-na';
         display='<i class="fas fa-ban" style="margin-right:3px;opacity:.5"></i>ไม่ได้ติดตั้ง';
       }else if(v===null||v===undefined){

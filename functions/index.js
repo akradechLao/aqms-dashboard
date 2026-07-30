@@ -12,10 +12,14 @@ function getSupabase() {
   return _supabase;
 }
 
-const AMATA_TOKEN = 'REMOVED';
-const AMATA_PM25_TOKEN = 'REMOVED';
+const AMATA_TOKEN = process.env.AMATA_TOKEN || '';
+const AMATA_PM25_TOKEN = process.env.AMATA_PM25_TOKEN || '';
 const AMATA_PM25_STATIONS = ["002", "004", "005"];
-const PT5_TOKEN = 'REMOVED';
+const PT5_TOKEN = process.env.PT5_TOKEN || '';
+
+if (!AMATA_TOKEN) console.warn('[WARN] AMATA_TOKEN not set in .env');
+if (!AMATA_PM25_TOKEN) console.warn('[WARN] AMATA_PM25_TOKEN not set in .env');
+if (!PT5_TOKEN) console.warn('[WARN] PT5_TOKEN not set in .env');
 const AQ_STATIONS = ["001", "002", "003", "004", "005", "006"];
 const MAX_DUST_RETRY = 1;
 const DUST_RETRY_DELAY_MS = 60000;
@@ -364,6 +368,9 @@ exports.fetchAqData = onSchedule(
 
           const record = {
             station_id: stationId,
+            pm25: data.pm25 != null ? +data.pm25 : null,
+            pm10: data.pm10 != null ? +data.pm10 : null,
+            tsp: data.tsp != null ? +data.tsp : null,
             so2: data.so2 != null ? +data.so2 : null,
             no2: data.no2 != null ? +data.no2 : null,
             aqi: data.aqi != null ? +data.aqi : null,
@@ -380,14 +387,9 @@ exports.fetchAqData = onSchedule(
           };
 
           if (isNewHour) {
-            let dustReady = false;
             for (let retry = 0; retry < MAX_DUST_RETRY; retry++) {
               const last = await getLastDustValues(stationId);
               if (hasNewDustValues(data, last)) {
-                record.pm25 = data.pm25 != null ? +data.pm25 : null;
-                record.pm10 = data.pm10 != null ? +data.pm10 : null;
-                record.tsp = data.tsp != null ? +data.tsp : null;
-                dustReady = true;
                 console.log(`[${stationId}] New dust values found (retry ${retry})`);
                 break;
               }
@@ -400,12 +402,9 @@ exports.fetchAqData = onSchedule(
                 data.tsp = freshData.tsp;
               }
             }
-            if (!dustReady) {
-              console.log(`[${stationId}] No new dust values after ${MAX_DUST_RETRY} retries, saving anyway`);
-              record.pm25 = data.pm25 != null ? +data.pm25 : null;
-              record.pm10 = data.pm10 != null ? +data.pm10 : null;
-              record.tsp = data.tsp != null ? +data.tsp : null;
-            }
+            record.pm25 = data.pm25 != null ? +data.pm25 : null;
+            record.pm10 = data.pm10 != null ? +data.pm10 : null;
+            record.tsp = data.tsp != null ? +data.tsp : null;
           }
 
           const lastRec = await getLastRecord(stationId);
@@ -427,6 +426,9 @@ exports.fetchAqData = onSchedule(
         data.aqi = calcOverallAQI(data);
         const record = {
           station_id: "PT5",
+          pm25: data.pm25 != null ? +data.pm25 : null,
+          pm10: data.pm10 != null ? +data.pm10 : null,
+          tsp: data.tsp != null ? +data.tsp : null,
           so2: data.so2 != null ? +data.so2 : null,
           no2: data.no2 != null ? +data.no2 : null,
           aqi: data.aqi != null ? +data.aqi : null,
@@ -443,14 +445,9 @@ exports.fetchAqData = onSchedule(
         };
 
         if (isNewHour) {
-          let dustReady = false;
           for (let retry = 0; retry < MAX_DUST_RETRY; retry++) {
             const last = await getLastDustValues("PT5");
             if (hasNewDustValues(data, last)) {
-              record.pm25 = data.pm25 != null ? +data.pm25 : null;
-              record.pm10 = data.pm10 != null ? +data.pm10 : null;
-              record.tsp = data.tsp != null ? +data.tsp : null;
-              dustReady = true;
               console.log(`[PT5] New dust values found (retry ${retry})`);
               break;
             }
@@ -463,12 +460,9 @@ exports.fetchAqData = onSchedule(
               data.tsp = freshData.tsp;
             }
           }
-          if (!dustReady) {
-            console.log(`[PT5] No new dust values after ${MAX_DUST_RETRY} retries, saving anyway`);
-            record.pm25 = data.pm25 != null ? +data.pm25 : null;
-            record.pm10 = data.pm10 != null ? +data.pm10 : null;
-            record.tsp = data.tsp != null ? +data.tsp : null;
-          }
+          record.pm25 = data.pm25 != null ? +data.pm25 : null;
+          record.pm10 = data.pm10 != null ? +data.pm10 : null;
+          record.tsp = data.tsp != null ? +data.tsp : null;
         }
 
         const lastRec = await getLastRecord('PT5');
