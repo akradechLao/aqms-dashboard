@@ -354,6 +354,22 @@ body{
   position:absolute;right:10px;left:auto;
 }
 .legend-labels{display:flex;justify-content:space-between;font-size:.85rem;color:var(--text-secondary);font-weight:600;line-height:1.4;text-align:center}
+.aqi-formula-section{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:var(--radius-lg);padding:24px;margin-top:20px;box-shadow:var(--shadow-sm)}
+.aqi-formula-title{font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:12px}
+.aqi-formula-title i{margin-right:8px;color:var(--primary)}
+.aqi-formula-desc{font-size:.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:20px}
+.aqi-formula-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.aqi-formula-card{background:var(--bg-light);border:1px solid rgba(0,0,0,0.06);border-radius:var(--radius-md);padding:16px}
+.aqi-formula-pollutant{font-size:1.1rem;font-weight:800;color:var(--primary);margin-bottom:2px}
+.aqi-formula-subtitle{font-size:.72rem;color:var(--text-muted);margin-bottom:12px}
+.aqi-formula-table{margin-bottom:10px}
+.aqi-ft-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px dashed rgba(0,0,0,0.06);font-size:.75rem}
+.aqi-ft-range{color:var(--text-muted);font-weight:600;min-width:70px}
+.aqi-ft-val{color:var(--text-secondary);font-family:monospace;font-size:.72rem}
+.aqi-formula-example{background:rgba(26,115,232,0.06);border-radius:6px;padding:8px 10px;font-size:.75rem;color:var(--text-secondary);line-height:1.5}
+.aqi-formula-example strong{color:var(--primary)}
+.aqi-formula-note{background:var(--bg-light);border-radius:8px;padding:12px 16px;font-size:.8rem;color:var(--text-secondary);line-height:1.6}
+.aqi-formula-note i{color:var(--primary);margin-right:6px}
 .modal-overlay{
   position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.3);backdrop-filter:blur(8px);
   display:none;align-items:center;justify-content:center;padding:24px;
@@ -606,6 +622,7 @@ body{
   .pollutant-standard{height:14px}
   .pollutant-standard::after{font-size:.45rem}
   .pollutant-val{min-width:80px;font-size:.65rem}
+  .aqi-formula-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:480px){
   .page-content{transform:scale(0.9);transform-origin:top center}
@@ -617,6 +634,7 @@ body{
   .pollutant-val{min-width:70px;font-size:.6rem}
   .map-wrap{height:260px}
   .cctv-grid{grid-template-columns:1fr}
+  .aqi-formula-grid{grid-template-columns:1fr}
 }
 @media(min-width:1400px){
   .stations-grid{grid-template-columns:repeat(3,1fr)}
@@ -1076,9 +1094,66 @@ body{
             <span>มีผลต่อ<br>สุขภาพ<br>101-200</span><span>มีผลต่อสุขภาพ<br>อย่างมาก<br>201-300</span><span>เป็นอันตราย<br>ต่อสุขภาพ<br>301+</span>
           </div>
         </div>
+        <div class="aqi-formula-section">
+          <div class="aqi-formula-title"><i class="fas fa-calculator"></i> สูตรคำนวณค่า AQI (ดัชนีคุณภาพอากาศ)</div>
+          <div class="aqi-formula-desc">
+            AQI คำนวณจากค่า污染物 (มลพิษ) แต่ละตัว โดยใช้สูตร Piecewise Linear ตามมาตรฐานกรมควบคุมมลพิษ
+            <strong>ค่า AQI ของสถานี = ค่า AQI สูงสุด</strong> จากมลพิษทุกตัวที่วัดได้
+          </div>
+          <div class="aqi-formula-grid">
+            <div class="aqi-formula-card">
+              <div class="aqi-formula-pollutant">PM2.5</div>
+              <div class="aqi-formula-subtitle">ฝุ่นละอองขนาดไม่เกิน 2.5 ไมкрอน (µg/m³)</div>
+              <div class="aqi-formula-table">
+                <div class="aqi-ft-row"><span class="aqi-ft-range">0 - 12.0</span><span class="aqi-ft-val">AQI = (50 ÷ 12) × C</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">12.1 - 37.5</span><span class="aqi-ft-val">AQI = 50 + (50 ÷ 25.5) × (C − 12)</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">37.6 - 75</span><span class="aqi-ft-val">AQI = 100 + (50 ÷ 37.5) × (C − 37.5)</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">75.1 - 150</span><span class="aqi-ft-val">AQI = 150 + (50 ÷ 75) × (C − 75)</span></div>
+              </div>
+              <div class="aqi-formula-example">ตัวอย่าง: PM2.5 = 25 µg/m³ → AQI = 50 + (50÷25.5)×(25−12) = <strong>75</strong></div>
+            </div>
+            <div class="aqi-formula-card">
+              <div class="aqi-formula-pollutant">PM10</div>
+              <div class="aqi-formula-subtitle">ฝุ่นละอองขนาดไม่เกิน 10 ไมкрอน (µg/m³)</div>
+              <div class="aqi-formula-table">
+                <div class="aqi-ft-row"><span class="aqi-ft-range">0 - 50</span><span class="aqi-ft-val">AQI = (50 ÷ 50) × C = C</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">51 - 100</span><span class="aqi-ft-val">AQI = 50 + (50 ÷ 50) × (C − 50)</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">101 - 200</span><span class="aqi-ft-val">AQI = 100 + (50 ÷ 100) × (C − 100)</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">201 - 350</span><span class="aqi-ft-val">AQI = 150 + (50 ÷ 150) × (C − 200)</span></div>
+              </div>
+              <div class="aqi-formula-example">ตัวอย่าง: PM10 = 80 µg/m³ → AQI = 50 + (50÷50)×(80−50) = <strong>80</strong></div>
+            </div>
+            <div class="aqi-formula-card">
+              <div class="aqi-formula-pollutant">NO₂</div>
+              <div class="aqi-formula-subtitle">ไนโตรเจนไดออกไซด์ (µg/m³)</div>
+              <div class="aqi-formula-table">
+                <div class="aqi-ft-row"><span class="aqi-ft-range">0 - 40</span><span class="aqi-ft-val">AQI = (50 ÷ 40) × C</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">41 - 120</span><span class="aqi-ft-val">AQI = 50 + (50 ÷ 80) × (C − 40)</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">121 - 400</span><span class="aqi-ft-val">AQI = 100 + (50 ÷ 280) × (C − 120)</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">401 - 800</span><span class="aqi-ft-val">AQI = 150 + (50 ÷ 400) × (C − 400)</span></div>
+              </div>
+              <div class="aqi-formula-example">ตัวอย่าง: NO₂ = 60 µg/m³ → AQI = 50 + (50÷80)×(60−40) = <strong>62</strong></div>
+            </div>
+            <div class="aqi-formula-card">
+              <div class="aqi-formula-pollutant">SO₂</div>
+              <div class="aqi-formula-subtitle">ซัลเฟอร์ไดออกไซด์ (µg/m³)</div>
+              <div class="aqi-formula-table">
+                <div class="aqi-ft-row"><span class="aqi-ft-range">0 - 20</span><span class="aqi-ft-val">AQI = (50 ÷ 20) × C</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">21 - 50</span><span class="aqi-ft-val">AQI = 50 + (50 ÷ 30) × (C − 20)</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">51 - 150</span><span class="aqi-ft-val">AQI = 100 + (50 ÷ 100) × (C − 50)</span></div>
+                <div class="aqi-ft-row"><span class="aqi-ft-range">151 - 300</span><span class="aqi-ft-val">AQI = 150 + (50 ÷ 150) × (C − 150)</span></div>
+              </div>
+              <div class="aqi-formula-example">ตัวอย่าง: SO₂ = 35 µg/m³ → AQI = 50 + (50÷30)×(35−20) = <strong>75</strong></div>
+            </div>
+          </div>
+          <div class="aqi-formula-note">
+            <i class="fas fa-info-circle"></i>
+            <strong>C</strong> = ค่าความเข้มข้นของมลพิษ (µg/m³) &nbsp;|&nbsp;
+            <strong>สูตรทั่วไป:</strong> AQI = [(AQI_High − AQI_Low) ÷ (C_High − C_Low)] × (C − C_Low) + AQI_Low &nbsp;|&nbsp;
+            <strong>ค่า AQI สูงสุด</strong> จากมลพิษทุกตัว = AQI ของสถานี
+          </div>
+        </div>
       </div>
-
-      <!-- ===== PAGE: AMATA CITY ===== -->
       <div class="page" id="page-amata">
         <div class="page-title"><i class="fas fa-industry"></i> Amata City ชลบุรี & ระยอง<div class="page-subtitle">สถานีเฝ้าระวังคุณภาพอากาศ 6 แห่ง</div></div>
         <div class="page-stations-grid" id="amataGrid"></div>
