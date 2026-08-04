@@ -420,6 +420,8 @@ exports.fetchAqData = onSchedule(
           } else {
             console.log(`[${stationId}] Skipped (no significant change)`);
           }
+        } else {
+          console.warn(`[${stationId}] Offline or API timeout`);
         }
       } catch (e) {
         console.warn(`Error fetching station ${stationId}:`, e.message);
