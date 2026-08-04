@@ -1612,14 +1612,19 @@ async function fetchAllStations(){
 
   const allStationIds = STATIONS.filter(s=>s.source!=='rainfall'&&s.source!=='waterLevel').map(s=>s.id);
   try {
-    const { data, error } = await sb.from('readings')
-      .select('*')
-      .in('station_id', allStationIds)
-      .order('timestamp', { ascending: false })
-      .limit(allStationIds.length);
-    if(!error && data){
-      data.forEach(function(r){
-        results[r.station_id] = {
+    var stationPromises = allStationIds.map(function(stId){
+      return sb.from('readings')
+        .select('*')
+        .eq('station_id', stId)
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .then(function(res){ return { stId: stId, record: res.data && res.data[0] ? res.data[0] : null, error: res.error }; });
+    });
+    var stationResults = await Promise.all(stationPromises);
+    stationResults.forEach(function(res){
+      if(!res.error && res.record){
+        var r = res.record;
+        results[res.stId] = {
           pm25: r.pm25 != null ? +r.pm25 : null,
           pm10: r.pm10 != null ? +r.pm10 : null,
           tsp: r.tsp != null ? +r.tsp : null,
@@ -1634,8 +1639,8 @@ async function fetchAllStations(){
           aqi: r.aqi != null ? +r.aqi : null,
           online: true,
         };
-      });
-    }
+      }
+    });
   } catch(e){ console.warn('Supabase fetchAll error:', e); }
 
   STATIONS.forEach(s => {
